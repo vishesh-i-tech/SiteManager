@@ -1,0 +1,70 @@
+import { TradeCategory, TradeConfig } from '../../types';
+
+export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
+  construction: {
+    id: 'construction',
+    nameEn: 'General Construction',
+    nameHi: 'सामान्य निर्माण (ठेकेदारी)',
+    subtitleEn: 'Buildings, Roads, Bridges, RCC & Masonry',
+    subtitleHi: 'मकान, सड़क, पुल, आरसीसी और चिनाई',
+    primaryColor: '#EA580C',
+    badgeBg: '#FFEDD5',
+    badgeText: '#C2410C',
+    iconName: 'Building2',
+    quickAddTemplates: [
+      { titleEn: 'Shuttering Plates (4x4)', titleHi: 'शटरिंग प्लेट (4x4)', category: 'material', defaultCost: 18000, unit: 'plates' },
+      { titleEn: 'Concrete Vibrator Rent', titleHi: 'कंक्रीट वाइब्रेटर किराया', category: 'tool_rent', defaultCost: 800, unit: 'day' },
+      { titleEn: 'Cement Bags (Ultratech)', titleHi: 'सीमेंट की बोरियां', category: 'material', defaultCost: 380, unit: 'bags' },
+      { titleEn: 'Mixer Diesel Fuel', titleHi: 'मिक्सर मशीन डीजल', category: 'machinery', defaultCost: 2500, unit: 'litres' },
+      { titleEn: 'Daily Mason & Helper Wage', titleHi: 'राजमिस्त्री व लेबर दिहाड़ी', category: 'labour', defaultCost: 6500, unit: 'daily' },
+      { titleEn: 'Steel Reinforcement (TMT)', titleHi: 'सरिया / टीएमटी स्टील', category: 'material', defaultCost: 45000, unit: 'kg' },
+    ],
+    customWidgets: ['site_progress', 'active_workers', 'tool_overdue', 'fuel_consumed'],
+  },
+  plumbing: {
+    id: 'plumbing',
+    nameEn: 'Plumbing & Sanitary',
+    nameHi: 'प्लंबिंग व सेनेटरी',
+    subtitleEn: 'Pipes, Fittings, Drainage, Borewell & Fixtures',
+    subtitleHi: 'पाइप फिटिंग, लीकेज रिपेयर, बोरवेल व सेनेटरी',
+    primaryColor: '#0284C7',
+    badgeBg: '#E0F2FE',
+    badgeText: '#0369A1',
+    iconName: 'Wrench',
+    quickAddTemplates: [
+      { titleEn: 'CPVC Pipe Fitting (1 inch)', titleHi: 'सीपीवीसी पाइप फिटिंग (1 इंच)', category: 'material', defaultCost: 4200, unit: 'bundle' },
+      { titleEn: 'Pipe Threader & Cutter Rent', titleHi: 'पाइप थ्रेडर मशीन किराया', category: 'tool_rent', defaultCost: 600, unit: 'day' },
+      { titleEn: 'Sanitary Fixtures Set', titleHi: 'सेनेटरी वेयर व नल सेट', category: 'material', defaultCost: 12500, unit: 'set' },
+      { titleEn: 'Plumber & Assistant Wages', titleHi: 'प्लंबर व हेल्पर दिहाड़ी', category: 'labour', defaultCost: 4800, unit: 'daily' },
+      { titleEn: 'Borewell Motor Connection', titleHi: 'बोरवेल मोटर कनेक्शन', category: 'subcontract', defaultCost: 8500, unit: 'job' },
+      { titleEn: 'Water Tank (1000L Triple Layer)', titleHi: 'पानी की टंकी (1000L)', category: 'material', defaultCost: 6200, unit: 'pieces' },
+    ],
+    customWidgets: ['jobs_completed', 'pipe_stock', 'client_payments_pending', 'active_plumbers'],
+  },
+  electrical: {
+    id: 'electrical',
+    nameEn: 'Electrical & Wiring',
+    nameHi: 'इलेक्ट्रिकल व वायरिंग',
+    subtitleEn: 'Conduit, Wiring, Panels, Substation & Lighting',
+    subtitleHi: 'कंसील्ड वायरिंग, पैनल बोर्ड, सबस्टेशन व लाइटिंग',
+    primaryColor: '#D97706',
+    badgeBg: '#FEF3C7',
+    badgeText: '#B45309',
+    iconName: 'Zap',
+    quickAddTemplates: [
+      { titleEn: 'Copper Wire Bundle (1.5 sq mm)', titleHi: 'कॉपर वायर बंडल (1.5 mm)', category: 'material', defaultCost: 3800, unit: 'rolls' },
+      { titleEn: 'Main Distribution MCB Panel', titleHi: 'मेन डिस्ट्रीब्यूशन एमसीबी बॉक्स', category: 'material', defaultCost: 14500, unit: 'pieces' },
+      { titleEn: 'Wall Chaser Machine Rent', titleHi: 'झिरी कटर (Wall Chaser) किराया', category: 'tool_rent', defaultCost: 750, unit: 'day' },
+      { titleEn: 'Electrician Team Wages', titleHi: 'इलेक्ट्रीशियन टीम मजदूरी', category: 'labour', defaultCost: 5500, unit: 'daily' },
+      { titleEn: 'Conduit PVC Pipes (25mm)', titleHi: 'कंड्यूट पीवीसी पाइप', category: 'material', defaultCost: 2800, unit: 'bundle' },
+      { titleEn: 'LED Panel Lighting Set', titleHi: 'एलईडी पैनल लाइट सेट', category: 'material', defaultCost: 9200, unit: 'set' },
+    ],
+    customWidgets: ['wire_panel_expenses', 'active_electricians', 'pending_safety_checks', 'pending_dues'],
+  },
+};
+
+export const UPCOMING_TRADES = [
+  { id: 'carpentry', nameEn: 'Carpentry & Woodwork', nameHi: 'कारपेंट्री व लकड़ी का काम', iconName: 'Hammer' },
+  { id: 'painting', nameEn: 'Painting & Polishing', nameHi: 'पेंटिंग व पुट्टी', iconName: 'Paintbrush' },
+  { id: 'hvac', nameEn: 'HVAC & Ducting', nameHi: 'एसी व वेंटिलेशन', iconName: 'Wind' },
+];

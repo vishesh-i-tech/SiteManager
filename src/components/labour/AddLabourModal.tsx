@@ -1,0 +1,486 @@
+import React, { useState, useEffect } from 'react';
+import { useTheme } from '../../core/theme/ThemeContext';
+import { Site, LabourRecord, LabourEntry } from '../../types';
+import { db } from '../../core/db/database';
+import {
+  Building,
+  Calendar,
+  IndianRupee,
+  X,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  ClipboardList,
+} from 'lucide-react';
+
+interface AddLabourModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  sites: Site[];
+  defaultSiteId?: string;
+  onLabourAdded: () => void;
+}
+
+const ROLES: { id: LabourEntry['role']; labelEn: string; labelHi: string; defaultWage: number }[] = [
+  { id: 'Mason', labelEn: 'Mason (Rajmistri)', labelHi: 'राजमिस्त्री (Mason)', defaultWage: 800 },
+  { id: 'Helper', labelEn: 'Helper (Labour)', labelHi: 'मजदूर / हेल्पर (Helper)', defaultWage: 550 },
+  { id: 'Carpenter', labelEn: 'Carpenter (Shuttering)', labelHi: 'बढ़ई / शटरिंग (Carpenter)', defaultWage: 750 },
+  { id: 'Electrician', labelEn: 'Electrician', labelHi: 'इलेक्ट्रीशियन (Electrician)', defaultWage: 750 },
+  { id: 'Plumber', labelEn: 'Plumber', labelHi: 'प्लम्बर (Plumber)', defaultWage: 750 },
+  { id: 'Plasterer', labelEn: 'Plasterer', labelHi: 'प्लास्टर मिस्त्री (Plasterer)', defaultWage: 800 },
+  { id: 'Welder', labelEn: 'Welder', labelHi: 'वेल्डर (Welder)', defaultWage: 750 },
+  { id: 'Painter', labelEn: 'Painter', labelHi: 'पेंटर (Painter)', defaultWage: 700 },
+  { id: 'Supervisor', labelEn: 'Supervisor', labelHi: 'सुपरवाइजर (Supervisor)', defaultWage: 900 },
+];
+
+export const AddLabourModal: React.FC<AddLabourModalProps> = ({
+  isOpen,
+  onClose,
+  sites,
+  defaultSiteId,
+  onLabourAdded,
+}) => {
+  const { t, language, tradeConfig } = useTheme();
+
+  const [siteId, setSiteId] = useState(defaultSiteId || (sites[0]?.id || ''));
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Default initial entries for quick start
+  const [entries, setEntries] = useState<LabourEntry[]>([
+    {
+      id: `entry-${Date.now()}-1`,
+      recordId: '',
+      workerName: '',
+      role: 'Mason',
+      attendanceStatus: 'full_day',
+      dailyWage: 800,
+      paidAmount: 800,
+      balanceDue: 0,
+    },
+    {
+      id: `entry-${Date.now()}-2`,
+      recordId: '',
+      workerName: '',
+      role: 'Helper',
+      attendanceStatus: 'full_day',
+      dailyWage: 550,
+      paidAmount: 550,
+      balanceDue: 0,
+    },
+  ]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (defaultSiteId) {
+        setSiteId(defaultSiteId);
+      } else if (sites.length > 0 && !sites.some((s) => s.id === siteId)) {
+        setSiteId(sites[0].id);
+      }
+    }
+  }, [isOpen, defaultSiteId, sites]);
+
+  if (!isOpen) return null;
+
+  const handleUpdateEntry = (index: number, field: keyof LabourEntry, val: any) => {
+    const updated = [...entries];
+    const current = { ...updated[index], [field]: val };
+
+    if (field === 'role') {
+      const matched = ROLES.find((r) => r.id === val);
+      if (matched && !current.dailyWage) {
+        current.dailyWage = matched.defaultWage;
+      }
+    }
+
+    if (field === 'attendanceStatus' || field === 'dailyWage' || field === 'role') {
+      const base = Number(current.dailyWage) || 0;
+      if (current.attendanceStatus === 'half_day') {
+        current.paidAmount = Math.round(base * 0.5);
+      } else if (current.attendanceStatus === 'absent') {
+        current.paidAmount = 0;
+      } else if (current.attendanceStatus === 'overtime') {
+        current.paidAmount = Math.round(base * 1.5);
+      } else {
+        current.paidAmount = base;
+      }
+      current.balanceDue = Math.max(0, base - (current.paidAmount || 0));
+    }
+
+    updated[index] = current;
+    setEntries(updated);
+  };
+
+  const handleAddWorkerRow = (role: LabourEntry['role'] = 'Helper', defaultWage = 550) => {
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: `entry-${Date.now()}-${prev.length}`,
+        recordId: '',
+        workerName: '',
+        role,
+        attendanceStatus: 'full_day',
+        dailyWage: defaultWage,
+        paidAmount: defaultWage,
+        balanceDue: 0,
+      },
+    ]);
+  };
+
+  const handleRemoveRow = (index: number) => {
+    if (entries.length <= 1) {
+      setEntries([
+        {
+          id: `entry-${Date.now()}`,
+          recordId: '',
+          workerName: '',
+          role: 'Helper',
+          attendanceStatus: 'full_day',
+          dailyWage: 550,
+          paidAmount: 550,
+          balanceDue: 0,
+        },
+      ]);
+      return;
+    }
+    setEntries(entries.filter((_, i) => i !== index));
+  };
+
+  const totalDailyWage = entries.reduce((acc, e) => {
+    if (e.attendanceStatus === 'absent') return acc;
+    if (e.attendanceStatus === 'half_day') return acc + Math.round((e.dailyWage || 0) * 0.5);
+    if (e.attendanceStatus === 'overtime') return acc + Math.round((e.dailyWage || 0) * 1.5);
+    return acc + (e.dailyWage || 0);
+  }, 0);
+
+  const activeWorkersCount = entries.filter((e) => e.workerName.trim().length > 0).length || entries.length;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!siteId) return;
+
+    const finalizedEntries = entries.map((entry, idx) => ({
+      ...entry,
+      workerName: entry.workerName.trim() || `Worker #${idx + 1}`,
+    }));
+
+    if (finalizedEntries.length === 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const recordId = `lr-${Date.now()}`;
+      const totalPaid = finalizedEntries.reduce((acc, e) => acc + (e.paidAmount || 0), 0);
+
+      const labourRecord: LabourRecord = {
+        id: recordId,
+        siteId,
+        date,
+        totalWorkers: finalizedEntries.length,
+        totalDailyWage,
+        totalPaid,
+        notes: notes.trim() || undefined,
+        entries: finalizedEntries.map((entry) => ({
+          ...entry,
+          recordId,
+        })),
+      };
+
+      await db.labourRecords.put(labourRecord);
+      for (const entry of labourRecord.entries || []) {
+        await db.labourEntries.put(entry);
+      }
+
+      onLabourAdded();
+      onClose();
+    } catch (err) {
+      console.error('Failed to save manual labour record', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      {/* Separate Backdrop Layer */}
+      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+
+      {/* Interactive Sharp Dialog Container */}
+      <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
+        
+        {/* Header */}
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md"
+              style={{ backgroundColor: tradeConfig.primaryColor }}
+            >
+              <ClipboardList className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-extrabold text-base text-slate-900 dark:text-white font-heading">
+                {language === 'hi' ? 'दैनिक हाजिरी व मजदूरी दर्ज करें' : 'Manual Attendance & Wage Entry'}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {language === 'hi' ? 'मजदूरों के नाम, हाजिरी और दैनिक मजदूरी भरें' : 'Log daily muster roll without scanning a photo'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Scrollable Form Body */}
+        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto flex-1 space-y-4">
+          
+          {/* Top Controls: Site & Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1">
+                <Building className="w-3.5 h-3.5 text-orange-500" />
+                {language === 'hi' ? 'साइट चुनें' : 'Select Job Site'} *
+              </label>
+              <select
+                value={siteId}
+                onChange={(e) => setSiteId(e.target.value)}
+                required
+                className="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+              >
+                {sites.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.location})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1">
+                <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                {language === 'hi' ? 'हाजिरी दिनांक' : 'Attendance Date'} *
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                className="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Quick 1-Tap Add Role Presets */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              {language === 'hi' ? 'त्वरित जोड़ें:' : 'Quick Add:'}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleAddWorkerRow('Mason', 800)}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 btn-tactile"
+            >
+              + Mason (₹800)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddWorkerRow('Helper', 550)}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 btn-tactile"
+            >
+              + Helper (₹550)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddWorkerRow('Carpenter', 750)}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 btn-tactile"
+            >
+              + Skilled (₹750)
+            </button>
+          </div>
+
+          {/* Worker Rows Table / Cards */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {language === 'hi' ? `मजदूर सूची (${entries.length})` : `Worker Attendance Muster (${entries.length})`}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleAddWorkerRow()}
+                className="px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow-sm flex items-center gap-1 btn-tactile"
+                style={{ backgroundColor: tradeConfig.primaryColor }}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{language === 'hi' ? 'मजदूर जोड़ें' : 'Add Worker'}</span>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {entries.map((entry, idx) => (
+                <div
+                  key={entry.id}
+                  className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2"
+                >
+                  <div className="grid grid-cols-12 gap-2 items-center">
+                    
+                    {/* Worker Name */}
+                    <div className="col-span-12 sm:col-span-5">
+                      <input
+                        type="text"
+                        placeholder={language === 'hi' ? `मजदूर का नाम #${idx + 1} (उदा. राम कुमार)` : `Worker Name #${idx + 1} (e.g. Ramesh Kumar)`}
+                        value={entry.workerName}
+                        onChange={(e) => handleUpdateEntry(idx, 'workerName', e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 outline-none"
+                      />
+                    </div>
+
+                    {/* Role / Trade Dropdown */}
+                    <div className="col-span-6 sm:col-span-4">
+                      <select
+                        value={entry.role}
+                        onChange={(e) => handleUpdateEntry(idx, 'role', e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-xl text-xs font-medium bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                      >
+                        {ROLES.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {language === 'hi' ? r.labelHi : r.labelEn}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Daily Wage Rate */}
+                    <div className="col-span-5 sm:col-span-2 relative">
+                      <span className="absolute left-2.5 top-2 text-slate-400 text-xs font-bold">₹</span>
+                      <input
+                        type="number"
+                        placeholder="Wage"
+                        value={entry.dailyWage || ''}
+                        onChange={(e) => handleUpdateEntry(idx, 'dailyWage', Number(e.target.value))}
+                        className="w-full pl-6 pr-2 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-right"
+                      />
+                    </div>
+
+                    {/* Delete Row */}
+                    <div className="col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRow(idx)}
+                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+                        title="Remove row"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                  </div>
+
+                  {/* Attendance Status Selector Pills */}
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-[11px]">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-slate-500 dark:text-slate-400">
+                        {language === 'hi' ? 'हाजिरी:' : 'Status:'}
+                      </span>
+                      {[
+                        { id: 'full_day', label: language === 'hi' ? 'पूरा दिन (Full)' : 'Full Day', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300' },
+                        { id: 'half_day', label: language === 'hi' ? 'आधा दिन (Half)' : 'Half Day', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300' },
+                        { id: 'overtime', label: language === 'hi' ? 'ओवरटाइम (OT)' : 'Overtime', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-300' },
+                        { id: 'absent', label: language === 'hi' ? 'अनुपस्थित (Absent)' : 'Absent', color: 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-300' },
+                      ].map((statusOption) => (
+                        <button
+                          key={statusOption.id}
+                          type="button"
+                          onClick={() => handleUpdateEntry(idx, 'attendanceStatus', statusOption.id)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all ${
+                            entry.attendanceStatus === statusOption.id
+                              ? `${statusOption.color} shadow-xs scale-102`
+                              : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          {statusOption.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300">
+                      <span>{language === 'hi' ? 'मजदूरी:' : 'Calculated:'}</span>
+                      <span className="font-black text-slate-900 dark:text-white">₹{entry.paidAmount}</span>
+                    </div>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+              {language === 'hi' ? 'टिप्पणी / विवरण (वैकल्पिक)' : 'Notes / Diary Remarks (Optional)'}
+            </label>
+            <input
+              type="text"
+              placeholder={language === 'hi' ? 'उदा. ढलाई का काम चला, मौसम साफ था' : 'e.g. 1st floor roof slab casting day'}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+          </div>
+
+          {/* Real-time Summary Card */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white flex items-center justify-between">
+            <div>
+              <span className="text-[11px] text-slate-300 block font-medium">
+                {language === 'hi' ? 'कुल मजदूर व हाजिरी' : 'Total Muster Summary'}
+              </span>
+              <span className="text-xs font-bold text-orange-400 mt-0.5 block">
+                {activeWorkersCount} {language === 'hi' ? 'श्रमिक' : 'Workers'} Logged
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-bold">
+                {language === 'hi' ? 'कुल दैनिक मजदूरी' : 'Total Daily Wages'}
+              </span>
+              <span className="text-base sm:text-lg font-black text-emerald-400 block">
+                ₹{totalDailyWage.toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+
+          {/* Submit Actions */}
+          <div className="pt-2 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !siteId}
+              className="px-5 py-2 rounded-xl text-xs font-extrabold text-white shadow-md flex items-center gap-1.5 btn-tactile disabled:opacity-50"
+              style={{ backgroundColor: tradeConfig.primaryColor }}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>
+                {isSubmitting
+                  ? language === 'hi'
+                    ? 'सहेज रहे हैं...'
+                    : 'Saving...'
+                  : language === 'hi'
+                  ? 'हाजिरी रजिस्टर सेव करें'
+                  : 'Save Attendance Sheet'}
+              </span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  );
+};
