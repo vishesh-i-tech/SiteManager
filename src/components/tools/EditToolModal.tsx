@@ -9,6 +9,8 @@ import {
   IndianRupee,
   X,
   CheckCircle2,
+  Warehouse,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface EditToolModalProps {
@@ -26,8 +28,9 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
   sites,
   onToolUpdated,
 }) => {
-  const { t, language, tradeConfig } = useTheme();
+  const { language, tradeConfig } = useTheme();
 
+  const [sourceType, setSourceType] = useState<'self_owned' | 'purchased_for_site'>('self_owned');
   const [siteId, setSiteId] = useState('');
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState<number>(1);
@@ -35,13 +38,14 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
   const [dateSent, setDateSent] = useState('');
   const [expectedReturnDate, setExpectedReturnDate] = useState('');
   const [actualReturnDate, setActualReturnDate] = useState('');
-  const [rentCost, setRentCost] = useState<number>(0);
+  const [purchasePrice, setPurchasePrice] = useState<number | ''>('');
   const [status, setStatus] = useState<ToolRecord['status']>('on_site');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (tool) {
+      setSourceType(tool.sourceType || (tool.purchasePrice ? 'purchased_for_site' : 'self_owned'));
       setSiteId(tool.siteId);
       setName(tool.name);
       setQuantity(tool.quantity);
@@ -49,7 +53,7 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
       setDateSent(tool.dateSent || '');
       setExpectedReturnDate(tool.expectedReturnDate || '');
       setActualReturnDate(tool.actualReturnDate || '');
-      setRentCost(tool.rentOrRepairCost || 0);
+      setPurchasePrice(tool.purchasePrice || (tool.rentOrRepairCost && tool.sourceType === 'purchased_for_site' ? tool.rentOrRepairCost : ''));
       setStatus(tool.status);
       setNotes(tool.notes || '');
     }
@@ -63,6 +67,7 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const parsedPrice = sourceType === 'purchased_for_site' ? Number(purchasePrice) || 0 : 0;
       await db.tools.update(tool.id, {
         siteId,
         name: name.trim(),
@@ -71,7 +76,9 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
         dateSent,
         expectedReturnDate,
         actualReturnDate: actualReturnDate || null,
-        rentOrRepairCost: Number(rentCost) || 0,
+        sourceType,
+        purchasePrice: parsedPrice,
+        rentOrRepairCost: parsedPrice,
         status: actualReturnDate ? 'returned' : status,
         notes: notes.trim() || undefined,
       });
@@ -85,17 +92,23 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
     }
   };
 
+  const handleMarkReturnedToday = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setActualReturnDate(today);
+    setStatus('returned');
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
-      {/* Separate Backdrop Layer */}
+      {/* Backdrop */}
       <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
-      {/* Interactive Sharp Dialog Container */}
+      {/* Modal Container */}
       <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
         
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
-          <div className="flex items-center gap-2.5">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
+          <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md"
               style={{ backgroundColor: tradeConfig.primaryColor }}
@@ -104,7 +117,7 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
             </div>
             <div>
               <h2 className="font-extrabold text-base text-slate-900 dark:text-white font-heading">
-                {language === 'hi' ? 'औजार विवरण बदलें (Edit Tool)' : 'Edit Tool Details'}
+                {language === 'hi' ? 'औजार विवरण बदलें' : 'Edit Tool Record'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {tool.name}
@@ -113,7 +126,7 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -122,6 +135,58 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1">
           
+          {/* Source Type Selector */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              {language === 'hi' ? 'औजार का प्रकार' : 'Tool Source Type'}
+            </label>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSourceType('self_owned')}
+                className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1 ${
+                  sourceType === 'self_owned'
+                    ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-500 shadow-sm ring-2 ring-blue-500/20'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg ${sourceType === 'self_owned' ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                    <Warehouse className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="font-extrabold text-xs text-slate-900 dark:text-white">
+                    {language === 'hi' ? 'खुद का औजार' : 'Self-Owned'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {language === 'hi' ? 'गोदाम से साइट भेजा' : 'From godown / workshop'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSourceType('purchased_for_site')}
+                className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1 ${
+                  sourceType === 'purchased_for_site'
+                    ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 dark:border-emerald-500 shadow-sm ring-2 ring-emerald-500/20'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg ${sourceType === 'purchased_for_site' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="font-extrabold text-xs text-slate-900 dark:text-white">
+                    {language === 'hi' ? 'साइट पर खरीदा' : 'Bought for Site'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {language === 'hi' ? 'चलते काम में खरीदा' : 'Bought during work'}
+                </span>
+              </button>
+            </div>
+          </div>
+
           {/* Site selection */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
@@ -145,7 +210,7 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
           {/* Tool Name */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              {language === 'hi' ? 'औजार / मशीन का नाम *' : 'Equipment Name *'}
+              {language === 'hi' ? 'औजार / मशीन का नाम *' : 'Tool / Equipment Name *'}
             </label>
             <input
               type="text"
@@ -156,27 +221,65 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
             />
           </div>
 
-          {/* Quantity */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              {language === 'hi' ? 'संख्या / मात्रा (Qty) *' : 'Quantity *'}
-            </label>
-            <input
-              type="number"
-              required
-              min={1}
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
-            />
+          {/* Quantity & Spec */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                {language === 'hi' ? 'संख्या / मात्रा (Qty) *' : 'Quantity *'}
+              </label>
+              <input
+                type="number"
+                required
+                min={1}
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                {language === 'hi' ? 'साइज / विवरण' : 'Size / Spec'}
+              </label>
+              <input
+                type="text"
+                value={size}
+                onChange={(e) => setSize(e.target.value)}
+                placeholder="4x4, 5-inch आदि"
+                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+              />
+            </div>
           </div>
 
-          {/* Date Sent & Expected Return */}
+          {/* Purchase Price (If purchased for site) */}
+          {sourceType === 'purchased_for_site' && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 animate-fade-in">
+              <label className="block text-xs font-bold text-emerald-900 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
+                <IndianRupee className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{language === 'hi' ? 'खरीद मूल्य (₹) *' : 'Purchase Cost (₹) *'}</span>
+              </label>
+              <input
+                type="number"
+                required
+                min={0}
+                value={purchasePrice}
+                onChange={(e) => setPurchasePrice(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="उदा. 2400"
+                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 text-slate-900 dark:text-white focus:outline-none"
+              />
+            </div>
+          )}
+
+          {/* Date Sent / Purchased & Expected Return */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>{language === 'hi' ? 'भेजने की तारीख' : 'Date Sent'}</span>
+                <span>
+                  {sourceType === 'purchased_for_site'
+                    ? (language === 'hi' ? 'खरीद तारीख' : 'Purchase Date')
+                    : (language === 'hi' ? 'भेजने की तारीख' : 'Date Sent')}
+                </span>
               </label>
               <input
                 type="date"
@@ -190,7 +293,7 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>{language === 'hi' ? 'वापसी तारीख *' : 'Expected Return *'}</span>
+                <span>{language === 'hi' ? 'गोदाम वापसी तारीख *' : 'Expected Return *'}</span>
               </label>
               <input
                 type="date"
@@ -205,14 +308,28 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
           {/* Actual Return Date & Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-green-500" />
-                <span>{language === 'hi' ? 'वास्तविक वापसी तारीख' : 'Actual Returned Date'}</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>{language === 'hi' ? 'गोदाम वापसी तारीख' : 'Actual Returned Date'}</span>
+                </label>
+                {!actualReturnDate && (
+                  <button
+                    type="button"
+                    onClick={handleMarkReturnedToday}
+                    className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    {language === 'hi' ? 'आज लौटा' : 'Today'}
+                  </button>
+                )}
+              </div>
               <input
                 type="date"
                 value={actualReturnDate}
-                onChange={(e) => setActualReturnDate(e.target.value)}
+                onChange={(e) => {
+                  setActualReturnDate(e.target.value);
+                  if (e.target.value) setStatus('returned');
+                }}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -226,31 +343,19 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
                 onChange={(e) => setStatus(e.target.value as any)}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               >
-                <option value="on_site">On Site (साइट पर)</option>
-                <option value="overdue">Overdue (देरी)</option>
-                <option value="returned">Returned (वापस आ चुका)</option>
+                <option value="on_site">{language === 'hi' ? 'साइट पर मौजूद' : 'Active on Site'}</option>
+                <option value="overdue">{language === 'hi' ? 'देरी (Overdue)' : 'Overdue'}</option>
+                <option value="returned">{language === 'hi' ? 'गोदाम में वापस आ चुका' : 'Returned to Godown'}</option>
               </select>
             </div>
-          </div>
-
-          {/* Rent Cost */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-              <IndianRupee className="w-3.5 h-3.5 text-green-500" />
-              <span>{language === 'hi' ? 'किराया या रिपेयर खर्च (₹)' : 'Rental / Repair Cost (₹)'}</span>
-            </label>
-            <input
-              type="number"
-              value={rentCost}
-              onChange={(e) => setRentCost(Number(e.target.value))}
-              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
-            />
           </div>
 
           {/* Notes */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              {language === 'hi' ? 'नोट / दुकानदार का नाम' : 'Notes / Vendor Name'}
+              {sourceType === 'purchased_for_site'
+                ? (language === 'hi' ? 'दुकानदार / बिल विवरण' : 'Shop / Vendor Details')
+                : (language === 'hi' ? 'नोट / गाड़ी नंबर' : 'Notes / Handed to Whom')}
             </label>
             <input
               type="text"
@@ -265,9 +370,9 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              {t('cancel')}
+              {language === 'hi' ? 'रद्द करें' : 'Cancel'}
             </button>
             <button
               type="submit"
@@ -276,7 +381,7 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
               style={{ backgroundColor: tradeConfig.primaryColor }}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>{isSubmitting ? 'Saving...' : t('save')}</span>
+              <span>{isSubmitting ? (language === 'hi' ? 'सहेज रहे हैं...' : 'Saving...') : (language === 'hi' ? 'अपडेट करें' : 'Save Changes')}</span>
             </button>
           </div>
         </form>

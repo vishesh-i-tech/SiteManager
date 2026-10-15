@@ -198,7 +198,14 @@ export class SiteSaathiDatabase extends Dexie {
     const machineryCost = machinery.reduce((acc, m) => acc + (m.totalCost || 0), 0);
 
     const tools = await this.tools.where('siteId').equals(siteId).toArray();
-    const toolsCost = tools.reduce((acc, t) => acc + (t.rentOrRepairCost || 0), 0);
+    const toolsCost = tools.reduce(
+      (acc, t) =>
+        acc +
+        (t.sourceType === 'purchased_for_site'
+          ? t.purchasePrice || t.rentOrRepairCost || 0
+          : t.purchasePrice || 0),
+      0
+    );
 
     const labourRecords = await this.labourRecords.where('siteId').equals(siteId).toArray();
     const labourCost = labourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 0);

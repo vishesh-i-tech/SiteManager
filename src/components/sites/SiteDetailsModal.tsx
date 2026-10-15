@@ -394,7 +394,7 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                         )}
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1">
-                        Sent: {tool.dateSent} | Return: {tool.expectedReturnDate} | Rent: ₹{tool.rentOrRepairCost}
+                        Sent: {tool.dateSent} | Return: {tool.expectedReturnDate} | {tool.sourceType === 'purchased_for_site' ? `Purchased: ₹${tool.purchasePrice || tool.rentOrRepairCost || 0}` : 'Self-Owned'}
                       </p>
                     </div>
 

@@ -102,12 +102,14 @@ export const exportSiteReportPdf = (
     t.dateSent,
     t.expectedReturnDate,
     t.status.toUpperCase(),
-    `Rs. ${t.rentOrRepairCost.toLocaleString('en-IN')}`,
+    t.sourceType === 'purchased_for_site'
+      ? `Purchased (Rs. ${(t.purchasePrice || t.rentOrRepairCost || 0).toLocaleString('en-IN')})`
+      : 'Self-Owned (Rs. 0)',
   ]);
 
   autoTable(doc, {
     startY: currentY + 4,
-    head: [['Equipment Name', 'Qty', 'Date Sent', 'Expected Return', 'Status', 'Rent/Cost']],
+    head: [['Equipment Name', 'Qty', 'Date Sent', 'Expected Return', 'Status', 'Ownership / Cost']],
     body: toolRows.length > 0 ? toolRows : [['-', 'No tools deployed', '-', '-', '-', '-']],
     theme: 'grid',
     headStyles: { fillColor: [15, 23, 42] },

@@ -13,7 +13,7 @@ export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
     iconName: 'Building2',
     quickAddTemplates: [
       { titleEn: 'Shuttering Plates (4x4)', titleHi: 'शटरिंग प्लेट (4x4)', category: 'material', defaultCost: 18000, unit: 'plates' },
-      { titleEn: 'Concrete Vibrator Rent', titleHi: 'कंक्रीट वाइब्रेटर किराया', category: 'tool_rent', defaultCost: 800, unit: 'day' },
+      { titleEn: 'Concrete Vibrator Needle', titleHi: 'कंक्रीट वाइब्रेटर नीडल', category: 'material', defaultCost: 2800, unit: 'unit' },
       { titleEn: 'Cement Bags (Ultratech)', titleHi: 'सीमेंट की बोरियां', category: 'material', defaultCost: 380, unit: 'bags' },
       { titleEn: 'Mixer Diesel Fuel', titleHi: 'मिक्सर मशीन डीजल', category: 'machinery', defaultCost: 2500, unit: 'litres' },
       { titleEn: 'Daily Mason & Helper Wage', titleHi: 'राजमिस्त्री व लेबर दिहाड़ी', category: 'labour', defaultCost: 6500, unit: 'daily' },
@@ -33,7 +33,7 @@ export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
     iconName: 'Wrench',
     quickAddTemplates: [
       { titleEn: 'CPVC Pipe Fitting (1 inch)', titleHi: 'सीपीवीसी पाइप फिटिंग (1 इंच)', category: 'material', defaultCost: 4200, unit: 'bundle' },
-      { titleEn: 'Pipe Threader & Cutter Rent', titleHi: 'पाइप थ्रेडर मशीन किराया', category: 'tool_rent', defaultCost: 600, unit: 'day' },
+      { titleEn: 'Pipe Threader & Cutter Blades', titleHi: 'पाइप थ्रेडर व कटर ब्लेड', category: 'material', defaultCost: 1600, unit: 'set' },
       { titleEn: 'Sanitary Fixtures Set', titleHi: 'सेनेटरी वेयर व नल सेट', category: 'material', defaultCost: 12500, unit: 'set' },
       { titleEn: 'Plumber & Assistant Wages', titleHi: 'प्लंबर व हेल्पर दिहाड़ी', category: 'labour', defaultCost: 4800, unit: 'daily' },
       { titleEn: 'Borewell Motor Connection', titleHi: 'बोरवेल मोटर कनेक्शन', category: 'subcontract', defaultCost: 8500, unit: 'job' },
@@ -54,7 +54,7 @@ export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
     quickAddTemplates: [
       { titleEn: 'Copper Wire Bundle (1.5 sq mm)', titleHi: 'कॉपर वायर बंडल (1.5 mm)', category: 'material', defaultCost: 3800, unit: 'rolls' },
       { titleEn: 'Main Distribution MCB Panel', titleHi: 'मेन डिस्ट्रीब्यूशन एमसीबी बॉक्स', category: 'material', defaultCost: 14500, unit: 'pieces' },
-      { titleEn: 'Wall Chaser Machine Rent', titleHi: 'झिरी कटर (Wall Chaser) किराया', category: 'tool_rent', defaultCost: 750, unit: 'day' },
+      { titleEn: 'Wall Chaser Cutter Blades', titleHi: 'झिरी कटर (Wall Chaser) ब्लेड', category: 'material', defaultCost: 1450, unit: 'set' },
       { titleEn: 'Electrician Team Wages', titleHi: 'इलेक्ट्रीशियन टीम मजदूरी', category: 'labour', defaultCost: 5500, unit: 'daily' },
       { titleEn: 'Conduit PVC Pipes (25mm)', titleHi: 'कंड्यूट पीवीसी पाइप', category: 'material', defaultCost: 2800, unit: 'bundle' },
       { titleEn: 'LED Panel Lighting Set', titleHi: 'एलईडी पैनल लाइट सेट', category: 'material', defaultCost: 9200, unit: 'set' },
@@ -74,9 +74,9 @@ export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
     quickAddTemplates: [
       { titleEn: 'Wall Putty (40kg Bag)', titleHi: 'बिरला / जेके वॉल पुट्टी (40kg)', category: 'material', defaultCost: 920, unit: 'bags' },
       { titleEn: 'Interior Emulsion Bucket (20L)', titleHi: 'इंटीरियर पेंट बाल्टी (20L)', category: 'material', defaultCost: 6500, unit: 'bucket' },
-      { titleEn: 'Scaffolding Bamboo / Rent', titleHi: 'मचान / घोड़ी भाड़ा', category: 'tool_rent', defaultCost: 500, unit: 'day' },
+      { titleEn: 'Scaffolding H-Frames', titleHi: 'मचान / घोड़ी सेट', category: 'material', defaultCost: 3500, unit: 'set' },
       { titleEn: 'Painter & Polish Karigar Wage', titleHi: 'पेंटर व कारीगर दिहाड़ी', category: 'labour', defaultCost: 4500, unit: 'daily' },
-      { titleEn: 'Sander Machine Rent', titleHi: 'वॉल सैंडर मशीन किराया', category: 'tool_rent', defaultCost: 400, unit: 'day' },
+      { titleEn: 'Sander Machine Discs', titleHi: 'वॉल सैंडर मशीन डिस्क', category: 'material', defaultCost: 850, unit: 'pack' },
     ],
     customWidgets: ['paint_stock', 'wall_area_done', 'active_painters'],
   },
@@ -93,7 +93,7 @@ export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
     quickAddTemplates: [
       { titleEn: 'Commercial Plywood (18mm)', titleHi: 'कमर्शियल प्लाईवुड 18mm', category: 'material', defaultCost: 2200, unit: 'sheets' },
       { titleEn: 'Laminate Mica Sheets (1mm)', titleHi: 'सनमाइका / लैमिनेट शीट', category: 'material', defaultCost: 1400, unit: 'sheets' },
-      { titleEn: 'Circular Saw & Router Rent', titleHi: 'लकड़ी कटर व राउटर किराया', category: 'tool_rent', defaultCost: 600, unit: 'day' },
+      { titleEn: 'Circular Saw Blades & Router Bits', titleHi: 'कटर ब्लेड व राउटर बिट्स', category: 'material', defaultCost: 1200, unit: 'set' },
       { titleEn: 'Master Carpenter & Helper Wage', titleHi: 'कारीगर व बढ़ई हेल्पर मजदूरी', category: 'labour', defaultCost: 5800, unit: 'daily' },
     ],
     customWidgets: ['wood_sheets', 'fittings_used', 'active_carpenters'],
@@ -110,7 +110,7 @@ export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
     iconName: 'Shield',
     quickAddTemplates: [
       { titleEn: 'MS Hollow Square Pipe (2x2)', titleHi: 'एम.एस. पाइप 2x2', category: 'material', defaultCost: 3200, unit: 'bundle' },
-      { titleEn: 'Welding Machine & Electrodes', titleHi: 'वेल्डिंग सेट व इलेक्ट्रोड', category: 'tool_rent', defaultCost: 700, unit: 'day' },
+      { titleEn: 'Welding Machine Electrodes & Cable', titleHi: 'वेल्डिंग इलेक्ट्रोड रॉड्स', category: 'material', defaultCost: 1400, unit: 'box' },
       { titleEn: 'Grinder & Cut-off Wheel', titleHi: 'हैंड ग्राइंडर कटर ब्लेड', category: 'material', defaultCost: 950, unit: 'set' },
       { titleEn: 'Welder & Fitter Daily Wages', titleHi: 'वेल्डर व फिटर दिहाड़ी', category: 'labour', defaultCost: 5200, unit: 'daily' },
     ],
@@ -129,7 +129,7 @@ export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
     quickAddTemplates: [
       { titleEn: 'Vitrified Tiles 2x4 (Box)', titleHi: 'टाइल्स बॉक्स (2x4)', category: 'material', defaultCost: 680, unit: 'boxes' },
       { titleEn: 'Tile Adhesive (20kg Bag)', titleHi: 'टाइल केमिकल (एडहेसिव)', category: 'material', defaultCost: 450, unit: 'bags' },
-      { titleEn: 'Marble Polish Machine Rent', titleHi: 'मार्बल घिसाई मशीन किराया', category: 'tool_rent', defaultCost: 900, unit: 'day' },
+      { titleEn: 'Marble Polish Pads & Chemical', titleHi: 'मार्बल घिसाई पैड व केमिकल', category: 'material', defaultCost: 1800, unit: 'set' },
       { titleEn: 'Tile Mistri & Labour Wage', titleHi: 'टाइल मिस्त्री व लेबर मजदूरी', category: 'labour', defaultCost: 6000, unit: 'daily' },
     ],
     customWidgets: ['sqft_flooring', 'tiles_balance', 'active_masons'],
@@ -164,7 +164,7 @@ export const TRADE_CONFIGS: Record<TradeCategory, TradeConfig> = {
     iconName: 'Wind',
     quickAddTemplates: [
       { titleEn: 'Copper Pipe Roll (1/2" & 1/4")', titleHi: 'कॉपर पाइप रोल', category: 'material', defaultCost: 6800, unit: 'rolls' },
-      { titleEn: 'Vacuum Pump & Manifold Gauge', titleHi: 'वैक्यूम पंप सेट किराया', category: 'tool_rent', defaultCost: 500, unit: 'day' },
+      { titleEn: 'Vacuum Pump Oil & Manifold Hose', titleHi: 'वैक्यूम पंप ऑइल व होज़', category: 'material', defaultCost: 1100, unit: 'set' },
       { titleEn: 'R32 / R410A Gas Cylinder', titleHi: 'एसी रेफ्रिजरेंट गैस सिलेंडर', category: 'material', defaultCost: 4500, unit: 'cylinders' },
       { titleEn: 'AC Technician Team Wages', titleHi: 'एसी टेक्नीशियन टीम मजदूरी', category: 'labour', defaultCost: 5500, unit: 'daily' },
     ],

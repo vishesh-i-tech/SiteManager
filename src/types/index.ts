@@ -61,7 +61,9 @@ export interface ToolRecord {
   dateSent: string;
   expectedReturnDate: string;
   actualReturnDate?: string | null;
-  rentOrRepairCost: number;
+  sourceType?: 'self_owned' | 'purchased_for_site'; // Contractor's own tool dispatched vs newly bought for site
+  purchasePrice?: number; // Cost if purchased during site work
+  rentOrRepairCost?: number;
   status: 'on_site' | 'returned' | 'overdue';
   notes?: string;
   photoUrl?: string;

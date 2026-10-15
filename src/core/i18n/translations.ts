@@ -12,7 +12,7 @@ export const translations = {
     // Navigation
     navDashboard: 'Dashboard',
     navSites: 'Sites',
-    navTools: 'Tools & Rent',
+    navTools: 'Tools',
     navLabour: 'Labour Register',
     navMaterials: 'Materials',
     navMachinery: 'Machinery & Fuel',
@@ -61,7 +61,7 @@ export const translations = {
     totalExpenses: 'Total Expenses',
     netProfit: 'Estimated Margin',
     pendingDuesTotal: 'Pending Dues',
-    overdueToolsCount: 'Overdue Tools',
+    overdueToolsCount: 'Tools Due for Return',
     dailyLabourPresent: 'Workers Today',
     materialSpent: 'Material Logged',
     fuelSpent: 'Machinery & Fuel',
@@ -74,16 +74,16 @@ export const translations = {
     recordPayment: 'Record Payment',
     udhaarBalance: 'Udhaar / Credit Balance',
 
-    // Tools & Equipment
-    toolsTrackerTitle: 'Tool & Equipment Rental Tracker',
-    toolsTrackerSubtitle: 'Track which site has your shuttering, mixers, and cutters. Never lose equipment again.',
+    // Tools & Equipment (Self-owned & site purchases, NO rent)
+    toolsTrackerTitle: 'Tools & Equipment Tracker',
+    toolsTrackerSubtitle: 'Track self-owned tools sent to sites, newly purchased tools, and equipment returns.',
     addTool: 'Add Tool / Equipment',
     toolName: 'Tool Name',
     quantity: 'Quantity',
     expectedReturnDate: 'Expected Return Date',
     dateSent: 'Date Sent to Site',
-    rentCost: 'Rent / Repair Cost',
-    markReturned: 'Mark Returned',
+    rentCost: 'Purchase Price (₹)',
+    markReturned: 'Mark Returned to Godown',
 
     // Labour Register & OCR
     labourRegisterTitle: 'Daily Labour & Attendance Register',
@@ -164,9 +164,9 @@ export const translations = {
 
     // Navigation
     navDashboard: 'डैशबोर्ड',
-    navSites: 'साइट्स (काम)',
-    navTools: 'औजार व किराया',
-    navLabour: 'लेबर हाजिरी',
+    navSites: 'साइट्स',
+    navTools: 'औजार',
+    navLabour: 'कारीगर हाजिरी',
     navMaterials: 'सामान (मटेरियल)',
     navMachinery: 'मशीनरी व डीजल',
     navDues: 'बकाया हिसाब',
@@ -227,16 +227,16 @@ export const translations = {
     recordPayment: 'भुगतान दर्ज करें',
     udhaarBalance: 'कुल उधारी बाकी',
 
-    // Tools & Equipment
-    toolsTrackerTitle: 'औजार व मशीनरी ट्रैकर',
-    toolsTrackerSubtitle: 'शटरिंग प्लेट, कटर, वाइब्रेटर किस साइट पर हैं और कब वापस आने हैं — पूरा हिसाब।',
-    addTool: 'नया औजार दर्ज करें',
+    // Tools & Equipment (Self-owned & site purchases, NO rent)
+    toolsTrackerTitle: 'साइट औजार व उपकरण ट्रैकर',
+    toolsTrackerSubtitle: 'साइट पर भेजे गए अपने औजार, नए खरीदे गए टूल्स और गोदाम वापसी का पूरा हिसाब रखें।',
+    addTool: 'साइट पर औजार जोड़ें',
     toolName: 'औजार का नाम',
     quantity: 'संख्या / नग',
     expectedReturnDate: 'वापसी की तारीख',
     dateSent: 'साइट पर भेजने की तारीख',
-    rentCost: 'किराया / रिपेयर खर्च',
-    markReturned: 'वापस आ गया',
+    rentCost: 'खरीद मूल्य (₹)',
+    markReturned: 'गोदाम में वापस आया',
 
     // Labour Register & OCR
     labourRegisterTitle: 'दैनिक लेबर हाजिरी व मजदूरी',
