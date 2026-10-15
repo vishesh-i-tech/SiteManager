@@ -176,7 +176,7 @@ export const EditMachineryModal: React.FC<EditMachineryModalProps> = ({
                 required
                 value={customMachine}
                 onChange={(e) => setCustomMachine(e.target.value)}
-                placeholder={language === 'hi' ? 'मशीन का नाम दर्ज करें (उदा. रोलर, वाटर टैंकर)' : 'Specify equipment name (e.g. Road Roller, Water Tanker)'}
+                placeholder={language === 'hi' ? 'मशीन का नाम दर्ज करें (रोलर, वाटर टैंकर आदि)' : 'Specify equipment name (Road Roller, Water Tanker)'}
                 className="mt-2 w-full px-3.5 py-2 rounded-xl text-xs font-semibold bg-orange-50/50 dark:bg-orange-950/20 border border-orange-300 dark:border-orange-800 focus:outline-none dark:text-white"
               />
             )}

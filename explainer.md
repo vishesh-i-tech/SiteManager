@@ -105,8 +105,30 @@ This document tracks all technologies, libraries, and architectural modules used
 
 ---
 
+### 12. Machinery & Equipment Cost Modeling (Rental vs. Owned)
+- **What it does:** Allows contractors to distinguish between rented heavy machinery (which accumulates daily/hourly rental fees plus fuel) and self-owned equipment (which only logs fuel and usage hours, setting machine rent to ₹0).
+- **How it works:** Conditionally toggles rent calculations and form inputs in IndexedDB records based on the `ownership` flag (`rental` vs `owned`), preventing accidental inflation of project rental costs.
+- **Small Summary:** Smart cost segregation for owned vs hired site equipment.
+
+---
+
+### 13. Mobile Device Shell Architecture (`MobileDeviceShell.tsx`)
+- **What it does:** Provides a realistic mobile frame simulator previewing the app at realistic smartphone dimensions (390px viewport) during desktop testing.
+- **How it works:** Encapsulates the application inside a responsive container with rounded device borders, safe-area padding (`pb-safe`, `safe-top`), and shadow elevation.
+- **Small Summary:** In-browser realistic smartphone wrapper for responsive testing.
+
+---
+
 ## 📝 Change Log & Phase History
 
-*(New phases, updates, and architectural changes will be documented here chronologically.)*
-
 - **Phase 0 (Baseline Setup):** Initial project baseline, Git repository setup, README badges, executive PDF document in `docx/`, and creation of this `explainer.md` file.
+- **Phase 1 (20-Page Visual & Functional Fixes):**
+  - Expanded trade professions from 3 to 11 dynamic trades (Painting, Carpentry, Fabrication, Flooring, Ceiling, HVAC, Interior, Infrastructure).
+  - Streamlined Auth screen tabs to "Sign In" / "Sign Up".
+  - Refactored Site cards into a single-column flex list to eliminate multi-column card overlap on mobile.
+  - Linked Dashboard Active Sites widget directly to the Sites tab with automatic "Ongoing" filtering.
+  - Stabilized bottom navigation by removing overlapping floating FAB button.
+  - Added equipment ownership toggle (Rental vs Self-Owned) in machinery logs.
+  - Removed "Size/Specs" field and cleaned "e.g." from all input placeholders across the app.
+  - Compacted Pending Dues banner and simplified Smart Insights descriptions for high-visibility mobile glanceability.
+

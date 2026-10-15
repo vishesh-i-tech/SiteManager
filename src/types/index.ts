@@ -1,4 +1,15 @@
-export type TradeCategory = 'construction' | 'plumbing' | 'electrical';
+export type TradeCategory =
+  | 'construction'
+  | 'plumbing'
+  | 'electrical'
+  | 'painting'
+  | 'carpentry'
+  | 'fabrication'
+  | 'flooring'
+  | 'ceiling'
+  | 'hvac'
+  | 'interior'
+  | 'infra';
 export type Language = 'hi' | 'en';
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -9,6 +20,7 @@ export interface ContractorAccount {
   id: string;
   name: string;
   phone: string;
+  password?: string;
   trade: TradeCategory;
   language: Language;
   themeMode: ThemeMode;

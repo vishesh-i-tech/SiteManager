@@ -156,33 +156,19 @@ export const EditToolModal: React.FC<EditToolModalProps> = ({
             />
           </div>
 
-          {/* Quantity & Size */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {language === 'hi' ? 'संख्या (Qty) *' : 'Quantity *'}
-              </label>
-              <input
-                type="number"
-                required
-                min={1}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {language === 'hi' ? 'साइज / प्रकार' : 'Size / Specs'}
-              </label>
-              <input
-                type="text"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
-              />
-            </div>
+          {/* Quantity */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              {language === 'hi' ? 'संख्या / मात्रा (Qty) *' : 'Quantity *'}
+            </label>
+            <input
+              type="number"
+              required
+              min={1}
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+            />
           </div>
 
           {/* Date Sent & Expected Return */}

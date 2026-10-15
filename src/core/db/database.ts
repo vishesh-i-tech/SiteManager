@@ -14,6 +14,7 @@ import {
 } from '../../types';
 import {
   SEED_ACCOUNT,
+  SEED_ACCOUNTS,
   SEED_SITES,
   SEED_TOOLS,
   SEED_LABOUR_RECORDS,
@@ -53,6 +54,13 @@ export class SiteSaathiDatabase extends Dexie {
     });
   }
 
+  async ensureDefaultAccounts() {
+    const count = await this.account.count();
+    if (count === 0) {
+      await this.account.bulkPut(SEED_ACCOUNTS);
+    }
+  }
+
   // Explicit opt-in sample data seeder for recruiters/reviewers
   async seedDemoData(contractorId = 'contractor-1') {
     await this.transaction(
@@ -73,15 +81,10 @@ export class SiteSaathiDatabase extends Dexie {
         // Clear previous and load clean sample data
         await this.clearAllData();
 
-        const customAccount: ContractorAccount = {
-          ...SEED_ACCOUNT,
-          id: contractorId,
-        };
-
+        await this.account.bulkPut(SEED_ACCOUNTS);
         const customSites = SEED_SITES.map((s) => ({ ...s, contractorId }));
         const customVendors = SEED_VENDORS.map((v) => ({ ...v, contractorId }));
 
-        await this.account.put(customAccount);
         await this.sites.bulkPut(customSites);
         await this.tools.bulkPut(SEED_TOOLS);
         await this.labourRecords.bulkPut(SEED_LABOUR_RECORDS);
@@ -241,13 +244,13 @@ export class SiteSaathiDatabase extends Dexie {
       (t) => (t.status === 'overdue' || (t.actualReturnDate === null && new Date(t.expectedReturnDate) < new Date())) && !t.actualReturnDate
     );
     if (overdueTools.length > 0) {
-      const toolNames = overdueTools.slice(0, 2).map((t) => `${t.name} (${t.quantity} qty)`).join(', ');
+      const toolNames = overdueTools.slice(0, 2).map((t) => `${t.name} (${t.quantity})`).join(', ');
       insights.push({
         id: 'ins-tools-overdue',
         category: 'tool_overdue',
-        title: `${overdueTools.length} Tools Overdue for Return`,
-        description: `${toolNames} ${overdueTools.length > 2 ? `and ${overdueTools.length - 2} more` : ''} have exceeded return dates, causing extra rental accumulation.`,
-        badge: 'High Priority',
+        title: `${overdueTools.length} Tools Overdue`,
+        description: `${toolNames}${overdueTools.length > 2 ? ` +${overdueTools.length - 2} more` : ''}`,
+        badge: 'Return Alert',
         actionText: 'Manage Tools',
         actionRoute: 'tools',
       });
@@ -261,8 +264,8 @@ export class SiteSaathiDatabase extends Dexie {
       insights.push({
         id: 'ins-completed-dues',
         category: 'budget_alert',
-        title: `₹${totalDueAmount.toLocaleString('en-IN')} Unsettled on Completed Sites`,
-        description: `You have ${completedSiteDues.length} pending vendor/tool bills from sites whose physical work is already completed.`,
+        title: `₹${totalDueAmount.toLocaleString('en-IN')} Completed Site Dues`,
+        description: `${completedSiteDues.length} pending bills from finished sites`,
         badge: 'Dues Alert',
         actionText: 'View Pending Dues',
         actionRoute: 'dues',
@@ -283,9 +286,9 @@ export class SiteSaathiDatabase extends Dexie {
       insights.push({
         id: 'ins-expense-leader',
         category: 'profit_summary',
-        title: `Site with Highest Outflow: ${highestSiteName}`,
-        description: `Total logged expenditure stands at ₹${highestExpense.toLocaleString('en-IN')}. Verify upcoming material invoices.`,
-        badge: 'Cost Breakdown',
+        title: `Top Expense Site: ${highestSiteName}`,
+        description: `Logged expenditure: ₹${highestExpense.toLocaleString('en-IN')}`,
+        badge: 'Cost Alert',
         actionText: 'View Sites',
         actionRoute: 'sites',
       });

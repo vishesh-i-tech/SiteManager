@@ -218,10 +218,10 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
               onChange={(e) => handleUpdateWorkStatus(e.target.value as any)}
               className="px-2.5 py-1 rounded-lg font-bold text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200"
             >
-              <option value="planning">Planning (योजना)</option>
-              <option value="ongoing">Ongoing (चालू काम)</option>
-              <option value="completed">Completed (पूर्ण)</option>
-              <option value="on_hold">On Hold (रुका हुआ)</option>
+              <option value="planning">{language === 'hi' ? 'योजनागत' : 'Planning'}</option>
+              <option value="ongoing">{language === 'hi' ? 'चालू काम' : 'Ongoing'}</option>
+              <option value="completed">{language === 'hi' ? 'पूर्ण काम' : 'Completed'}</option>
+              <option value="on_hold">{language === 'hi' ? 'रुका हुआ' : 'On Hold'}</option>
             </select>
           </div>
 
@@ -235,9 +235,9 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
               onChange={(e) => handleUpdatePaymentStatus(e.target.value as any)}
               className="px-2.5 py-1 rounded-lg font-bold text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200"
             >
-              <option value="unpaid">Unpaid (पूरा बकाया)</option>
-              <option value="partially_paid">Partially Paid (आंशिक भुगतान)</option>
-              <option value="paid">Fully Paid (पूर्ण चुकता)</option>
+              <option value="unpaid">{language === 'hi' ? 'पूरा बकाया' : 'Unpaid'}</option>
+              <option value="partially_paid">{language === 'hi' ? 'आंशिक भुगतान' : 'Partially Paid'}</option>
+              <option value="paid">{language === 'hi' ? 'पूर्ण चुकता' : 'Fully Paid'}</option>
             </select>
           </div>
         </div>

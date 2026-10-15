@@ -86,31 +86,33 @@ export const PendingDuesTracker: React.FC<PendingDuesTrackerProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Banner - Compact */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-heading">
-              {t('pendingDuesTitle')}
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-heading">
+              {language === 'hi' ? 'बकाया बिल व उधारी' : 'Pending Dues'}
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900">
-              {unpaidDues.length} {language === 'hi' ? 'बाकी बिल' : 'Pending Bills'}
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900">
+              {unpaidDues.length} {language === 'hi' ? 'बाकी' : 'Due'}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {t('pendingDuesSubtitle')}
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            {language === 'hi'
+              ? 'दुकानदारों, सप्लायर्स व औजारों का बकाया हिसाब'
+              : 'Vendor credit, equipment rents & outstanding invoices'}
           </p>
         </div>
 
         <button
           onClick={onOpenAddDue}
-          className="px-4 py-2.5 rounded-xl text-xs font-extrabold text-white shadow-md flex items-center justify-center gap-2 transition-all btn-tactile glow-theme self-start sm:self-auto"
+          className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1.5 transition-all btn-tactile glow-theme self-start sm:self-auto"
           style={{ backgroundColor: tradeConfig.primaryColor }}
         >
-          <Plus className="w-4 h-4" />
-          <span>{language === 'hi' ? 'नया बिल / उधारी जोड़ें' : 'Add Bill / Due'}</span>
+          <Plus className="w-3.5 h-3.5" />
+          <span>{language === 'hi' ? '+ नया बिल' : '+ Add Due'}</span>
         </button>
       </div>
 

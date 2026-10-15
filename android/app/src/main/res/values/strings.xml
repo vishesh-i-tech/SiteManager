@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SiteSaathi</string>
+    <string name="title_activity_main">SiteSaathi</string>
+    <string name="package_name">com.sitesaathi.app</string>
+    <string name="custom_url_scheme">com.sitesaathi.app</string>
+</resources>

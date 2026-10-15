@@ -6,10 +6,6 @@ import {
   Users,
   Wrench,
   Receipt,
-  Plus,
-  Package,
-  Truck,
-  FileSpreadsheet,
 } from 'lucide-react';
 
 export type ActiveTab = 'dashboard' | 'sites' | 'labour' | 'tools' | 'materials' | 'machinery' | 'dues' | 'reports';
@@ -17,13 +13,12 @@ export type ActiveTab = 'dashboard' | 'sites' | 'labour' | 'tools' | 'materials'
 interface BottomNavProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
-  onOpenQuickAdd: () => void;
+  onOpenQuickAdd?: () => void;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
   onTabChange,
-  onOpenQuickAdd,
 }) => {
   const { t, tradeConfig } = useTheme();
 
@@ -37,20 +32,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   return (
     <>
-      {/* Mobile Floating Action Button (FAB) */}
-      <div className="fixed bottom-20 right-4 z-40 sm:hidden">
-        <button
-          onClick={onOpenQuickAdd}
-          className="w-14 h-14 rounded-full text-white shadow-2xl flex items-center justify-center font-bold btn-tactile glow-theme"
-          style={{ backgroundColor: tradeConfig.primaryColor }}
-          aria-label="Quick Add Record"
-        >
-          <Plus className="w-7 h-7" />
-        </button>
-      </div>
 
-      {/* Bottom Navigation Bar (Mobile / Tablet) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 md:hidden pb-safe">
+      {/* Bottom Navigation Bar */}
+      <nav className="sticky bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe">
         <div className="grid grid-cols-5 h-16 items-center px-1">
           {mainNavItems.map((item) => {
             const Icon = item.icon;

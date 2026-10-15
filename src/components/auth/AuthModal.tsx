@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { TradeCategory, Language, ContractorAccount } from '../../types';
-import { TRADE_CONFIGS, UPCOMING_TRADES } from '../../core/theme/tradeConfigs';
+import { TRADE_CONFIGS, ALL_TRADE_KEYS } from '../../core/theme/tradeConfigs';
 import { db } from '../../core/db/database';
 import {
   HardHat,
@@ -18,6 +18,13 @@ import {
   UserPlus,
   ChevronRight,
   ShieldCheck,
+  Paintbrush,
+  Hammer,
+  Shield,
+  Layers,
+  Grid,
+  Wind,
+  Truck,
 } from 'lucide-react';
 
 interface AuthModalProps {
@@ -182,7 +189,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   : 'text-slate-600 dark:text-slate-400'
               }`}
             >
-              {language === 'hi' ? 'नया खाता' : 'Register'}
+              {language === 'hi' ? 'साइन अप' : 'Sign Up'}
             </button>
             <button
               onClick={() => {
@@ -195,7 +202,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   : 'text-slate-600 dark:text-slate-400'
               }`}
             >
-              {language === 'hi' ? 'लॉगिन' : 'Login'}
+              {language === 'hi' ? 'साइन इन' : 'Sign In'}
             </button>
           </div>
         </div>
@@ -274,58 +281,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </p>
                   </div>
 
-                  <div className="space-y-2.5">
-                    {(['construction', 'plumbing', 'electrical'] as TradeCategory[]).map((cat) => {
-                      const config = TRADE_CONFIGS[cat];
+                  <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                    {ALL_TRADE_KEYS.map((cat) => {
+                      const config = TRADE_CONFIGS[cat] || TRADE_CONFIGS.construction;
+                      const getModalTradeIcon = (tradeId: TradeCategory) => {
+                        switch (tradeId) {
+                          case 'construction': return <HardHat className="w-5 h-5" />;
+                          case 'plumbing': return <Wrench className="w-5 h-5" />;
+                          case 'electrical': return <Zap className="w-5 h-5" />;
+                          case 'painting': return <Paintbrush className="w-5 h-5" />;
+                          case 'carpentry': return <Hammer className="w-5 h-5" />;
+                          case 'fabrication': return <Shield className="w-5 h-5" />;
+                          case 'flooring': return <Layers className="w-5 h-5" />;
+                          case 'ceiling': return <Grid className="w-5 h-5" />;
+                          case 'hvac': return <Wind className="w-5 h-5" />;
+                          case 'interior': return <Sparkles className="w-5 h-5" />;
+                          case 'infra': return <Truck className="w-5 h-5" />;
+                          default: return <HardHat className="w-5 h-5" />;
+                        }
+                      };
+
                       return (
                         <button
                           key={cat}
                           type="button"
                           onClick={() => handleTradeSelect(cat)}
-                          className="w-full p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 text-left flex items-center justify-between group transition-all btn-tactile"
+                          className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-slate-800 text-left flex items-center justify-between group transition-all btn-tactile"
                         >
                           <div className="flex items-center gap-3">
                             <div
-                              className="w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm"
+                              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0"
                               style={{ backgroundColor: config.primaryColor }}
                             >
-                              {cat === 'construction' && <HardHat className="w-5 h-5" />}
-                              {cat === 'plumbing' && <Wrench className="w-5 h-5" />}
-                              {cat === 'electrical' && <Zap className="w-5 h-5" />}
+                              {getModalTradeIcon(cat)}
                             </div>
-                            <div>
-                              <span className="font-extrabold text-sm text-slate-900 dark:text-white block">
+                            <div className="min-w-0">
+                              <span className="font-bold text-sm text-slate-900 dark:text-white block truncate">
                                 {language === 'hi' ? config.nameHi : config.nameEn}
                               </span>
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-slate-500 block truncate">
                                 {language === 'hi' ? config.subtitleHi : config.subtitleEn}
                               </span>
                             </div>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform shrink-0" />
                         </button>
                       );
                     })}
-                  </div>
-
-                  {/* Disabled Future Trades */}
-                  <div className="pt-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                      {language === 'hi' ? 'अन्य काम (जल्द आ रहे हैं):' : 'Future Expansions:'}
-                    </span>
-                    <div className="grid grid-cols-3 gap-2 opacity-50">
-                      {UPCOMING_TRADES.map((item) => (
-                        <div
-                          key={item.id}
-                          className="p-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center"
-                        >
-                          <span className="text-[11px] font-semibold text-slate-500 block truncate">
-                            {language === 'hi' ? item.nameHi.split(' ')[0] : item.nameEn.split(' ')[0]}
-                          </span>
-                          <span className="text-[8px] text-amber-600 font-bold">Coming Soon</span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
               )}
@@ -353,7 +355,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="e.g. Rameshwar Sharma"
+                        placeholder={language === 'hi' ? 'रमेश शर्मा' : 'Rameshwar Sharma'}
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>
@@ -382,7 +384,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         type="text"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="e.g. Sharma Construction Co."
+                        placeholder={language === 'hi' ? 'शर्मा कंस्ट्रक्शन' : 'Sharma Construction Co.'}
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>

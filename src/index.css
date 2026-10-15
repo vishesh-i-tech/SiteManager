@@ -1,21 +1,23 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
-    /* Refined Architectural Construction Palette (Industrial Terra-Cotta & Slate) */
-    --theme-name: 'construction';
+    /* Unified Monochromatic Theme System with Exactly 1 Accent Color (Professional Blue #2563EB) */
+    --theme-name: 'unified-pro';
     --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-body: 'Plus Jakarta Sans', 'Hind', -apple-system, BlinkMacSystemFont, sans-serif;
 
-    --color-primary: #EA580C;
-    --color-primary-hover: #C2410C;
-    --color-primary-dark: #9A3412;
-    --color-primary-light: #FFEDD5;
-    --color-primary-glow: rgba(234, 88, 12, 0.22);
+    /* Exactly ONE primary accent color */
+    --color-primary: #2563EB;
+    --color-primary-hover: #1D4ED8;
+    --color-primary-dark: #1E40AF;
+    --color-primary-light: #EFF6FF;
+    --color-primary-glow: rgba(37, 99, 235, 0.12);
 
-    --color-secondary: #1E293B;
-    --color-secondary-hover: #0F172A;
-    --color-accent: #F59E0B;
+    --color-secondary: #0F172A;
+    --color-secondary-hover: #1E293B;
+    --color-accent: #2563EB;
 
     --color-bg-base: #F8FAFC;
     --color-bg-surface: #FFFFFF;
@@ -25,65 +27,48 @@
 
     --color-border: #E2E8F0;
     --color-border-hover: #CBD5E1;
-    --color-border-focus: #EA580C;
+    --color-border-focus: #2563EB;
 
     --color-text-main: #0F172A;
     --color-text-muted: #64748B;
     --color-text-subtle: #94A3B8;
     --color-text-inverse: #FFFFFF;
 
-    --trade-badge-bg: #FFF7ED;
-    --trade-badge-text: #C2410C;
-    --trade-badge-border: #FFEDD5;
+    --trade-badge-bg: #EFF6FF;
+    --trade-badge-text: #1D4ED8;
+    --trade-badge-border: #DBEAFE;
 
     --radius-sm: 0.375rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
   }
 
-  /* Refined Plumbing Theme (Modern Hydrodynamic Cyan-Teal & Oceanic Slate) */
-  [data-trade="plumbing"] {
-    --theme-name: 'plumbing';
-    --color-primary: #0284C7;
-    --color-primary-hover: #0369A1;
-    --color-primary-dark: #075985;
-    --color-primary-light: #E0F2FE;
-    --color-primary-glow: rgba(2, 132, 199, 0.22);
+  /* All trades adhere to the same single color palette */
+  [data-trade="plumbing"],
+  [data-trade="electrical"],
+  [data-trade="construction"] {
+    --color-primary: #2563EB;
+    --color-primary-hover: #1D4ED8;
+    --color-primary-dark: #1E40AF;
+    --color-primary-light: #EFF6FF;
+    --color-primary-glow: rgba(37, 99, 235, 0.12);
 
-    --color-secondary: #0F766E;
-    --color-secondary-hover: #115E59;
-    --color-accent: #0D9488;
+    --color-secondary: #0F172A;
+    --color-secondary-hover: #1E293B;
+    --color-accent: #2563EB;
 
-    --trade-badge-bg: #F0FDF4;
-    --trade-badge-text: #0369A1;
-    --trade-badge-border: #BAE6FD;
+    --trade-badge-bg: #EFF6FF;
+    --trade-badge-text: #1D4ED8;
+    --trade-badge-border: #DBEAFE;
   }
 
-  /* Refined Electrical Theme (Precision Volt Gold / Deep Titanium) */
-  [data-trade="electrical"] {
-    --theme-name: 'electrical';
-    --color-primary: #D97706;
-    --color-primary-hover: #B45309;
-    --color-primary-dark: #92400E;
-    --color-primary-light: #FEF3C7;
-    --color-primary-glow: rgba(217, 119, 6, 0.22);
-
-    --color-secondary: #1E1B4B;
-    --color-secondary-hover: #0F172A;
-    --color-accent: #F59E0B;
-
-    --trade-badge-bg: #FEFCE8;
-    --trade-badge-text: #B45309;
-    --trade-badge-border: #FDE68A;
-  }
-
-  /* Dark Mode Overrides */
+  /* Dark Mode - Clean neutral slate with the single primary accent */
   .dark {
     --color-bg-base: #0B0F19;
     --color-bg-surface: #111827;
-    --color-bg-card: #141E33;
-    --color-bg-elevated: #1F293D;
+    --color-bg-card: #151D2F;
+    --color-bg-elevated: #1E293B;
     --color-bg-subtle: #0E1626;
 
     --color-border: #1E293B;
@@ -93,31 +78,31 @@
     --color-text-muted: #94A3B8;
     --color-text-subtle: #64748B;
     --color-text-inverse: #0B0F19;
+
+    --color-primary: #3B82F6;
+    --color-primary-hover: #2563EB;
+    --color-primary-dark: #1D4ED8;
+    --color-primary-light: rgba(59, 130, 246, 0.15);
+    --trade-badge-bg: rgba(59, 130, 246, 0.12);
+    --trade-badge-text: #93C5FD;
+    --trade-badge-border: rgba(59, 130, 246, 0.25);
   }
 
-  .dark[data-trade="construction"] {
-    --color-primary-light: rgba(234, 88, 12, 0.15);
-    --trade-badge-bg: rgba(234, 88, 12, 0.15);
-    --trade-badge-text: #FB923C;
-    --trade-badge-border: rgba(234, 88, 12, 0.3);
-  }
-
-  .dark[data-trade="plumbing"] {
-    --color-primary-light: rgba(2, 132, 199, 0.15);
-    --trade-badge-bg: rgba(2, 132, 199, 0.15);
-    --trade-badge-text: #38BDF8;
-    --trade-badge-border: rgba(2, 132, 199, 0.3);
-  }
-
+  .dark[data-trade="construction"],
+  .dark[data-trade="plumbing"],
   .dark[data-trade="electrical"] {
-    --color-primary-light: rgba(217, 119, 6, 0.15);
-    --trade-badge-bg: rgba(217, 119, 6, 0.15);
-    --trade-badge-text: #FBBF24;
-    --trade-badge-border: rgba(217, 119, 6, 0.3);
+    --color-primary: #3B82F6;
+    --color-primary-hover: #2563EB;
+    --color-primary-dark: #1D4ED8;
+    --color-primary-light: rgba(59, 130, 246, 0.15);
+    --trade-badge-bg: rgba(59, 130, 246, 0.12);
+    --trade-badge-text: #93C5FD;
+    --trade-badge-border: rgba(59, 130, 246, 0.25);
   }
 
   * {
     border-color: var(--color-border);
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Smooth 200ms Token Cross-fade Transition when changing trade or theme */
@@ -127,10 +112,26 @@
                 color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  html {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     background-color: var(--color-bg-base);
     color: var(--color-text-main);
     font-family: var(--font-body);
+    overscroll-behavior-y: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Safe Area Support for Mobile Notches & Bottom Navigation Bars */
+  .safe-top {
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+  .safe-bottom {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
 
   h1, h2, h3, h4, h5, h6 {

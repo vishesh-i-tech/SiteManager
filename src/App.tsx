@@ -42,20 +42,18 @@ import { QuickAddModal } from './components/common/QuickAddModal';
 import { RemindersModal } from './components/common/RemindersModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { AuthModal } from './components/auth/AuthModal';
+import { AuthScreen } from './components/auth/AuthScreen';
 import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { ConfirmDeleteModal } from './components/common/ConfirmDeleteModal';
 import { ToastNotification, ToastMessage } from './components/common/ToastNotification';
-import { PublicLandingPage } from './components/landing/PublicLandingPage';
+import { MobileDeviceShell } from './components/common/MobileDeviceShell';
 import { exportSiteReportPdf } from './utils/reportExporter';
 
 export const App: React.FC = () => {
   const { trade, setTrade, language, setLanguage, t, tradeConfig } = useTheme();
 
-  // Navigation and view states: Cold URL visits start on Showcase Landing Page
+  // Navigation and active tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [isLandingPage, setIsLandingPage] = useState<boolean>(() => {
-    return !sessionStorage.getItem('sitesaathi_entered_app');
-  });
   const [insights, setInsights] = useState<SmartInsight[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -98,6 +96,16 @@ export const App: React.FC = () => {
     name: string;
   } | null>(null);
 
+  // Active filter for sites tab
+  const [siteWorkFilter, setSiteWorkFilter] = useState<'all' | 'ongoing' | 'completed' | 'planning'>('all');
+
+  const handleNavigateTab = (tab: ActiveTab, filter?: 'all' | 'ongoing' | 'completed' | 'planning') => {
+    setActiveTab(tab);
+    if (filter) {
+      setSiteWorkFilter(filter);
+    }
+  };
+
   // Reactive IndexedDB queries via Dexie hooks
   const sites = useLiveQuery(() => db.sites.toArray(), []) || [];
   const tools = useLiveQuery(() => db.tools.toArray(), []) || [];
@@ -108,7 +116,7 @@ export const App: React.FC = () => {
   const vendors = useLiveQuery(() => db.vendors.toArray(), []) || [];
   const reminders = useLiveQuery(() => db.reminders.toArray(), []) || [];
   const accounts = useLiveQuery(() => db.account.toArray(), []) || [];
-  const currentAccount = accounts.find((a) => a.id === activeAccountId) || accounts[0];
+  const currentAccount = accounts.find((a) => a.id === activeAccountId) || null;
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const newToast: ToastMessage = {
@@ -126,25 +134,20 @@ export const App: React.FC = () => {
   // Check auth session on startup
   useEffect(() => {
     const checkAuth = async () => {
+      await db.ensureDefaultAccounts();
       const allAccounts = await db.account.toArray();
       const savedId = localStorage.getItem('sitesaathi_active_user_id');
 
-      if (!savedId || !allAccounts.some((a) => a.id === savedId)) {
-        if (allAccounts.length > 0) {
-          setActiveAccountId(allAccounts[0].id);
-          localStorage.setItem('sitesaathi_active_user_id', allAccounts[0].id);
-          setTrade(allAccounts[0].trade);
-          setLanguage(allAccounts[0].language);
-        } else if (!isLandingPage) {
-          // If in app view without account, prompt registration
-          setIsAuthModalOpen(true);
-        }
-      } else {
+      if (savedId && allAccounts.some((a) => a.id === savedId)) {
         const acc = allAccounts.find((a) => a.id === savedId);
         if (acc) {
+          setActiveAccountId(acc.id);
           setTrade(acc.trade);
           setLanguage(acc.language);
         }
+      } else {
+        setActiveAccountId(null);
+        localStorage.removeItem('sitesaathi_active_user_id');
       }
 
       const smartIns = await db.generateSmartInsights();
@@ -152,7 +155,7 @@ export const App: React.FC = () => {
     };
 
     checkAuth();
-  }, [isLandingPage]);
+  }, []);
 
   const refreshInsights = async () => {
     const smartIns = await db.generateSmartInsights();
@@ -240,49 +243,36 @@ export const App: React.FC = () => {
     showToast(`Exported statement for ${site.name}`);
   };
 
-  // If Public Landing Page is active, render the showcase view
-  if (isLandingPage) {
-    return (
-      <PublicLandingPage
-        onEnterApp={() => {
-          sessionStorage.setItem('sitesaathi_entered_app', 'true');
-          setIsLandingPage(false);
-          if (!activeAccountId && accounts.length === 0) {
-            setIsAuthModalOpen(true);
-          }
-        }}
-      />
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-theme-base text-theme-main flex flex-col font-body transition-colors">
-      
-      {/* Toast Notifications */}
-      <ToastNotification toasts={toasts} onDismiss={dismissToast} />
+    <MobileDeviceShell>
+      {!currentAccount ? (
+        <>
+          <ToastNotification toasts={toasts} onDismiss={dismissToast} />
+          <AuthScreen
+            onAuthenticated={handleAuthenticated}
+            existingAccounts={accounts}
+          />
+        </>
+      ) : (
+        <div className="min-h-full bg-theme-base text-theme-main flex flex-col font-body transition-colors flex-1">
+          
+          {/* Toast Notifications */}
+          <ToastNotification toasts={toasts} onDismiss={dismissToast} />
 
-      {/* Header */}
-      <Header
-        onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
-        onOpenNotifications={() => setIsRemindersModalOpen(true)}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
-        unreadRemindersCount={reminders.filter((r) => !r.isDismissed).length}
-        isLandingPage={isLandingPage}
-        onToggleLandingPage={() => setIsLandingPage(!isLandingPage)}
-        onOpenTutorial={() => setIsOnboardingModalOpen(true)}
-        onResetData={handleLoadSampleData}
-        contractorName={currentAccount?.name}
-      />
+          {/* Header */}
+          <Header
+            onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
+            onOpenNotifications={() => setIsRemindersModalOpen(true)}
+            onOpenSettings={() => setIsSettingsModalOpen(true)}
+            unreadRemindersCount={reminders.filter((r) => !r.isDismissed).length}
+            onOpenTutorial={() => setIsOnboardingModalOpen(true)}
+            onResetData={handleLoadSampleData}
+            contractorName={currentAccount?.name}
+            onLogout={handleLogOut}
+          />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-28 md:pb-12 animate-fade-in">
-        
-        {/* Desktop / Tablet Sub-Tabs */}
-        <NavigationTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onOpenQuickAdd={() => setIsQuickAddModalOpen(true)}
-        />
+          {/* Main Container */}
+          <main className="flex-1 w-full px-3.5 py-3 space-y-4 pb-20 animate-fade-in">
 
         {/* Tab Views */}
         {activeTab === 'dashboard' && (
@@ -298,7 +288,7 @@ export const App: React.FC = () => {
             onOpenAddSite={() => setIsAddSiteModalOpen(true)}
             onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
             onOpenOcrModal={() => setIsOcrModalOpen(true)}
-            onNavigateTab={setActiveTab}
+            onNavigateTab={handleNavigateTab}
             onOpenReport={handleOpenReportFromSite}
             contractorName={currentAccount?.name}
           />
@@ -307,6 +297,7 @@ export const App: React.FC = () => {
         {activeTab === 'sites' && (
           <SiteList
             sites={sites}
+            initialWorkFilter={siteWorkFilter}
             onSelectSite={(site) => setSelectedSite(site)}
             onOpenAddSite={() => setIsAddSiteModalOpen(true)}
             onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
@@ -751,6 +742,8 @@ export const App: React.FC = () => {
         }
       />
 
-    </div>
+        </div>
+      )}
+    </MobileDeviceShell>
   );
 };

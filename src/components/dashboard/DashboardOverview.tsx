@@ -6,21 +6,14 @@ import { SmartInsightsCard } from '../insights/SmartInsightsCard';
 import { ActiveTab } from '../common/BottomNav';
 import { CountUpNumber } from '../common/CountUpNumber';
 import {
-  HardHat,
-  Wrench,
-  Zap,
   Building2,
   Users,
-  IndianRupee,
-  Clock,
-  AlertCircle,
+  Wrench,
+  Receipt,
   Plus,
   Mic,
   Camera,
   ArrowRight,
-  TrendingUp,
-  Receipt,
-  Package,
 } from 'lucide-react';
 
 interface DashboardOverviewProps {
@@ -35,7 +28,7 @@ interface DashboardOverviewProps {
   onOpenAddSite: () => void;
   onOpenVoiceModal: () => void;
   onOpenOcrModal: () => void;
-  onNavigateTab: (tab: ActiveTab) => void;
+  onNavigateTab: (tab: ActiveTab, filter?: 'all' | 'ongoing' | 'completed' | 'planning') => void;
   onOpenReport: (site: Site) => void;
   contractorName?: string;
 }
@@ -44,8 +37,6 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   sites,
   tools,
   labourRecords,
-  materials,
-  machinery,
   dues,
   insights,
   onSelectSite,
@@ -56,19 +47,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onOpenReport,
   contractorName,
 }) => {
-  const { trade, t, language, tradeConfig } = useTheme();
+  const { t, language, tradeConfig } = useTheme();
 
   const ongoingSites = sites.filter((s) => s.workStatus === 'ongoing');
-  const completedSites = sites.filter((s) => s.workStatus === 'completed');
-
   const totalContractBudget = sites.reduce((acc, s) => acc + (s.estimatedBudget || 0), 0);
-  const totalMaterialSpent = materials.reduce((acc, m) => acc + (m.totalCost || 0), 0);
-  const totalLabourWages = labourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 0);
-  const totalToolRent = tools.reduce((acc, tItem) => acc + (tItem.rentOrRepairCost || 0), 0);
-  const totalMachineryFuel = machinery.reduce((acc, m) => acc + (m.totalCost || 0), 0);
-
-  const totalOutflow = totalMaterialSpent + totalLabourWages + totalToolRent + totalMachineryFuel;
-  const estimatedOverallMargin = totalContractBudget - totalOutflow;
 
   const overdueTools = tools.filter(
     (tItem) => (tItem.status === 'overdue' || (tItem.actualReturnDate === null && new Date(tItem.expectedReturnDate) < new Date())) && !tItem.actualReturnDate
@@ -81,201 +63,221 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const todayDate = new Date().toISOString().split('T')[0];
   const todayLabourRecord = labourRecords.find((r) => r.date === todayDate) || labourRecords[0];
   const todayWorkerCount = todayLabourRecord?.totalWorkers || 0;
+  const totalLabourWages = labourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
-      {/* Hero Welcome & Quick Smart Entry Bar */}
-      <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800/90 dark:to-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full" style={{ backgroundColor: tradeConfig.badgeBg, color: tradeConfig.badgeText }}>
+      {/* Mobile Contractor Hero Card */}
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
               {language === 'hi' ? tradeConfig.nameHi : tradeConfig.nameEn}
             </span>
-            <span className="text-xs text-slate-400 font-semibold">
-              {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}
+            <span className="text-[10px] text-slate-400 font-medium">
+              {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
             </span>
           </div>
+          <span className="text-[11px] font-medium text-slate-500">
+            {ongoingSites.length} {language === 'hi' ? 'चालू साइट्स' : 'Active Sites'}
+          </span>
+        </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
-            {language === 'hi'
-              ? `नमस्ते, ${contractorName || 'ठेकेदार'} जी 👋`
-              : `Welcome back, ${contractorName || 'Contractor'} 👋`}
+        <div>
+          <h1 className="text-base font-bold text-slate-900 dark:text-white font-heading tracking-tight leading-tight">
+            {contractorName || 'SiteSaathi'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {language === 'hi'
-              ? `आपके पास ${ongoingSites.length} चालू साइट्स हैं और ₹${totalDuesAmount.toLocaleString('en-IN')} का बकाया हिसाब है।`
-              : `Managing ${ongoingSites.length} ongoing sites with ₹${totalDuesAmount.toLocaleString('en-IN')} in active dues.`}
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            ₹{totalContractBudget.toLocaleString('en-IN')} {language === 'hi' ? 'का कुल साइट बजट' : 'Total Contract Value'}
           </p>
         </div>
 
-        {/* Big Touch Smart Data Entry Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* 3-Button Mobile Quick Action Grid */}
+        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={onOpenVoiceModal}
-            className="flex-1 sm:flex-none px-4 py-3 rounded-2xl font-extrabold text-xs text-white shadow-lg flex items-center justify-center gap-2 transition-all btn-tactile glow-theme"
-            style={{ backgroundColor: tradeConfig.primaryColor }}
+            className="py-2 px-1 rounded-xl font-semibold text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 flex flex-col items-center justify-center gap-1 btn-tactile transition-colors"
           >
-            <Mic className="w-4 h-4" />
-            <span>{t('voiceAddSite')}</span>
+            <Mic className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="truncate">{language === 'hi' ? 'बोलकर भरें' : 'Voice Log'}</span>
           </button>
 
           <button
             onClick={onOpenOcrModal}
-            className="flex-1 sm:flex-none px-4 py-3 rounded-2xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center gap-2 transition-all btn-tactile"
+            className="py-2 px-1 rounded-xl font-semibold text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 flex flex-col items-center justify-center gap-1 btn-tactile transition-colors"
           >
-            <Camera className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-            <span>{t('scanRegister')}</span>
+            <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="truncate">{language === 'hi' ? 'फोटो हाज़िरी' : 'Photo OCR'}</span>
           </button>
 
           <button
             onClick={onOpenAddSite}
-            className="px-3.5 py-3 rounded-2xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center"
-            title="Manual Add Site"
+            className="py-2 px-1 rounded-xl font-semibold text-[11px] bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex flex-col items-center justify-center gap-1 btn-tactile transition-colors"
           >
             <Plus className="w-4 h-4" />
+            <span className="truncate">{language === 'hi' ? 'नई साइट' : 'New Site'}</span>
           </button>
         </div>
       </div>
 
-      {/* Smart Automated Insights Card */}
+      {/* Operational Insights & Alerts Card */}
       <SmartInsightsCard insights={insights} onNavigateTab={onNavigateTab} />
 
-      {/* Category-Aware Dashboard Widgets */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* Mobile 2x2 KPI Widgets (Zero Horizontal Truncation) */}
+      <div className="grid grid-cols-2 gap-2.5">
         
-        {/* Widget 1: Active Sites & Contract Value */}
+        {/* Widget 1: Active Sites */}
         <div
-          onClick={() => onNavigateTab('sites')}
-          className="bg-white dark:bg-slate-800/90 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          onClick={() => onNavigateTab('sites', 'ongoing')}
+          className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-500/50 transition-all cursor-pointer btn-tactile flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
               {t('activeSites')}
             </span>
-            <div
-              className="p-2 rounded-xl text-white shadow-sm"
-              style={{ backgroundColor: tradeConfig.primaryColor }}
-            >
-              <Building2 className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Building2 className="w-3.5 h-3.5" />
             </div>
           </div>
-          <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-2 block font-heading">
-            <CountUpNumber value={ongoingSites.length} /> <span className="text-xs font-normal text-slate-400">/ {sites.length} total</span>
-          </span>
-          <span className="text-[11px] font-bold text-slate-500 mt-1 block truncate">
-            ₹<CountUpNumber value={totalContractBudget} /> Value
-          </span>
+          <div className="space-y-0.5">
+            <div className="text-xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
+              <CountUpNumber value={ongoingSites.length} />
+              <span className="text-xs font-medium text-slate-400 ml-1">
+                / {sites.length}
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate font-medium">
+              ₹{totalContractBudget.toLocaleString('en-IN')} {language === 'hi' ? 'बजट' : 'Value'}
+            </span>
+          </div>
         </div>
 
-        {/* Widget 2: Trade Specific (Labour Attendance or Jobs) */}
+        {/* Widget 2: Workers Today */}
         <div
           onClick={() => onNavigateTab('labour')}
-          className="bg-white dark:bg-slate-800/90 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-500/50 transition-all cursor-pointer btn-tactile flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-              {trade === 'construction'
-                ? t('dailyLabourPresent')
-                : trade === 'plumbing'
-                ? 'Active Plumbers'
-                : 'Active Electricians'}
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+              {language === 'hi' ? 'आज हाज़िरी' : 'Workers Today'}
             </span>
-            <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-950/50 text-purple-600">
-              <Users className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Users className="w-3.5 h-3.5" />
             </div>
           </div>
-          <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-2 block font-heading">
-            <CountUpNumber value={todayWorkerCount} /> {language === 'hi' ? 'कारीगर' : 'Workers'}
-          </span>
-          <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 mt-1 block">
-            ₹<CountUpNumber value={totalLabourWages} /> logged wages
-          </span>
+          <div className="space-y-0.5">
+            <div className="text-xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
+              <CountUpNumber value={todayWorkerCount} />
+              <span className="text-xs font-medium text-slate-400 ml-1">
+                {language === 'hi' ? 'मजदूर' : 'Workers'}
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate font-medium">
+              ₹{totalLabourWages.toLocaleString('en-IN')} {language === 'hi' ? 'मजदूरी' : 'Wages'}
+            </span>
+          </div>
         </div>
 
-        {/* Widget 3: Overdue Tools or Trade Metrics */}
+        {/* Widget 3: Tools Inventory & Overdue */}
         <div
           onClick={() => onNavigateTab('tools')}
-          className={`bg-white dark:bg-slate-800/90 rounded-2xl p-4 sm:p-5 border shadow-sm hover:shadow-md transition-all cursor-pointer group ${
-            overdueTools.length > 0
-              ? 'border-red-300 dark:border-red-900/80 bg-red-50/20'
-              : 'border-slate-200/90 dark:border-slate-700/80'
-          }`}
+          className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-500/50 transition-all cursor-pointer btn-tactile flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-              {t('overdueToolsCount')}
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+              {language === 'hi' ? 'औज़ार / टूल्स' : 'Tool Inventory'}
             </span>
-            <div
-              className={`p-2 rounded-xl ${
-                overdueTools.length > 0 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'
-              }`}
-            >
-              <Wrench className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Wrench className="w-3.5 h-3.5" />
             </div>
           </div>
-          <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-2 block font-heading">
-            <CountUpNumber value={overdueTools.length} /> {language === 'hi' ? 'देरी' : 'Overdue'}
-          </span>
-          <span className="text-[11px] font-bold text-slate-500 mt-1 block truncate">
-            {tools.length} total tools deployed
-          </span>
+          <div className="space-y-0.5">
+            <div className="text-xl font-black text-slate-900 dark:text-white font-heading tracking-tight flex items-baseline">
+              <CountUpNumber value={overdueTools.length} />
+              <span className={`text-xs ml-1 font-semibold ${overdueTools.length > 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                {overdueTools.length > 0 ? (language === 'hi' ? 'देरी से' : 'Overdue') : (language === 'hi' ? 'नियमित' : 'On track')}
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate font-medium">
+              {tools.length} {language === 'hi' ? 'कुल उपकरण' : 'Total Tools'}
+            </span>
+          </div>
         </div>
 
-        {/* Widget 4: Total Pending Dues (Persistent across all sites) */}
+        {/* Widget 4: Pending Dues */}
         <div
           onClick={() => onNavigateTab('dues')}
-          className="bg-white dark:bg-slate-800/90 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-500/50 transition-all cursor-pointer btn-tactile flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-              {t('pendingDuesTotal')}
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+              {language === 'hi' ? 'बकाया रकम' : 'Pending Dues'}
             </span>
-            <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-600">
-              <Receipt className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Receipt className="w-3.5 h-3.5" />
             </div>
           </div>
-          <span className="text-xl sm:text-2xl font-black text-red-600 dark:text-red-400 mt-2 block font-heading">
-            ₹<CountUpNumber value={totalDuesAmount} />
-          </span>
-          <span className="text-[11px] font-bold text-red-500 mt-1 block truncate">
-            {unpaidDues.length} {language === 'hi' ? 'बकाया लेन-देन' : 'unpaid ledgers'}
-          </span>
+          <div className="space-y-0.5">
+            <div className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-heading tracking-tight truncate">
+              ₹<CountUpNumber value={totalDuesAmount} />
+            </div>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate font-medium">
+              {unpaidDues.length} {language === 'hi' ? 'बाकी बिल' : 'Pending Bills'}
+            </span>
+          </div>
         </div>
 
       </div>
 
-      {/* Sites Overview Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      {/* Sites List Section - Vertical Mobile Feed */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between px-1">
           <div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-heading">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white font-heading">
               {language === 'hi' ? 'आपकी साइट्स (प्रोजेक्ट)' : 'Project Sites'}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {language === 'hi' ? 'काम की स्थिति व पेमेंट स्थिति के साथ' : 'Independent work & payment status tracker'}
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              {sites.length} {language === 'hi' ? 'कुल साइट्स दर्ज' : 'Sites recorded'}
             </p>
           </div>
 
           <button
             onClick={() => onNavigateTab('sites')}
-            className="text-xs font-extrabold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center gap-1 transition-colors"
           >
-            <span>{language === 'hi' ? 'सभी देखें' : 'View All'} ({sites.length})</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>{language === 'hi' ? 'सभी देखें' : 'View All'}</span>
+            <ArrowRight className="w-3 h-3" />
           </button>
         </div>
 
-        {/* Sites Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sites.slice(0, 6).map((site) => (
-            <SiteCard
-              key={site.id}
-              site={site}
-              onSelect={onSelectSite}
-              onOpenReport={onOpenReport}
-            />
-          ))}
+        {/* Sites Feed */}
+        <div className="flex flex-col space-y-3">
+          {sites.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 text-center space-y-2">
+              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {language === 'hi' ? 'कोई साइट दर्ज नहीं है' : 'No Sites Added Yet'}
+              </p>
+              <button
+                onClick={onOpenAddSite}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white"
+              >
+                + {language === 'hi' ? 'पहली साइट जोड़ें' : 'Add First Site'}
+              </button>
+            </div>
+          ) : (
+            sites.slice(0, 4).map((site) => (
+              <SiteCard
+                key={site.id}
+                site={site}
+                onSelect={onSelectSite}
+                onOpenReport={onOpenReport}
+              />
+            ))
+          )}
         </div>
       </div>
 

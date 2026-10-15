@@ -125,7 +125,7 @@ export const SiteCard: React.FC<SiteCardProps> = ({
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 {site.siteType}
               </span>
-              <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-1 font-heading">
+              <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1 font-heading">
                 {site.name}
               </h3>
             </div>
@@ -142,32 +142,30 @@ export const SiteCard: React.FC<SiteCardProps> = ({
 
         {/* Financial Progress & Independent Payment Status */}
         <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 space-y-2">
-          <div className="flex items-center justify-between text-xs font-bold">
+          <div className="flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-600 dark:text-slate-400">
               {language === 'hi' ? 'खर्च / बजट' : 'Expense / Budget'}
             </span>
             <div className="flex items-center gap-2">
               {getPaymentStatusBadge()}
-              <span className="text-slate-900 dark:text-white font-extrabold">
+              <span className="text-slate-900 dark:text-white font-bold">
                 ₹{totalExpense.toLocaleString('en-IN')} / ₹{site.estimatedBudget.toLocaleString('en-IN')}
               </span>
             </div>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+          <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${
-                expenseRatio > 90 ? 'bg-red-500' : 'bg-orange-500'
-              }`}
+              className="h-full rounded-full transition-all bg-blue-600 dark:bg-blue-500"
               style={{ width: `${expenseRatio}%` }}
             ></div>
           </div>
 
           {/* Key Quick Flags */}
-          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400 pt-0.5">
+          <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400 pt-0.5">
             <span>{expenseRatio}% {language === 'hi' ? 'बजट प्रयुक्त' : 'budget used'}</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+            <span className="text-slate-700 dark:text-slate-300 font-semibold">
               {language === 'hi' ? 'बचत' : 'Est. Margin'}: ₹{(finance?.estimatedProfit || 0).toLocaleString('en-IN')}
             </span>
           </div>
@@ -177,13 +175,13 @@ export const SiteCard: React.FC<SiteCardProps> = ({
         {(overdueCount > 0 || (site.workStatus === 'completed' && site.paymentStatus !== 'paid')) && (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {overdueCount > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
                 <AlertCircle className="w-3 h-3" />
                 {overdueCount} {language === 'hi' ? 'औजार वापसी में देरी' : 'Tools Overdue'}
               </span>
             )}
             {site.workStatus === 'completed' && site.paymentStatus !== 'paid' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                 <Clock className="w-3 h-3" />
                 {language === 'hi' ? 'काम पूरा, पैसा बकाया!' : 'Completed, Payment Pending!'}
               </span>
@@ -207,7 +205,7 @@ export const SiteCard: React.FC<SiteCardProps> = ({
                 e.stopPropagation();
                 onEditSite(site);
               }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               title="Edit Site"
             >
               <Edit2 className="w-3.5 h-3.5" />
@@ -221,7 +219,7 @@ export const SiteCard: React.FC<SiteCardProps> = ({
                 e.stopPropagation();
                 onDeleteSite(site);
               }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               title="Delete Site"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -234,13 +232,13 @@ export const SiteCard: React.FC<SiteCardProps> = ({
               e.stopPropagation();
               onOpenReport(site);
             }}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             title="Download PDF Financial Report"
           >
             <FileText className="w-4 h-4" />
           </button>
           <span
-            className="font-bold text-xs flex items-center gap-0.5 text-orange-600 dark:text-orange-400 group-hover:translate-x-0.5 transition-transform ml-1"
+            className="font-semibold text-xs flex items-center gap-0.5 text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform ml-1"
           >
             {t('viewDetails')}
             <ArrowUpRight className="w-3.5 h-3.5" />

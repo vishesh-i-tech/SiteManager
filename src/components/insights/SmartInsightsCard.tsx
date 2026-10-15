@@ -25,74 +25,47 @@ export const SmartInsightsCard: React.FC<SmartInsightsCardProps> = ({
   if (insights.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-slate-700/80 relative overflow-hidden space-y-4">
-      
-      {/* Glow decorative effect */}
-      <div
-        className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-15 pointer-events-none"
-        style={{ backgroundColor: tradeConfig.primaryColor }}
-      ></div>
-
+    <div className="bg-white dark:bg-slate-800/90 rounded-xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-md"
-            style={{ backgroundColor: tradeConfig.primaryColor }}
-          >
-            <Sparkles className="w-4 h-4" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+            <AlertCircle className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="font-extrabold text-sm sm:text-base tracking-tight font-heading">
-              {t('smartInsightsTitle')}
+            <h2 className="font-bold text-sm text-slate-900 dark:text-white font-heading">
+              {language === 'hi' ? 'साइट अलर्ट व महत्वपूर्ण सूचनाएं' : 'Operational Alerts & Site Notes'}
             </h2>
-            <p className="text-[11px] text-slate-400">
-              {t('smartInsightsSubtitle')}
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {language === 'hi' ? 'दैनिक रिकॉर्ड के आधार पर आवश्यक कार्य' : 'Action items requiring attention across your sites'}
             </p>
           </div>
         </div>
 
-        <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-800 border border-slate-700 text-orange-400">
-          ⚡ Automated Intelligence
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
+          {insights.length} {language === 'hi' ? 'अलर्ट' : 'Alerts'}
         </span>
       </div>
 
       {/* Insights List */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {insights.map((ins) => {
-          const isTool = ins.category === 'tool_overdue';
-          const isDue = ins.category === 'budget_alert';
-
           return (
             <div
               key={ins.id}
-              className="bg-slate-800/80 hover:bg-slate-800 backdrop-blur-md rounded-2xl p-4 border border-slate-700/60 flex flex-col justify-between transition-all group"
+              className="bg-slate-50 dark:bg-slate-900/60 rounded-lg p-3.5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between transition-colors hover:border-slate-300 dark:hover:border-slate-700"
             >
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                      isTool
-                        ? 'bg-red-900/60 text-red-300 border border-red-700/50'
-                        : isDue
-                        ? 'bg-amber-900/60 text-amber-300 border border-amber-700/50'
-                        : 'bg-blue-900/60 text-blue-300 border border-blue-700/50'
-                    }`}
-                  >
+                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
                     {ins.badge}
                   </span>
-                  {isTool ? (
-                    <Clock className="w-3.5 h-3.5 text-red-400" />
-                  ) : isDue ? (
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-                  ) : (
-                    <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
-                  )}
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
                 </div>
 
-                <h3 className="font-extrabold text-xs sm:text-sm text-slate-100 line-clamp-1">
+                <h3 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
                   {ins.title}
                 </h3>
-                <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
                   {ins.description}
                 </p>
               </div>
@@ -100,10 +73,10 @@ export const SmartInsightsCard: React.FC<SmartInsightsCardProps> = ({
               {ins.actionRoute && (
                 <button
                   onClick={() => onNavigateTab(ins.actionRoute as ActiveTab)}
-                  className="mt-3 text-[11px] font-bold text-orange-400 group-hover:text-orange-300 flex items-center gap-1 transition-colors self-start"
+                  className="mt-3 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 transition-colors self-start"
                 >
                   <span>{ins.actionText || 'Take Action'}</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight className="w-3 h-3 transition-transform" />
                 </button>
               )}
             </div>

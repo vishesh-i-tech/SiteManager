@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { ContractorAccount, TradeCategory, ThemeMode, Language } from '../../types';
-import { TRADE_CONFIGS } from '../../core/theme/tradeConfigs';
+import { TRADE_CONFIGS, ALL_TRADE_KEYS } from '../../core/theme/tradeConfigs';
 import { db } from '../../core/db/database';
 import { ConfirmDeleteModal } from '../common/ConfirmDeleteModal';
 import {
@@ -23,6 +23,13 @@ import {
   HardHat,
   Wrench,
   Zap,
+  Paintbrush,
+  Hammer,
+  Shield,
+  Layers,
+  Grid,
+  Wind,
+  Truck,
 } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -122,24 +129,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <label className="block font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 {t('tradePreference')}
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['construction', 'plumbing', 'electrical'] as TradeCategory[]).map((cat) => {
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                {ALL_TRADE_KEYS.map((cat) => {
+                  const conf = TRADE_CONFIGS[cat] || TRADE_CONFIGS.construction;
                   const isSelected = trade === cat;
+                  const getSettingTradeIcon = (tradeId: TradeCategory) => {
+                    switch (tradeId) {
+                      case 'construction': return <HardHat className="w-4 h-4 text-orange-500" />;
+                      case 'plumbing': return <Wrench className="w-4 h-4 text-sky-500" />;
+                      case 'electrical': return <Zap className="w-4 h-4 text-amber-500" />;
+                      case 'painting': return <Paintbrush className="w-4 h-4 text-purple-500" />;
+                      case 'carpentry': return <Hammer className="w-4 h-4 text-amber-700" />;
+                      case 'fabrication': return <Shield className="w-4 h-4 text-slate-500" />;
+                      case 'flooring': return <Layers className="w-4 h-4 text-teal-500" />;
+                      case 'ceiling': return <Grid className="w-4 h-4 text-indigo-500" />;
+                      case 'hvac': return <Wind className="w-4 h-4 text-cyan-500" />;
+                      case 'interior': return <Sparkles className="w-4 h-4 text-rose-500" />;
+                      case 'infra': return <Truck className="w-4 h-4 text-slate-700" />;
+                      default: return <HardHat className="w-4 h-4 text-orange-500" />;
+                    }
+                  };
+
                   return (
                     <button
                       key={cat}
                       type="button"
                       onClick={() => setTrade(cat)}
-                      className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1 btn-tactile ${
+                      className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1 btn-tactile hover:-translate-y-0.5 ${
                         isSelected
-                          ? 'border-slate-900 dark:border-white bg-white dark:bg-slate-800 shadow-sm font-bold text-slate-900 dark:text-white'
-                          : 'border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 shadow-xs font-bold text-blue-700 dark:text-blue-300 ring-1 ring-blue-500'
+                          : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
-                      {cat === 'construction' && <HardHat className="w-4 h-4 text-orange-500" />}
-                      {cat === 'plumbing' && <Wrench className="w-4 h-4 text-sky-500" />}
-                      {cat === 'electrical' && <Zap className="w-4 h-4 text-amber-500" />}
-                      <span className="capitalize">{cat}</span>
+                      {getSettingTradeIcon(cat)}
+                      <span className="text-[11px] font-semibold line-clamp-1">
+                        {language === 'hi' ? conf.nameHi.split(' ')[0] : conf.nameEn}
+                      </span>
                     </button>
                   );
                 })}

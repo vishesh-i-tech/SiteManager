@@ -190,27 +190,6 @@ export const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                 <span>{t('micTapToStart')}</span>
               )}
             </p>
-
-            {/* Quick guided speech triggers (Sample phrases to click or speak) */}
-            <div className="mt-3 flex flex-wrap justify-center gap-1.5 px-3">
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 w-full text-center mb-1">
-                {language === 'hi' ? '👇 या तुरंत टेस्ट करने के लिए नीचे टैप करें:' : '👇 Or tap a sample phrase to test:'}
-              </span>
-              <button
-                type="button"
-                onClick={() => applyPresetPhrase(language === 'hi' ? 'साइट का नाम वर्मा विला, बजट 8 लाख, लोकेशन सिविल लाइन्स' : 'Site name Verma Villa, budget 8 lakh, location Civil Lines')}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
-              >
-                🏠 {language === 'hi' ? 'वर्मा विला (8 लाख, सिविल लाइन्स)' : 'Verma Villa (8 Lakh)'}
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPresetPhrase(language === 'hi' ? 'साइट का नाम ग्रैंड प्लाजा, बजट 25 लाख, लोकेशन रिंग रोड, कमर्शियल' : 'Site name Grand Plaza, budget 25 lakh, location Ring Road, Commercial')}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
-              >
-                🏢 {language === 'hi' ? 'ग्रैंड प्लाजा (25 लाख, रिंग रोड)' : 'Grand Plaza (25 Lakh)'}
-              </button>
-            </div>
           </div>
 
           {/* Real-time recognized voice text bubble */}
@@ -240,7 +219,7 @@ export const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                 type="text"
                 value={siteName}
                 onChange={(e) => setSiteName(e.target.value)}
-                placeholder="e.g., Sharma Villa"
+                placeholder={language === 'hi' ? 'साइट का नाम' : 'Site name'}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 dark:text-white"
               />
             </div>
@@ -256,7 +235,7 @@ export const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., Sector 14, Mansarovar"
+                  placeholder={language === 'hi' ? 'लोकेशन या पता' : 'Location or area'}
                   className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 dark:text-white"
                 />
               </div>
@@ -271,14 +250,31 @@ export const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                   onChange={(e) => setSiteType(e.target.value as any)}
                   className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 dark:text-white"
                 >
-                  <option value="Residential">Residential (मकान/कोठी)</option>
-                  <option value="Commercial">Commercial (दुकान/प्लाजा)</option>
-                  <option value="Building">Building / Tower</option>
-                  <option value="Apartment">Apartment / Flats</option>
-                  <option value="Road">Road / Highway</option>
-                  <option value="Bridge">Bridge / Flyover</option>
-                  <option value="Renovation">Renovation / Repair</option>
-                  <option value="Industrial">Industrial / Factory</option>
+                  {language === 'hi' ? (
+                    <>
+                      <option value="Residential">आवासीय (मकान / कोठी)</option>
+                      <option value="Commercial">व्यावसायिक (दुकान / कॉम्प्लेक्स)</option>
+                      <option value="Building">बहुमंजिला भवन / टावर</option>
+                      <option value="Apartment">अपार्टमेंट / फ्लैट्स</option>
+                      <option value="Road">सड़क / हाईवे</option>
+                      <option value="Bridge">पुल / नहर</option>
+                      <option value="Renovation">मरम्मत व नवीनीकरण</option>
+                      <option value="Industrial">औद्योगिक शेड / फैक्ट्री</option>
+                      <option value="Other">+ अन्य (कस्टम प्रकार)</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Residential">Residential</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="Building">Building / Tower</option>
+                      <option value="Apartment">Apartment / Flats</option>
+                      <option value="Road">Road / Highway</option>
+                      <option value="Bridge">Bridge / Flyover</option>
+                      <option value="Renovation">Renovation / Repair</option>
+                      <option value="Industrial">Industrial / Factory</option>
+                      <option value="Other">+ Add Custom Type / Other</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>
@@ -293,7 +289,7 @@ export const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
-                placeholder="650000"
+                placeholder="0"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 dark:text-white"
               />
             </div>

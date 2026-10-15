@@ -11,17 +11,46 @@ import {
   Reminder,
 } from '../../types';
 
-export const SEED_ACCOUNT: ContractorAccount = {
-  id: 'contractor-1',
-  name: 'Rameshwar Sharma',
-  phone: '+91 98765 43210',
-  companyName: 'Sharma Construction & Contractors',
-  trade: 'construction',
-  language: 'hi',
-  themeMode: 'light',
-  tutorialCompleted: true,
-  createdAt: new Date().toISOString(),
-};
+export const SEED_ACCOUNTS: ContractorAccount[] = [
+  {
+    id: 'contractor-1',
+    name: 'Rameshwar Sharma',
+    phone: '9876543210',
+    password: '1234',
+    companyName: 'Sharma Construction & Contractors',
+    trade: 'construction',
+    language: 'hi',
+    themeMode: 'light',
+    tutorialCompleted: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'contractor-2',
+    name: 'Vikram Singh',
+    phone: '9876543211',
+    password: '1234',
+    companyName: 'Vikram Plumbing & Sanitary Works',
+    trade: 'plumbing',
+    language: 'hi',
+    themeMode: 'light',
+    tutorialCompleted: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'contractor-3',
+    name: 'Rajesh Patel',
+    phone: '9876543212',
+    password: '1234',
+    companyName: 'Patel Electrical & Wiring Solutions',
+    trade: 'electrical',
+    language: 'en',
+    themeMode: 'light',
+    tutorialCompleted: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const SEED_ACCOUNT: ContractorAccount = SEED_ACCOUNTS[0];
 
 export const SEED_SITES: Site[] = [
   {

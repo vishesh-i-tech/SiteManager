@@ -29,7 +29,8 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
 }) => {
   const { t, language, tradeConfig } = useTheme();
 
-  const [siteId, setSiteId] = useState(defaultSiteId || (sites[0]?.id || ''));
+  const [siteId, setSiteId] = useState(defaultSiteId || (sites[sites.length - 1]?.id || sites[0]?.id || ''));
+  const [ownership, setOwnership] = useState<'rental' | 'owned'>('rental');
   const [machineType, setMachineType] = useState<MachineryRecord['machineType']>('Concrete Mixer');
   const [customMachine, setCustomMachine] = useState('');
   const [fuelLitres, setFuelLitres] = useState<number>(30);
@@ -45,14 +46,15 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
       if (defaultSiteId) {
         setSiteId(defaultSiteId);
       } else if (sites.length > 0 && !sites.some((s) => s.id === siteId)) {
-        setSiteId(sites[0].id);
+        setSiteId(sites[sites.length - 1]?.id || sites[0].id);
       }
     }
   }, [isOpen, defaultSiteId, sites]);
 
   if (!isOpen) return null;
 
-  const totalCost = (Number(fuelCost) || 0) + (Number(rentalCost) || 0);
+  const effectiveRentalCost = ownership === 'owned' ? 0 : (Number(rentalCost) || 0);
+  const totalCost = (Number(fuelCost) || 0) + effectiveRentalCost;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,10 +70,10 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
         fuelLitres: Number(fuelLitres) || 0,
         fuelCost: Number(fuelCost) || 0,
         rentalHoursOrDays: Number(rentalHours) || 0,
-        rentalCost: Number(rentalCost) || 0,
+        rentalCost: effectiveRentalCost,
         totalCost,
         logDate,
-        notes: notes.trim() || undefined,
+        notes: notes.trim() ? `${ownership === 'owned' ? '[Self-Owned] ' : ''}${notes.trim()}` : (ownership === 'owned' ? '[Self-Owned]' : undefined),
       };
 
       await db.machinery.put(newMachinery);
@@ -141,6 +143,40 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
             </select>
           </div>
 
+          {/* Equipment Ownership: Rental vs Self-Owned */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              {language === 'hi' ? 'उपकरण का स्वामित्व *' : 'Equipment Ownership *'}
+            </label>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setOwnership('rental')}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                  ownership === 'rental'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+                }`}
+              >
+                {language === 'hi' ? 'किराया (Rental)' : 'Rental'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOwnership('owned');
+                  setRentalCost(0);
+                }}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                  ownership === 'owned'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+                }`}
+              >
+                {language === 'hi' ? 'अपना निजी (Owned)' : 'Self / Owned'}
+              </button>
+            </div>
+          </div>
+
           {/* Machine Type */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -151,15 +187,15 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
               onChange={(e) => setMachineType(e.target.value as any)}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             >
-              <option value="Concrete Mixer">Concrete Mixer (कंक्रीट मिक्सर)</option>
-              <option value="JCB Excavator">JCB Excavator (खुदाई मशीन)</option>
-              <option value="Tractor">Tractor / Trolley (ट्रैक्टर ट्रॉली)</option>
-              <option value="Generator">Diesel Generator (डीजल जनरेटर)</option>
-              <option value="Tower Crane">Tower Crane (क्रेन)</option>
-              <option value="Breaker">Breaker Hammer (ब्रेकर)</option>
-              <option value="Pipe Threader">Pipe Threader / Cutter</option>
-              <option value="Cable Puller">Cable Puller Winch</option>
-              <option value="Other">Other Equipment (कस्टम मशीन)</option>
+              <option value="Concrete Mixer">{language === 'hi' ? 'कंक्रीट मिक्सर' : 'Concrete Mixer'}</option>
+              <option value="JCB Excavator">{language === 'hi' ? 'खुदाई मशीन (JCB)' : 'JCB Excavator'}</option>
+              <option value="Tractor">{language === 'hi' ? 'ट्रैक्टर ट्रॉली' : 'Tractor / Trolley'}</option>
+              <option value="Generator">{language === 'hi' ? 'डीजल जनरेटर' : 'Diesel Generator'}</option>
+              <option value="Tower Crane">{language === 'hi' ? 'क्रेन' : 'Tower Crane'}</option>
+              <option value="Breaker">{language === 'hi' ? 'ब्रेकर हैमर' : 'Breaker Hammer'}</option>
+              <option value="Pipe Threader">{language === 'hi' ? 'पाइप थ्रेडर / कटर' : 'Pipe Threader / Cutter'}</option>
+              <option value="Cable Puller">{language === 'hi' ? 'केबल विंच' : 'Cable Puller Winch'}</option>
+              <option value="Other">{language === 'hi' ? 'अन्य उपकरण (कस्टम)' : 'Other Equipment'}</option>
             </select>
 
             {machineType === 'Other' && (
@@ -168,7 +204,7 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
                 required
                 value={customMachine}
                 onChange={(e) => setCustomMachine(e.target.value)}
-                placeholder={language === 'hi' ? 'मशीन का नाम दर्ज करें (उदा. रोलर, वाटर टैंकर)' : 'Specify equipment name (e.g. Road Roller, Water Tanker)'}
+                placeholder={language === 'hi' ? 'मशीन का नाम दर्ज करें (रोलर, वाटर टैंकर आदि)' : 'Specify equipment name (Road Roller, Water Tanker)'}
                 className="mt-2 w-full px-3.5 py-2 rounded-xl text-xs font-semibold bg-orange-50/50 dark:bg-orange-950/20 border border-orange-300 dark:border-orange-800 focus:outline-none dark:text-white"
               />
             )}
@@ -226,12 +262,18 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
                 <IndianRupee className="w-3.5 h-3.5 text-green-500" />
                 <span>{language === 'hi' ? 'मशीन किराया (₹)' : 'Machine Rent (₹)'}</span>
               </label>
-              <input
-                type="number"
-                value={rentalCost}
-                onChange={(e) => setRentalCost(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
-              />
+              {ownership === 'rental' ? (
+                <input
+                  type="number"
+                  value={rentalCost}
+                  onChange={(e) => setRentalCost(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+                />
+              ) : (
+                <div className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center">
+                  ₹0 ({language === 'hi' ? 'निजी उपकरण' : 'Self-Owned'})
+                </div>
+              )}
             </div>
           </div>
 
@@ -258,7 +300,7 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g. Beam casting pour..."
+                placeholder={language === 'hi' ? 'बीम ढलाई, खुदाई कार्य आदि...' : 'Beam casting, excavation work...'}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>

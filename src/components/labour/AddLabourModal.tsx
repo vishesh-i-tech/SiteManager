@@ -330,7 +330,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
                     <div className="col-span-12 sm:col-span-5">
                       <input
                         type="text"
-                        placeholder={language === 'hi' ? `मजदूर का नाम #${idx + 1} (उदा. राम कुमार)` : `Worker Name #${idx + 1} (e.g. Ramesh Kumar)`}
+                        placeholder={language === 'hi' ? `कारीगर / मजदूर #${idx + 1}` : `Worker Name #${idx + 1}`}
                         value={entry.workerName}
                         onChange={(e) => handleUpdateEntry(idx, 'workerName', e.target.value)}
                         className="w-full px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 outline-none"
@@ -423,7 +423,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
             </label>
             <input
               type="text"
-              placeholder={language === 'hi' ? 'उदा. ढलाई का काम चला, मौसम साफ था' : 'e.g. 1st floor roof slab casting day'}
+              placeholder={language === 'hi' ? 'ढलाई का काम चला, मौसम साफ था' : 'Roof slab casting day'}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 outline-none"

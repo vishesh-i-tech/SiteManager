@@ -5,16 +5,17 @@ import {
   HardHat,
   Wrench,
   Zap,
-  Globe,
-  Sun,
-  Moon,
-  Monitor,
-  Sparkles,
-  ExternalLink,
-  ShieldCheck,
-  RotateCcw,
   Bell,
-  Settings,
+  MoreVertical,
+  LogOut,
+  Paintbrush,
+  Hammer,
+  Shield,
+  Layers,
+  Grid,
+  Wind,
+  Sparkles,
+  Truck,
 } from 'lucide-react';
 import { TradeCategory } from '../../types';
 
@@ -23,161 +24,123 @@ interface HeaderProps {
   onOpenNotifications: () => void;
   onOpenSettings: () => void;
   unreadRemindersCount?: number;
-  isLandingPage: boolean;
-  onToggleLandingPage: () => void;
   onOpenTutorial: () => void;
   onResetData: () => void;
   contractorName?: string;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  onOpenVoiceModal,
   onOpenNotifications,
   onOpenSettings,
   unreadRemindersCount = 0,
-  isLandingPage,
-  onToggleLandingPage,
-  onOpenTutorial,
-  onResetData,
   contractorName,
+  onLogout,
 }) => {
-  const { trade, setTrade, themeMode, setThemeMode, language, setLanguage, t, tradeConfig, isDarkMode } = useTheme();
+  const { trade, language, tradeConfig } = useTheme();
 
   const getTradeIcon = (cat: TradeCategory) => {
     switch (cat) {
       case 'construction':
-        return <HardHat className="w-4 h-4 text-orange-500" />;
+        return <HardHat className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />;
       case 'plumbing':
-        return <Wrench className="w-4 h-4 text-sky-500" />;
+        return <Wrench className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />;
       case 'electrical':
-        return <Zap className="w-4 h-4 text-amber-500" />;
+        return <Zap className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />;
+      case 'painting':
+        return <Paintbrush className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />;
+      case 'carpentry':
+        return <Hammer className="w-3.5 h-3.5 text-amber-700 dark:text-amber-500" />;
+      case 'fabrication':
+        return <Shield className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />;
+      case 'flooring':
+        return <Layers className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />;
+      case 'ceiling':
+        return <Grid className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />;
+      case 'hvac':
+        return <Wind className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />;
+      case 'interior':
+        return <Sparkles className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />;
+      case 'infra':
+        return <Truck className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />;
+      default:
+        return <HardHat className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />;
     }
   };
 
+  const initials = contractorName
+    ? contractorName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'SS';
+
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-2">
-          
-          {/* Logo & Trade Badge */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => onToggleLandingPage()}
-              className="flex items-center gap-2.5 group text-left focus:outline-none"
-              title="SiteSaathi Home"
-            >
-              <SiteSaathiLogo size="md" />
-              <div className="hidden sm:block">
-                <div className="flex items-center gap-2">
-                  <span className="font-black text-lg tracking-tight font-heading text-slate-900 dark:text-white">
-                    SiteSaathi
-                  </span>
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border" style={{ backgroundColor: tradeConfig.badgeBg, color: tradeConfig.badgeText, borderColor: tradeConfig.badgeBg }}>
-                    {language === 'hi' ? tradeConfig.nameHi.split(' ')[0] : tradeConfig.nameEn.split(' ')[0]}
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium -mt-0.5">
-                  {language === 'hi' ? 'स्मार्ट ठेकेदार साथी' : 'Multi-Trade Contractor OS'}
-                </p>
-              </div>
-            </button>
+    <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+      <div className="w-full px-3 py-2 flex items-center justify-between gap-2">
+        
+        {/* Left: App Identity / Contractor Avatar & Trade */}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+            {initials}
           </div>
 
-          {/* Quick Trade Switcher Pills (Desktop & Tablet) */}
-          <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
-            {(['construction', 'plumbing', 'electrical'] as TradeCategory[]).map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setTrade(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  trade === cat
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {getTradeIcon(cat)}
-                <span className="capitalize">{cat}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Action Center: Language, Theme, Landing toggle, Reminder bell, Mic */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            
-            {/* Landing / App View Switcher */}
-            <button
-              onClick={onToggleLandingPage}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border ${
-                isLandingPage
-                  ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
-              }`}
-              title={isLandingPage ? 'Switch to App Dashboard' : 'View Public Portfolio Showcase'}
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{isLandingPage ? t('livePreview') : t('landingPage')}</span>
-            </button>
-
-            {/* Language Toggle (Hindi / English) */}
-            <button
-              onClick={() => setLanguage(language === 'hi' ? 'en' : 'hi')}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-all btn-tactile"
-              title="Toggle Language / भाषा बदलें"
-            >
-              <Globe className="w-3.5 h-3.5 text-blue-500" />
-              <span>{language === 'hi' ? 'EN' : 'हिंदी'}</span>
-            </button>
-
-            {/* Theme Mode Toggle */}
-            <button
-              onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : themeMode === 'dark' ? 'system' : 'light')}
-              className="p-2 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all btn-tactile"
-              title={`Theme: ${themeMode}`}
-            >
-              {themeMode === 'light' ? <Sun className="w-4 h-4 text-amber-500" /> : themeMode === 'dark' ? <Moon className="w-4 h-4 text-indigo-400" /> : <Monitor className="w-4 h-4 text-slate-400" />}
-            </button>
-
-            {/* Notifications / Reminders Bell */}
-            <button
-              onClick={onOpenNotifications}
-              className="relative p-2 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all btn-tactile"
-              title="Reminders & Overdue Alerts"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadRemindersCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-pulse">
-                  {unreadRemindersCount}
-                </span>
-              )}
-            </button>
-
-            {/* Settings & Account Config */}
-            <button
-              onClick={onOpenSettings}
-              className="p-2 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all btn-tactile flex items-center gap-1.5"
-              title="App Settings, Reset Data & Account"
-            >
-              <Settings className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-              {contractorName && (
-                <span className="hidden lg:inline text-xs font-bold text-slate-700 dark:text-slate-300 max-w-[80px] truncate">
-                  {contractorName.split(' ')[0]}
-                </span>
-              )}
-            </button>
-
-            {/* Voice Assistant Mic Trigger */}
-            <button
-              onClick={onOpenVoiceModal}
-              className="px-3 py-1.5 rounded-lg font-bold text-xs text-white shadow-md flex items-center gap-1.5 transition-all btn-tactile glow-theme"
-              style={{ backgroundColor: tradeConfig.primaryColor }}
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+          <div className="min-w-0 flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-sm text-slate-900 dark:text-white truncate font-heading leading-tight">
+                {contractorName || 'SiteSaathi'}
               </span>
-              <span>{language === 'hi' ? 'बोलकर भरें' : 'Voice'}</span>
-            </button>
+            </div>
+            
+            {/* Trade Badge */}
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 leading-none">
+              {getTradeIcon(trade)}
+              <span className="truncate">
+                {language === 'hi' ? tradeConfig.nameHi.split(' ')[0] : tradeConfig.nameEn.split(' ')[0]}
+              </span>
+            </div>
           </div>
+        </div>
+
+        {/* Right: Clean Action Bar */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          
+          {/* Notifications Bell */}
+          <button
+            onClick={onOpenNotifications}
+            className="relative p-1.5 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 btn-tactile transition-colors"
+            title="Notifications"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadRemindersCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">
+                {unreadRemindersCount}
+              </span>
+            )}
+          </button>
+
+          {/* Menu / Settings Modal (3 Dots) */}
+          <button
+            onClick={onOpenSettings}
+            className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 btn-tactile transition-colors"
+            title="Menu / Settings"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+
+          {/* Logout */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 btn-tactile"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
+
         </div>
       </div>
     </header>

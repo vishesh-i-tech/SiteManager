@@ -204,7 +204,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
               required
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
-              placeholder="e.g. Ultratech Cement (PPC), TMT Steel..."
+              placeholder={language === 'hi' ? 'अल्ट्राटेक सीमेंट, टीएमटी स्टील आदि...' : 'Ultratech Cement (PPC), TMT Steel...'}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             />
           </div>
@@ -312,7 +312,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Bill #849, Khandelwal Hardware"
+              placeholder={language === 'hi' ? 'बिल #849, खंडेलवाल हार्डवेयर' : 'Bill #849, Hardware vendor'}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             />
           </div>

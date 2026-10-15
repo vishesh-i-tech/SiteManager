@@ -45,30 +45,30 @@ export const translations = {
 
     // Statuses
     statusPlanning: 'Planning',
-    statusOngoing: 'Ongoing Work',
-    statusCompleted: 'Work Completed',
+    statusOngoing: 'Ongoing',
+    statusCompleted: 'Completed',
     statusOnHold: 'On Hold',
-    paymentUnpaid: 'Unpaid / Full Due',
+    paymentUnpaid: 'Unpaid',
     paymentPartial: 'Partially Paid',
     paymentPaid: 'Fully Paid',
     toolOnSite: 'On Site',
     toolReturned: 'Returned',
-    toolOverdue: 'Overdue Return',
+    toolOverdue: 'Overdue',
 
     // Stats & Widgets
     activeSites: 'Active Sites',
     totalBudget: 'Total Contract Value',
-    totalExpenses: 'Total Site Expenses',
-    netProfit: 'Estimated Margin / Profit',
-    pendingDuesTotal: 'Total Pending Dues',
+    totalExpenses: 'Total Expenses',
+    netProfit: 'Estimated Margin',
+    pendingDuesTotal: 'Pending Dues',
     overdueToolsCount: 'Overdue Tools',
-    dailyLabourPresent: 'Workers on Site Today',
+    dailyLabourPresent: 'Workers Today',
     materialSpent: 'Material Logged',
     fuelSpent: 'Machinery & Fuel',
 
     // Dues & Finance
-    pendingDuesTitle: 'Persistent Pending Dues Tracker',
-    pendingDuesSubtitle: 'Unpaid bills, vendor credit & tool rents — remains active even after site completion.',
+    pendingDuesTitle: 'Pending Dues',
+    pendingDuesSubtitle: 'Unpaid bills, vendor credit & tool rents remain active even after site completion.',
     completedSiteDuesWarning: 'Pending bills from Completed sites',
     siteBudgetVsExpense: 'Budget vs Expense Breakdown',
     recordPayment: 'Record Payment',
@@ -199,14 +199,14 @@ export const translations = {
     // Statuses
     statusPlanning: 'योजना / टेंडर',
     statusOngoing: 'चालू कार्य',
-    statusCompleted: 'काम पूर्ण (Completed)',
+    statusCompleted: 'काम पूर्ण',
     statusOnHold: 'रुका हुआ',
     paymentUnpaid: 'पूरा बकाया',
     paymentPartial: 'आंशिक भुगतान मिला',
-    paymentPaid: 'पूरा पैसा मिल गया',
+    paymentPaid: 'पूर्ण चुकता',
     toolOnSite: 'साइट पर मौजूद',
     toolReturned: 'वापस आ गया',
-    toolOverdue: 'वापसी में देरी (Overdue)',
+    toolOverdue: 'वापसी में देरी',
 
     // Stats & Widgets
     activeSites: 'चालू साइट्स',

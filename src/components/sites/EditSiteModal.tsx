@@ -168,15 +168,31 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
                 onChange={(e) => setSiteType(e.target.value as any)}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               >
-                <option value="Residential">Residential (मकान/कोठी)</option>
-                <option value="Commercial">Commercial (दुकान/कॉम्प्लेक्स)</option>
-                <option value="Building">Building / Tower</option>
-                <option value="Apartment">Apartment / Flats</option>
-                <option value="Road">Road / Highway</option>
-                <option value="Bridge">Bridge / Canal</option>
-                <option value="Renovation">Renovation / Repair</option>
-                <option value="Industrial">Industrial / Shed</option>
-                <option value="Other">Other (कस्टम प्रकार)</option>
+                {language === 'hi' ? (
+                  <>
+                    <option value="Residential">आवासीय (मकान / कोठी)</option>
+                    <option value="Commercial">व्यावसायिक (दुकान / कॉम्प्लेक्स)</option>
+                    <option value="Building">बहुमंजिला भवन / टावर</option>
+                    <option value="Apartment">अपार्टमेंट / फ्लैट्स</option>
+                    <option value="Road">सड़क / हाईवे</option>
+                    <option value="Bridge">पुल / नहर</option>
+                    <option value="Renovation">मरम्मत व नवीनीकरण</option>
+                    <option value="Industrial">औद्योगिक शेड / फैक्ट्री</option>
+                    <option value="Other">+ अन्य (कस्टम प्रकार दर्ज करें)</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Residential">Residential</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Building">Building / Tower</option>
+                    <option value="Apartment">Apartment / Flats</option>
+                    <option value="Road">Road / Highway</option>
+                    <option value="Bridge">Bridge / Canal</option>
+                    <option value="Renovation">Renovation / Repair</option>
+                    <option value="Industrial">Industrial / Factory</option>
+                    <option value="Other">+ Add Custom Category / Other</option>
+                  </>
+                )}
               </select>
 
               {siteType === 'Other' && (
@@ -185,8 +201,8 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
                   required
                   value={customCategory}
                   onChange={(e) => setCustomCategory(e.target.value)}
-                  placeholder={language === 'hi' ? 'प्रकार दर्ज करें (उदा. सोलर प्लांट, गोदाम)' : 'Specify custom type (e.g. Solar Farm, Warehouse)'}
-                  className="mt-2 w-full px-3.5 py-2 rounded-xl text-xs font-semibold bg-orange-50/50 dark:bg-orange-950/20 border border-orange-300 dark:border-orange-800 focus:outline-none dark:text-white"
+                  placeholder={language === 'hi' ? 'कस्टम प्रकार दर्ज करें' : 'Enter custom category'}
+                  className="mt-2 w-full px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-50/50 dark:bg-blue-950/20 border border-blue-300 dark:border-blue-800 focus:outline-none dark:text-white"
                 />
               )}
             </div>
@@ -199,6 +215,7 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
               <input
                 type="number"
                 required
+                min={0}
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
@@ -210,32 +227,53 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {language === 'hi' ? 'काम की स्थिति (Work Status)' : 'Work Status'}
+                {language === 'hi' ? 'काम की स्थिति' : 'Work Status'}
               </label>
               <select
                 value={workStatus}
                 onChange={(e) => setWorkStatus(e.target.value as any)}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               >
-                <option value="planning">Planning (योजना)</option>
-                <option value="ongoing">Ongoing (चालू)</option>
-                <option value="completed">Completed (पूर्ण)</option>
-                <option value="on_hold">On Hold (रुका हुआ)</option>
+                {language === 'hi' ? (
+                  <>
+                    <option value="planning">योजना / टेंडर</option>
+                    <option value="ongoing">चालू काम</option>
+                    <option value="completed">काम पूर्ण</option>
+                    <option value="on_hold">रुका हुआ</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="planning">Planning</option>
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                    <option value="on_hold">On Hold</option>
+                  </>
+                )}
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {language === 'hi' ? 'भुगतान स्थिति (Payment Status)' : 'Payment Status'}
+                {language === 'hi' ? 'भुगतान स्थिति' : 'Payment Status'}
               </label>
               <select
                 value={paymentStatus}
                 onChange={(e) => setPaymentStatus(e.target.value as any)}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               >
-                <option value="unpaid">Unpaid (पूरा बकाया)</option>
-                <option value="partially_paid">Partially Paid (आंशिक भुगतान)</option>
-                <option value="paid">Fully Paid (पूर्ण चुकता)</option>
+                {language === 'hi' ? (
+                  <>
+                    <option value="unpaid">पूरा बकाया</option>
+                    <option value="partially_paid">आंशिक भुगतान</option>
+                    <option value="paid">पूर्ण चुकता</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="unpaid">Unpaid</option>
+                    <option value="partially_paid">Partially Paid</option>
+                    <option value="paid">Fully Paid</option>
+                  </>
+                )}
               </select>
             </div>
           </div>

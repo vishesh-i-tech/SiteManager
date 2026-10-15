@@ -149,7 +149,7 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Scaffolding rent to Gupta Scaffolding..."
+              placeholder={language === 'hi' ? 'गुप्ता मचान किराया, रेत सप्लायर आदि...' : 'Scaffolding rent, sand supplier...'}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             />
           </div>
@@ -227,7 +227,7 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Call Rajesh bhai for discount..."
+              placeholder={language === 'hi' ? 'दुकानदार का नंबर या विवरण...' : 'Vendor contact details or terms...'}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             />
           </div>

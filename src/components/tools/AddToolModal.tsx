@@ -177,39 +177,24 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. MS Shuttering Plates, Concrete Vibrator..."
+              placeholder={language === 'hi' ? 'शटरिंग प्लेट्स, कंक्रीट वाइब्रेटर आदि' : 'MS Shuttering Plates, Concrete Vibrator...'}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             />
           </div>
 
-          {/* Quantity & Size */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {language === 'hi' ? 'संख्या (Qty) *' : 'Quantity *'}
-              </label>
-              <input
-                type="number"
-                required
-                min={1}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {language === 'hi' ? 'साइज / प्रकार (वैकल्पिक)' : 'Size / Specs'}
-              </label>
-              <input
-                type="text"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                placeholder="e.g. 4x4 ft, 60mm needle"
-                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
-              />
-            </div>
+          {/* Quantity */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              {language === 'hi' ? 'संख्या / मात्रा (Qty) *' : 'Quantity *'}
+            </label>
+            <input
+              type="number"
+              required
+              min={1}
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+            />
           </div>
 
           {/* Date Sent & Expected Return */}
@@ -267,7 +252,7 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Sent from Gupta Scaffolding..."
+              placeholder={language === 'hi' ? 'गुप्ता हार्डवेयर से भेजा गया...' : 'Sent from Gupta Scaffolding...'}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             />
           </div>

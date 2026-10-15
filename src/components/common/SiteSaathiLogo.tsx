@@ -32,10 +32,7 @@ export const SiteSaathiLogo: React.FC<SiteSaathiLogoProps> = ({
     <div className={`flex items-center gap-2.5 ${className}`}>
       {/* Precision Geometric Architectural Logo Mark */}
       <div
-        className={`${sizeClasses[size]} rounded-2xl flex items-center justify-center text-white shadow-md relative overflow-hidden transition-transform duration-200 group-hover:scale-105`}
-        style={{
-          background: `linear-gradient(135deg, ${tradeConfig.primaryColor} 0%, #1e293b 140%)`,
-        }}
+        className={`${sizeClasses[size]} rounded-xl flex items-center justify-center text-white shadow-sm relative overflow-hidden transition-transform duration-200 group-hover:scale-105 bg-blue-600`}
       >
         {/* Subtle geometric structural mesh background */}
         <svg
@@ -73,18 +70,17 @@ export const SiteSaathiLogo: React.FC<SiteSaathiLogoProps> = ({
             strokeLinejoin="round"
           />
           
-          {/* Accent Gold/White Precision Corner Dot */}
           <circle cx="27" cy="24.5" r="2" fill="white" />
         </svg>
       </div>
 
       {showText && (
         <div className="flex flex-col">
-          <span className="font-extrabold text-lg sm:text-xl tracking-tight font-heading text-slate-900 dark:text-white leading-none">
+          <span className="font-bold text-lg sm:text-xl tracking-tight font-heading text-slate-900 dark:text-white leading-none">
             SiteSaathi
           </span>
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold tracking-wider uppercase mt-1">
-            Contractor OS
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wider uppercase mt-1">
+            Site Manager
           </span>
         </div>
       )}
