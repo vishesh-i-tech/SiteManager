@@ -163,5 +163,10 @@ This document tracks all technologies, libraries, and architectural modules used
   - Removed Operational Alerts section from Dashboard (offline app design) and relocated Logout button into Settings modal.
   - Redesigned Labour Register into **Worker Entry** (`कारीगर हाजिरी`): removed long subtitle, simplified manual add to an icon-only `+` button, renamed photo OCR to **Scan** (`स्कैन करें`), and deleted the 3 summary KPI cards.
   - Clarified 100% offline OCR processing architecture without cloud/internet dependency.
+- **Phase 2.1 (Worker Entry Hierarchy & Expandable Accordion):**
+  - Restructured Worker Entry page into a clean **Site → Date → Worker Entries** nested hierarchy.
+  - On the outer surface, contractors see the **Site Name** and a concise list of attendance **Dates** with total worker counts, daily wage totals, and direct **Edit** & Delete buttons.
+  - Individual worker entry cards are completely hidden from the outside by default to avoid visual clutter.
+  - Tapping any date smoothly expands the card to reveal the full worker muster roll, complete with worker roles, attendance tags (Full Day, Half Day, Absent), individual wage breakdowns, and an in-drawer **Edit Workers** action.
 
 
