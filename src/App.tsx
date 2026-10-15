@@ -339,6 +339,7 @@ export const App: React.FC = () => {
           <LabourRegister
             labourRecords={labourRecords}
             sites={sites}
+            companyName={currentAccount?.companyName}
             onOpenOcrModal={() => {
               setTargetSiteIdForModal(undefined);
               setIsOcrModalOpen(true);

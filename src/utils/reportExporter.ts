@@ -148,6 +148,175 @@ export const exportSiteReportPdf = (
   doc.save(`SiteSaathi_Report_${site.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
 };
 
+// Export Daily Attendance PDF for a single date
+export const exportDailyAttendancePdf = (
+  record: LabourRecord,
+  siteName: string,
+  companyName: string = 'SiteSaathi Contractor'
+) => {
+  const doc = new jsPDF();
+
+  // Header Banner
+  doc.setFillColor(30, 41, 59);
+  doc.rect(0, 0, 210, 30, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Daily Labour Attendance Register', 14, 15);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${companyName} | Site: ${siteName} | Date: ${record.date}`, 14, 24);
+
+  // Summary Metrics Card
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(14, 36, 182, 24, 3, 3, 'FD');
+
+  const totalWorkers = record.totalWorkers || (record.entries?.length || 0);
+  const totalWages = record.totalDailyWage || 0;
+  const totalPaid = record.totalPaid || 0;
+  const balanceDue = totalWages - totalPaid;
+
+  doc.setFontSize(9);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Total Workers Present', 20, 44);
+  doc.text('Total Daily Wages', 75, 44);
+  doc.text('Amount Paid', 125, 44);
+  doc.text('Balance Due', 165, 44);
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(`${totalWorkers} Workers`, 20, 53);
+  doc.text(`Rs. ${totalWages.toLocaleString('en-IN')}`, 75, 53);
+  doc.setTextColor(22, 163, 74);
+  doc.text(`Rs. ${totalPaid.toLocaleString('en-IN')}`, 125, 53);
+  doc.setTextColor(balanceDue > 0 ? 220 : 100, balanceDue > 0 ? 38 : 116, balanceDue > 0 ? 38 : 139);
+  doc.text(`Rs. ${balanceDue.toLocaleString('en-IN')}`, 165, 53);
+
+  // Workers Attendance Table
+  const tableRows = (record.entries || []).map((e, index) => [
+    index + 1,
+    e.workerName,
+    e.role,
+    e.attendanceStatus === 'half_day' ? 'Half Day (0.5)' : e.attendanceStatus === 'absent' ? 'Absent (0.0)' : 'Full Day (1.0)',
+    `Rs. ${e.dailyWage}`,
+    `Rs. ${e.paidAmount !== undefined ? e.paidAmount : e.dailyWage}`,
+    `Rs. ${e.balanceDue || 0}`,
+  ]);
+
+  autoTable(doc, {
+    startY: 66,
+    head: [['#', 'Worker Name', 'Role / Trade', 'Attendance', 'Daily Wage', 'Paid', 'Balance']],
+    body: tableRows.length > 0 ? tableRows : [['-', 'No individual entries logged', '-', '-', '-', '-', '-']],
+    theme: 'grid',
+    headStyles: { fillColor: [59, 130, 246] },
+    styles: { fontSize: 8 },
+    foot: [
+      [
+        'Total',
+        `${totalWorkers} Workers`,
+        '',
+        '',
+        `Rs. ${totalWages.toLocaleString('en-IN')}`,
+        `Rs. ${totalPaid.toLocaleString('en-IN')}`,
+        `Rs. ${balanceDue.toLocaleString('en-IN')}`,
+      ],
+    ],
+    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
+  });
+
+  doc.save(`Daily_Attendance_${siteName.replace(/[^a-zA-Z0-9]/g, '_')}_${record.date}.pdf`);
+};
+
+// Export Site Total Attendance Summary Sheet (Date & Worker Quantity ONLY, NO worker names)
+export const exportSiteTotalAttendancePdf = (
+  site: Site,
+  records: LabourRecord[],
+  companyName: string = 'SiteSaathi Contractor'
+) => {
+  const doc = new jsPDF();
+
+  // Header Banner
+  doc.setFillColor(30, 41, 59);
+  doc.rect(0, 0, 210, 32, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Site Total Attendance Summary Sheet', 14, 16);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${companyName} | Site: ${site.name} | Location: ${site.location}`, 14, 25);
+
+  // Summary Metrics Card
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(14, 38, 182, 24, 3, 3, 'FD');
+
+  const totalDays = records.length;
+  const totalWorkerQuantity = records.reduce((acc, r) => acc + (r.totalWorkers || (r.entries?.length || 0)), 0);
+  const totalSiteWages = records.reduce((acc, r) => acc + (r.totalDailyWage || 0), 0);
+  const totalSitePaid = records.reduce((acc, r) => acc + (r.totalPaid || 0), 0);
+  const totalSiteBalance = totalSiteWages - totalSitePaid;
+
+  doc.setFontSize(9);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Total Days Logged', 20, 46);
+  doc.text('Total Worker Quantity', 65, 46);
+  doc.text('Total Wages', 120, 46);
+  doc.text('Total Balance Due', 160, 46);
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(`${totalDays} Days`, 20, 55);
+  doc.text(`${totalWorkerQuantity} Man-days`, 65, 55);
+  doc.text(`Rs. ${totalSiteWages.toLocaleString('en-IN')}`, 120, 55);
+  doc.setTextColor(totalSiteBalance > 0 ? 220 : 22, totalSiteBalance > 0 ? 38 : 163, totalSiteBalance > 0 ? 38 : 74);
+  doc.text(`Rs. ${totalSiteBalance.toLocaleString('en-IN')}`, 160, 55);
+
+  // Sorted records by date
+  const sortedRecords = [...records].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // Table with Date and Worker Quantity (NO worker names)
+  const summaryRows = sortedRecords.map((r, index) => [
+    index + 1,
+    r.date,
+    `${r.totalWorkers || (r.entries?.length || 0)} Workers`,
+    `Rs. ${(r.totalDailyWage || 0).toLocaleString('en-IN')}`,
+    `Rs. ${(r.totalPaid || 0).toLocaleString('en-IN')}`,
+    `Rs. ${((r.totalDailyWage || 0) - (r.totalPaid || 0)).toLocaleString('en-IN')}`,
+    r.rawPhotoUrl ? 'OCR Scanned' : 'Manual Entry',
+  ]);
+
+  autoTable(doc, {
+    startY: 68,
+    head: [['#', 'Date (Date Logged)', 'Worker Quantity', 'Daily Wages', 'Amount Paid', 'Balance Due', 'Entry Type']],
+    body: summaryRows.length > 0 ? summaryRows : [['-', 'No attendance records logged', '-', '-', '-', '-', '-']],
+    theme: 'grid',
+    headStyles: { fillColor: [30, 41, 59] },
+    styles: { fontSize: 8 },
+    foot: [
+      [
+        'Total',
+        `${totalDays} Days`,
+        `${totalWorkerQuantity} Workers`,
+        `Rs. ${totalSiteWages.toLocaleString('en-IN')}`,
+        `Rs. ${totalSitePaid.toLocaleString('en-IN')}`,
+        `Rs. ${totalSiteBalance.toLocaleString('en-IN')}`,
+        '',
+      ],
+    ],
+    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
+  });
+
+  doc.save(`Site_Attendance_Summary_${site.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+};
+
 export const exportLabourRegisterCsv = (record: LabourRecord, siteName: string) => {
   const headers = ['Date', 'Site', 'Worker Name', 'Role', 'Attendance', 'Daily Wage', 'Paid Amount', 'Balance Due'];
   const rows = (record.entries || []).map((e) => [
