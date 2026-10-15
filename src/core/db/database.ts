@@ -258,8 +258,8 @@ export class SiteSaathiDatabase extends Dexie {
         title: `${overdueTools.length} Tools Overdue`,
         description: `${toolNames}${overdueTools.length > 2 ? ` +${overdueTools.length - 2} more` : ''}`,
         badge: 'Return Alert',
-        actionText: 'Manage Tools',
-        actionRoute: 'tools',
+        actionText: 'Manage Tools in Sites',
+        actionRoute: 'sites',
       });
     }
 

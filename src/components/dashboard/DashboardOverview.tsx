@@ -181,7 +181,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
         {/* Widget 3: Tools Inventory & Overdue */}
         <div
-          onClick={() => onNavigateTab('tools')}
+          onClick={() => onNavigateTab('sites')}
           className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-500/50 transition-all cursor-pointer btn-tactile flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-1.5">

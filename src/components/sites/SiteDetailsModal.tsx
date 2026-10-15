@@ -22,6 +22,8 @@ import {
   Plus,
   Edit2,
   Trash2,
+  Warehouse,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface SiteDetailsModalProps {
@@ -357,85 +359,166 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
           )}
 
           {/* TOOLS SUB-TAB */}
+          {/* TOOLS SUB-TAB */}
           {activeSubTab === 'tools' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                  {tools.length} Tools Tracked on this Site
-                </span>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    {language === 'hi'
+                      ? `इस साइट पर ${tools.length} औजार दर्ज हैं`
+                      : `${tools.length} Tools Tracked on this Site`}
+                  </span>
+                  <p className="text-[11px] text-slate-500">
+                    {language === 'hi'
+                      ? 'गोदाम से भेजे गए या साइट के लिए खरीदे गए उपकरण'
+                      : 'Self-owned warehouse equipment and tools purchased for this site'}
+                  </p>
+                </div>
                 <button
                   onClick={() => onOpenAddTool(currentSite.id)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1"
+                  className="px-3.5 py-2 rounded-xl text-xs font-extrabold text-white shadow-md flex items-center gap-1.5 transition-all btn-tactile glow-theme"
                   style={{ backgroundColor: tradeConfig.primaryColor }}
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>{t('addTool')}</span>
+                  <Plus className="w-4 h-4" />
+                  <span>{language === 'hi' ? '+ औजार जोड़ें' : '+ Add Tool'}</span>
                 </button>
               </div>
 
-              <div className="space-y-2">
-                {tools.map((tool) => (
-                  <div
-                    key={tool.id}
-                    className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-slate-900 dark:text-white text-sm">
-                          {tool.name}
-                        </span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                          {tool.quantity} {tool.size ? `(${tool.size})` : 'qty'}
-                        </span>
-                        {tool.status === 'overdue' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400">
-                            Overdue!
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        Sent: {tool.dateSent} | Return: {tool.expectedReturnDate} | {tool.sourceType === 'purchased_for_site' ? `Purchased: ₹${tool.purchasePrice || tool.rentOrRepairCost || 0}` : 'Self-Owned'}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {onEditTool && (
-                        <button
-                          onClick={() => onEditTool(tool)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-                          title="Edit Tool"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {onDeleteTool && (
-                        <button
-                          onClick={() => onDeleteTool(tool)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-                          title="Delete Tool"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {tool.actualReturnDate ? (
-                        <span className="text-emerald-600 font-bold flex items-center gap-1 text-[11px]">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Returned {tool.actualReturnDate}
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleReturnTool(tool.id)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
-                        >
-                          {t('markReturned')}
-                        </button>
-                      )}
-                    </div>
+              {tools.length === 0 ? (
+                <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-6 space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 mx-auto flex items-center justify-center">
+                    <Wrench className="w-6 h-6" />
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">
+                      {language === 'hi' ? 'इस साइट पर अभी कोई औजार दर्ज नहीं है' : 'No tools logged for this site yet'}
+                    </h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                      {language === 'hi'
+                        ? 'गोदाम से भेजा गया औजार या इस साइट के लिए खरीदा गया टूल जोड़ने के लिए नीचे दिए बटन पर टैप करें।'
+                        : 'Log self-owned equipment dispatched from godown or new tools purchased for ongoing site work.'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onOpenAddTool(currentSite.id)}
+                    className="px-4 py-2 rounded-xl text-xs font-extrabold text-white shadow-md inline-flex items-center gap-1.5 transition-all btn-tactile"
+                    style={{ backgroundColor: tradeConfig.primaryColor }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{language === 'hi' ? 'पहला औजार जोड़ें' : 'Add First Tool'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {tools.map((tool) => {
+                    const isPurchased = tool.sourceType === 'purchased_for_site';
+                    const price = tool.purchasePrice || (isPurchased ? tool.rentOrRepairCost : 0) || 0;
+                    const isOverdue =
+                      (tool.status === 'overdue' || (!tool.actualReturnDate && new Date(tool.expectedReturnDate) < new Date())) &&
+                      !tool.actualReturnDate;
+
+                    return (
+                      <div
+                        key={tool.id}
+                        className={`p-4 rounded-2xl bg-white dark:bg-slate-800 border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+                          isOverdue
+                            ? 'border-red-300 dark:border-red-900/80 bg-red-50/20 dark:bg-red-950/20'
+                            : 'border-slate-200 dark:border-slate-700'
+                        }`}
+                      >
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">
+                              {tool.name}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                              {tool.quantity} {tool.size ? `• ${tool.size}` : (language === 'hi' ? 'नग' : 'qty')}
+                            </span>
+
+                            {/* Source Type Badge */}
+                            {isPurchased ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                                <ShoppingBag className="w-3 h-3" />
+                                {language === 'hi' ? `खरीद: ₹${price}` : `Bought: ₹${price}`}
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center gap-1">
+                                <Warehouse className="w-3 h-3" />
+                                {language === 'hi' ? 'खुद का औजार' : 'Self-Owned'}
+                              </span>
+                            )}
+
+                            {/* Overdue Badge */}
+                            {isOverdue && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 animate-pulse">
+                                {language === 'hi' ? 'वापसी में देरी' : 'Overdue!'}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
+                            <span>
+                              {isPurchased ? (language === 'hi' ? 'खरीद तारीख: ' : 'Purchased: ') : (language === 'hi' ? 'भेजा: ' : 'Sent: ')}
+                              <strong className="text-slate-700 dark:text-slate-300">{tool.dateSent}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              {language === 'hi' ? 'गोदाम वापसी तारीख: ' : 'Expected Return: '}
+                              <strong className={isOverdue ? 'text-red-600 font-bold' : 'text-slate-700 dark:text-slate-300'}>
+                                {tool.expectedReturnDate}
+                              </strong>
+                            </span>
+                          </div>
+
+                          {tool.notes && (
+                            <p className="text-[11px] text-slate-500 italic bg-slate-50 dark:bg-slate-900/60 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-800">
+                              "{tool.notes}"
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                          {onEditTool && (
+                            <button
+                              onClick={() => onEditTool(tool)}
+                              className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                              title={language === 'hi' ? 'औजार बदलें' : 'Edit Tool'}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {onDeleteTool && (
+                            <button
+                              onClick={() => onDeleteTool(tool)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                              title={language === 'hi' ? 'हटाएं' : 'Delete Tool'}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {tool.actualReturnDate ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 text-[11px] bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-900">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              {language === 'hi' ? `गोदाम में वापस (${tool.actualReturnDate})` : `Returned (${tool.actualReturnDate})`}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleReturnTool(tool.id)}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm btn-tactile"
+                            >
+                              {language === 'hi' ? 'गोदाम वापसी दर्ज करें' : 'Mark Returned'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

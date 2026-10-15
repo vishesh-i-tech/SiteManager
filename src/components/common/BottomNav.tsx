@@ -26,7 +26,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { id: 'dashboard' as ActiveTab, label: t('navDashboard'), icon: LayoutDashboard },
     { id: 'sites' as ActiveTab, label: t('navSites'), icon: Building2 },
     { id: 'labour' as ActiveTab, label: t('navLabour'), icon: Users },
-    { id: 'tools' as ActiveTab, label: t('navTools'), icon: Wrench },
     { id: 'dues' as ActiveTab, label: t('navDues'), icon: Receipt },
   ];
 
@@ -35,7 +34,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
       {/* Bottom Navigation Bar */}
       <nav className="sticky bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe">
-        <div className="grid grid-cols-5 h-16 items-center px-1">
+        <div className="grid grid-cols-4 h-16 items-center px-1">
           {mainNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -60,7 +59,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 >
                   <Icon className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
+                <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[84px] text-center">
                   {item.label}
                 </span>
               </button>

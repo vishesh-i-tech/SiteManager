@@ -20,7 +20,6 @@ import { SiteList } from './components/sites/SiteList';
 import { SiteDetailsModal } from './components/sites/SiteDetailsModal';
 import { AddSiteModal } from './components/sites/AddSiteModal';
 import { EditSiteModal } from './components/sites/EditSiteModal';
-import { ToolTracker } from './components/tools/ToolTracker';
 import { AddToolModal } from './components/tools/AddToolModal';
 import { EditToolModal } from './components/tools/EditToolModal';
 import { LabourRegister } from './components/labour/LabourRegister';
@@ -102,6 +101,10 @@ export const App: React.FC = () => {
   const [siteWorkFilter, setSiteWorkFilter] = useState<'all' | 'ongoing' | 'completed' | 'planning'>('all');
 
   const handleNavigateTab = (tab: ActiveTab, filter?: 'all' | 'ongoing' | 'completed' | 'planning') => {
+    if (tab === 'tools') {
+      setActiveTab('sites');
+      return;
+    }
     setActiveTab(tab);
     if (filter) {
       setSiteWorkFilter(filter);
@@ -354,26 +357,6 @@ export const App: React.FC = () => {
                 type: 'labour',
                 id: record.id,
                 name: `${record.date} (${record.totalWorkers || (record.entries?.length || 0)} workers)`,
-              })
-            }
-          />
-        )}
-
-        {activeTab === 'tools' && (
-          <ToolTracker
-            tools={tools}
-            sites={sites}
-            onOpenAddTool={() => {
-              setTargetSiteIdForModal(undefined);
-              setIsAddToolModalOpen(true);
-            }}
-            onRefresh={refreshInsights}
-            onEditTool={(tool) => setEditingTool(tool)}
-            onDeleteTool={(tool) =>
-              setDeletingItem({
-                type: 'tool',
-                id: tool.id,
-                name: tool.name,
               })
             }
           />

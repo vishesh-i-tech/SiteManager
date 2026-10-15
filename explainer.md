@@ -181,6 +181,43 @@ This document tracks all technologies, libraries, and architectural modules used
   - Replaced the in-line cramped accordion with a dedicated **Date Attendance Detail Modal** (`LabourDateDetailModal.tsx`) providing an uncompressed single-column worker roster with zero text collisions.
   - Added **Daily Attendance PDF Generator** (`exportDailyAttendancePdf`): creates formatted day sheets listing all workers, trades, attendance statuses, wages, and payment balances.
   - Added **Site Total Attendance Summary PDF** (`exportSiteTotalAttendancePdf`): creates an executive muster statement for the entire site showing **Date and Worker Quantity (count)** without exposing individual worker names, perfect for clients and accountants.
+### 17. Site-Centric Tool Management Architecture (`SiteDetailsModal.tsx`, `BottomNav.tsx`)
+- **What it does:** Relocates tool tracking directly inside individual construction sites, removing the redundant standalone "Tools" page from the main bottom navigation.
+- **How it works:**
+  - **Site-Scoped Inventory:** Tools and equipment do not exist in the abstract; they are dispatched to or purchased for a specific site. Users open the desired site, navigate to its `Tools` tab, and immediately view, add, edit, or return tools assigned to that project.
+  - **Spacious Bottom Navigation:** Bottom navigation is streamlined from 5 columns to 4 focused columns (`Dashboard`, `Sites`, `Labour`, `Pending Dues`). This prevents text clipping (such as "Labour Regi...") on narrow mobile screens and provides generous touch targets.
+  - **Rich In-Site Tool View:** `SiteDetailsModal` features self-owned vs site-purchased badges, status pills (Active on Site, Return Overdue, Returned to Godown), 1-tap return actions, and an intuitive empty state encouraging tool logging.
+- **Small Summary:** Simplified UX by making tool tracking site-scoped and cleaning up the bottom navigation bar.
+
+---
+
+## 📝 Change Log & Phase History
+
+- **Phase 0 (Baseline Setup):** Initial project baseline, Git repository setup, README badges, executive PDF document in `docx/`, and creation of this `explainer.md` file.
+- **Phase 1 (20-Page Visual & Functional Fixes):**
+  - Expanded trade professions from 3 to 11 dynamic trades (Painting, Carpentry, Fabrication, Flooring, Ceiling, HVAC, Interior, Infrastructure).
+  - Streamlined Auth screen tabs to "Sign In" / "Sign Up".
+  - Refactored Site cards into a single-column flex list to eliminate multi-column card overlap on mobile.
+  - Linked Dashboard Active Sites widget directly to the Sites tab with automatic "Ongoing" filtering.
+  - Stabilized bottom navigation by removing overlapping floating FAB button.
+  - Added equipment ownership toggle (Rental vs Self-Owned) in machinery logs.
+  - Removed "Size/Specs" field and cleaned "e.g." from all input placeholders across the app.
+  - Compacted Pending Dues banner and simplified Smart Insights descriptions for high-visibility mobile glanceability.
+- **Phase 2 (Settings, Security, Backup Export, Dashboard & Labour Redesign):**
+  - Renamed "Settings & Preferences" to strictly **"Settings"** (`सेटिंग्स`) and cleaned headers (e.g. "Mode", "Active Trade", "Data Tools") eliminating all congested `/` and `&` text.
+  - Added inline **Contractor Profile Editor** with real-time updates for Name, strict 10-digit Phone, Display/Firm Name (`companyName`), and Email/Gmail (`email`).
+  - Enforced strict **10-digit mobile phone restriction** across Registration, Login, and Profile editing.
+  - Added full **Data Backup & Device Transfer Engine** with 1-tap JSON export and JSON restore for phone switching.
+  - Built **App Lock & Security Suite** featuring 4-digit PIN lock, device Fingerprint Biometric integration with automatic fallback, and **Anti-Delete Protection** restricting accidental app data wipes.
+  - Cleaned Dashboard header by removing repeated "General Construction" badge and dynamically rendering contractor's custom Firm/Business name.
+  - Removed Operational Alerts section from Dashboard (offline app design) and relocated Logout button into Settings modal.
+  - Redesigned Labour Register into **Worker Entry** (`कारीगर हाजिरी`): removed long subtitle, simplified manual add to an icon-only `+` button, renamed photo OCR to **Scan** (`स्कैन करें`), and deleted the 3 summary KPI cards.
+  - Clarified 100% offline OCR processing architecture without cloud/internet dependency.
+- **Phase 2.2 (Dedicated Date Attendance Page & Dual PDF Generator):**
+  - Eliminated all mobile horizontal text overlaps by replacing text buttons with clean, tactile icon buttons (edit pen icon, PDF download icon, trash icon).
+  - Replaced the in-line cramped accordion with a dedicated **Date Attendance Detail Modal** (`LabourDateDetailModal.tsx`) providing an uncompressed single-column worker roster with zero text collisions.
+  - Added **Daily Attendance PDF Generator** (`exportDailyAttendancePdf`): creates formatted day sheets listing all workers, trades, attendance statuses, wages, and payment balances.
+  - Added **Site Total Attendance Summary PDF** (`exportSiteTotalAttendancePdf`): creates an executive muster statement for the entire site showing **Date and Worker Quantity (count)** without exposing individual worker names, perfect for clients and accountants.
 - **Phase 2.3 (Eliminated Tool Rentals, Added Self-Owned & Site-Purchased Tool Inventory):**
   - Removed all "Rent" / "Rental Cost" / "किराया" options, fields, and badges from the Tools module.
   - Introduced two primary tool sources in `AddToolModal` and `EditToolModal`:
@@ -189,5 +226,10 @@ This document tracks all technologies, libraries, and architectural modules used
   - Updated `ToolTracker` with real-time KPI ribbon (Active on Sites, Self-Owned Godown Tools, Site Purchases with total ₹, and Returned to Godown), source filter tabs, and 1-tap "Mark Returned to Godown" (`गोदाम वापसी दर्ज करें`) functionality.
   - Corrected site financial calculations so only actual tool purchase costs affect site budget, eliminating false rental expenses.
   - Replaced quick-add rental templates with 1-tap realistic equipment chips tailored to each trade.
+- **Phase 2.4 (Site-Centric Tool Management & Streamlined Bottom Navigation):**
+  - Removed the standalone "Tools" tab from `BottomNav.tsx` and `NavigationTabs.tsx`.
+  - Converted the bottom navigation to a clean, uncrowded 4-tab bar (`Dashboard`, `Sites`, `Labour`, `Pending Dues`) with wider touch targets and no truncated labels.
+  - Upgraded the in-site Tools tab in `SiteDetailsModal.tsx` to directly manage all self-owned dispatched tools and site-purchased tools with rich cards, return-to-godown actions, and empty states.
+  - Re-routed tool-related dashboard widgets and reminders to open `Sites` directly.
 
 

@@ -31,7 +31,6 @@ export const NavigationTabs: React.FC<NavigationTabsProps> = ({
     { id: 'dashboard' as ActiveTab, label: t('navDashboard'), icon: LayoutDashboard },
     { id: 'sites' as ActiveTab, label: t('navSites'), icon: Building2 },
     { id: 'labour' as ActiveTab, label: t('navLabour'), icon: Users },
-    { id: 'tools' as ActiveTab, label: t('navTools'), icon: Wrench },
     { id: 'materials' as ActiveTab, label: t('navMaterials'), icon: Package },
     { id: 'machinery' as ActiveTab, label: t('navMachinery'), icon: Truck },
     { id: 'dues' as ActiveTab, label: t('navDues'), icon: Receipt },
