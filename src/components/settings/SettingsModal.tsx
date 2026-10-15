@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { ContractorAccount, TradeCategory, ThemeMode, Language } from '../../types';
 import { TRADE_CONFIGS, ALL_TRADE_KEYS } from '../../core/theme/tradeConfigs';
@@ -9,7 +9,14 @@ import {
   User,
   Phone,
   Building,
-  Globe,
+  Mail,
+  Lock,
+  Fingerprint,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Download,
+  Upload,
   Sun,
   Moon,
   Monitor,
@@ -20,12 +27,14 @@ import {
   LogOut,
   X,
   CheckCircle2,
+  AlertCircle,
+  Edit3,
+  Save,
   HardHat,
   Wrench,
   Zap,
   Paintbrush,
   Hammer,
-  Shield,
   Layers,
   Grid,
   Wind,
@@ -53,21 +62,241 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const { trade, setTrade, themeMode, setThemeMode, language, setLanguage, t, tradeConfig } = useTheme();
 
+  // Profile Edit State
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState(account?.name || '');
+  const [editPhone, setEditPhone] = useState(account?.phone || '');
+  const [editCompany, setEditCompany] = useState(account?.companyName || '');
+  const [editEmail, setEditEmail] = useState(account?.email || '');
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+
+  // Security & App Lock State
+  const [isPinLockEnabled, setIsPinLockEnabled] = useState(account?.isPinLockEnabled || false);
+  const [pinCode, setPinCode] = useState(account?.pinLock || '');
+  const [isBiometricEnabled, setIsBiometricEnabled] = useState(account?.isBiometricEnabled || false);
+  const [isAntiDeleteEnabled, setIsAntiDeleteEnabled] = useState(account?.isAntiDeleteEnabled || false);
+  const [securityNotice, setSecurityNotice] = useState('');
+
+  // Backup & Restore State
+  const [backupStatus, setBackupStatus] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Clear Confirmation
   const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
   const [isConfirmSampleOpen, setIsConfirmSampleOpen] = useState(false);
+  const [pinPromptOpen, setPinPromptOpen] = useState(false);
+  const [enteredPin, setEnteredPin] = useState('');
+  const [pinError, setPinError] = useState('');
+
+  // Hardware biometric detection
+  const hasBiometricSupport = typeof window !== 'undefined' && !!window.PublicKeyCredential;
 
   if (!isOpen) return null;
+
+  const handleStartEditProfile = () => {
+    setEditName(account?.name || '');
+    setEditPhone(account?.phone?.replace(/\D/g, '') || '');
+    setEditCompany(account?.companyName || '');
+    setEditEmail(account?.email || '');
+    setProfileError('');
+    setProfileSuccess('');
+    setIsEditingProfile(true);
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+
+    if (!editName.trim()) {
+      setProfileError(language === 'hi' ? 'कृपया अपना नाम दर्ज करें' : 'Please enter your name');
+      return;
+    }
+
+    const cleanPhone = editPhone.trim().replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      setProfileError(
+        language === 'hi'
+          ? 'मोबाइल नंबर ठीक 10 अंकों का होना चाहिए'
+          : 'Mobile phone number must be exactly 10 digits'
+      );
+      return;
+    }
+
+    try {
+      if (account?.id) {
+        await db.account.update(account.id, {
+          name: editName.trim(),
+          phone: cleanPhone,
+          companyName: editCompany.trim() || undefined,
+          email: editEmail.trim() || undefined,
+        });
+      }
+      setProfileSuccess(language === 'hi' ? 'प्रोफाइल सफलतापूर्वक अपडेट हुई!' : 'Profile updated successfully!');
+      setTimeout(() => {
+        setIsEditingProfile(false);
+        setProfileSuccess('');
+      }, 1200);
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      setProfileError(language === 'hi' ? 'प्रोफाइल सेव करने में त्रुटि' : 'Failed to save profile');
+    }
+  };
+
+  const handleTogglePinLock = async () => {
+    if (!account?.id) return;
+    const nextState = !isPinLockEnabled;
+    if (nextState && !pinCode) {
+      setSecurityNotice(language === 'hi' ? 'कृपया पहले 4 अंकों का पिन दर्ज करें' : 'Please set a 4-digit PIN first');
+      return;
+    }
+    setIsPinLockEnabled(nextState);
+    await db.account.update(account.id, {
+      isPinLockEnabled: nextState,
+      pinLock: pinCode,
+    });
+    setSecurityNotice(
+      nextState
+        ? language === 'hi' ? 'पिन लॉक सक्रिय हो गया' : 'PIN Lock enabled'
+        : language === 'hi' ? 'पिन लॉक बंद कर दिया गया' : 'PIN Lock disabled'
+    );
+    setTimeout(() => setSecurityNotice(''), 2500);
+  };
+
+  const handleSavePin = async () => {
+    if (!account?.id) return;
+    if (pinCode.length < 4) {
+      setSecurityNotice(language === 'hi' ? 'पिन कम से कम 4 अंकों का होना चाहिए' : 'PIN must be at least 4 digits');
+      return;
+    }
+    await db.account.update(account.id, {
+      pinLock: pinCode,
+      isPinLockEnabled: true,
+    });
+    setIsPinLockEnabled(true);
+    setSecurityNotice(language === 'hi' ? 'सुरक्षा पिन सुरक्षित रूप से सेव हुआ' : 'Security PIN saved successfully');
+    setTimeout(() => setSecurityNotice(''), 2500);
+  };
+
+  const handleToggleBiometric = async () => {
+    if (!account?.id) return;
+    if (!hasBiometricSupport) {
+      setSecurityNotice(
+        language === 'hi'
+          ? 'इस डिवाइस में बायोमेट्रिक सेंसर उपलब्ध नहीं है। पिन लॉक काम करेगा।'
+          : 'Biometric hardware not detected on this device. PIN lock will be active.'
+      );
+      setTimeout(() => setSecurityNotice(''), 3500);
+      return;
+    }
+    const nextState = !isBiometricEnabled;
+    setIsBiometricEnabled(nextState);
+    await db.account.update(account.id, {
+      isBiometricEnabled: nextState,
+    });
+    setSecurityNotice(
+      nextState
+        ? language === 'hi' ? 'फिंगरप्रिंट / फेस लॉक सक्रिय किया गया' : 'Biometric fingerprint lock activated'
+        : language === 'hi' ? 'बायोमेट्रिक लॉक बंद किया गया' : 'Biometric lock deactivated'
+    );
+    setTimeout(() => setSecurityNotice(''), 2500);
+  };
+
+  const handleToggleAntiDelete = async () => {
+    if (!account?.id) return;
+    const nextState = !isAntiDeleteEnabled;
+    setIsAntiDeleteEnabled(nextState);
+    await db.account.update(account.id, {
+      isAntiDeleteEnabled: nextState,
+    });
+    setSecurityNotice(
+      nextState
+        ? language === 'hi'
+          ? 'एंटी-डिलीट सुरक्षा चालू: बिना पिन कोई डेटा नहीं हटा सकता'
+          : 'Anti-Delete protection active: Data wipe restricted'
+        : language === 'hi'
+        ? 'एंटी-डिलीट सुरक्षा बंद की गई'
+        : 'Anti-Delete protection turned off'
+    );
+    setTimeout(() => setSecurityNotice(''), 3000);
+  };
+
+  const handleExportBackup = async () => {
+    try {
+      setBackupStatus(language === 'hi' ? 'बैकअप तैयार हो रहा है...' : 'Generating backup file...');
+      const json = await db.exportBackupJson();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.href = url;
+      a.download = `SiteSaathi_Backup_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setBackupStatus(
+        language === 'hi'
+          ? '✓ बैकअप डाउनलोड हो गया! फोन बदलते समय यह फाइल काम आएगी।'
+          : '✓ Backup downloaded! Keep this file to restore on any new phone.'
+      );
+      setTimeout(() => setBackupStatus(''), 4500);
+    } catch (err) {
+      console.error('Backup export failed:', err);
+      setBackupStatus(language === 'hi' ? 'बैकअप डाउनलोड करने में त्रुटि' : 'Failed to export backup');
+    }
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        setBackupStatus(language === 'hi' ? 'डेटा रीस्टोर किया जा रहा है...' : 'Restoring database...');
+        await db.importBackupJson(content);
+        setBackupStatus(language === 'hi' ? '✓ डेटा सफलतापूर्वक रीस्टोर हो गया!' : '✓ Database restored successfully!');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } catch (err) {
+        console.error('Backup import error:', err);
+        setBackupStatus(language === 'hi' ? 'अमान्य बैकअप फाइल' : 'Invalid backup JSON file');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleRequestClearData = () => {
+    if (isAntiDeleteEnabled || (isPinLockEnabled && pinCode)) {
+      setPinPromptOpen(true);
+      setEnteredPin('');
+      setPinError('');
+    } else {
+      setIsConfirmClearOpen(true);
+    }
+  };
+
+  const handleVerifyPinForClear = () => {
+    if (enteredPin === pinCode) {
+      setPinPromptOpen(false);
+      setIsConfirmClearOpen(true);
+    } else {
+      setPinError(language === 'hi' ? 'गलत पिन दर्ज किया गया' : 'Incorrect security PIN');
+    }
+  };
 
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-        {/* Separate Backdrop Layer */}
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
-        {/* Interactive Sharp Dialog Container */}
         <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
           
-          {/* Header */}
+          {/* Header - Strictly "Settings" as requested */}
           <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex items-center gap-2.5">
               <div
@@ -81,7 +310,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {t('settingsTitle')}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {language === 'hi' ? 'प्रोफाइल, भाषा, थीम व डेटा नियंत्रण' : 'Profile, language, trade theming & data'}
+                  {language === 'hi' ? 'प्रोफाइल, सुरक्षा व डेटा नियंत्रण' : 'Contractor profile, security & data control'}
                 </p>
               </div>
             </div>
@@ -93,38 +322,147 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
 
-          {/* Modal Content */}
+          {/* Modal Body */}
           <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
             
-            {/* 1. Account Profile Card */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+            {/* 1. Contractor Profile Card & In-line Editor */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-extrabold text-xs uppercase tracking-wider text-slate-500">
-                  {language === 'hi' ? 'ठेकेदार प्रोफाइल' : 'Contractor Profile'}
+                <span className="font-extrabold text-xs uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{language === 'hi' ? 'ठेकेदार प्रोफाइल' : 'Contractor Profile'}</span>
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 dark:bg-green-950/60 text-green-700 dark:text-green-400">
-                  Active
-                </span>
-              </div>
-
-              <div className="pt-1 space-y-1">
-                <h3 className="font-black text-base text-slate-900 dark:text-white">
-                  {account?.name || 'Contractor'}
-                </h3>
-                <p className="text-slate-500 font-semibold flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-blue-500" />
-                  {account?.phone || 'No phone'}
-                </p>
-                {account?.companyName && (
-                  <p className="text-slate-500 font-semibold flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-purple-500" />
-                    {account.companyName}
-                  </p>
+                {!isEditingProfile && (
+                  <button
+                    type="button"
+                    onClick={handleStartEditProfile}
+                    className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 border border-blue-200 dark:border-blue-900 flex items-center gap-1 transition-colors"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    <span>{language === 'hi' ? 'एडिट करें' : 'Edit Profile'}</span>
+                  </button>
                 )}
               </div>
+
+              {profileSuccess && (
+                <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-xs flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{profileSuccess}</span>
+                </div>
+              )}
+
+              {profileError && (
+                <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{profileError}</span>
+                </div>
+              )}
+
+              {/* View Mode */}
+              {!isEditingProfile ? (
+                <div className="pt-1 space-y-1.5">
+                  <h3 className="font-black text-base text-slate-900 dark:text-white">
+                    {account?.name || 'Contractor'}
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-blue-500" />
+                    <span>{account?.phone || 'No phone'}</span>
+                  </p>
+                  {account?.companyName && (
+                    <p className="text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+                      <Building className="w-3.5 h-3.5 text-purple-500" />
+                      <span>{account.companyName}</span>
+                    </p>
+                  )}
+                  {account?.email && (
+                    <p className="text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{account.email}</span>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                /* Edit Mode */
+                <form onSubmit={handleSaveProfile} className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      {language === 'hi' ? 'ठेकेदार का नाम *' : 'Contractor Name *'}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Contractor Name"
+                      className="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      {language === 'hi' ? 'मोबाइल नंबर (ठीक 10 अंक) *' : 'Mobile Number (Exactly 10 digits) *'}
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={10}
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="9876543210"
+                      className="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-blue-600"
+                    />
+                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                      {editPhone.length}/10 {language === 'hi' ? 'अंक दर्ज' : 'digits entered'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      {language === 'hi' ? 'फर्म / काम का डिस्प्ले नाम' : 'Firm / Business Display Name'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editCompany}
+                      onChange={(e) => setEditCompany(e.target.value)}
+                      placeholder={language === 'hi' ? 'शर्मा कंस्ट्रक्शन' : 'Sharma Construction'}
+                      className="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      {language === 'hi' ? 'ईमेल / जीमेल' : 'Email / Gmail'}
+                    </label>
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="contractor@gmail.com"
+                      className="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="submit"
+                      className="flex-1 py-2 px-3 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-blue-700 shadow-sm"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{language === 'hi' ? 'सेव करें' : 'Save Changes'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingProfile(false)}
+                      className="py-2 px-3 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-300"
+                    >
+                      {language === 'hi' ? 'रद्द करें' : 'Cancel'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
 
-            {/* 2. Trade Preference */}
+            {/* 2. Active Trade */}
             <div className="space-y-2">
               <label className="block font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 {t('tradePreference')}
@@ -171,7 +509,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
 
-            {/* 3. Language & Theme Mode Grid */}
+            {/* 3. Language & Mode */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Language */}
               <div className="space-y-2">
@@ -204,7 +542,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Theme Mode */}
+              {/* Mode - Strictly "Mode" as requested */}
               <div className="space-y-2">
                 <label className="block font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   {t('themePreference')}
@@ -237,8 +575,191 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
 
-            {/* 4. Interactive Tutorial Action */}
-            <div className="pt-2">
+            {/* 4. Security & App Lock (Fingerprint, PIN & Anti-Delete) */}
+            <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/60 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs uppercase tracking-wider text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span>{language === 'hi' ? 'सुरक्षा व ऐप लॉक' : 'Security & App Lock'}</span>
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-200/80 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                  APK Security
+                </span>
+              </div>
+
+              {securityNotice && (
+                <div className="p-2.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-200 text-xs flex items-center gap-1.5 font-semibold">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>{securityNotice}</span>
+                </div>
+              )}
+
+              {/* PIN Code Setup */}
+              <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-950 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                        {language === 'hi' ? 'पिन लॉक (PIN Lock)' : 'PIN / Password Lock'}
+                      </span>
+                      <span className="text-[10px] text-slate-500">
+                        {language === 'hi' ? 'ऐप खोलने व डेटा सुरक्षा हेतु' : 'Protects app opening & settings'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTogglePinLock}
+                    className={`w-10 h-6 rounded-full transition-colors relative p-0.5 ${
+                      isPinLockEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                        isPinLockEnabled ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {isPinLockEnabled && (
+                  <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700">
+                    <input
+                      type="password"
+                      maxLength={6}
+                      value={pinCode}
+                      onChange={(e) => setPinCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="4-digit PIN (e.g. 1234)"
+                      className="flex-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSavePin}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      {language === 'hi' ? 'सेव' : 'Save PIN'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Fingerprint / Biometric Lock */}
+              <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-950 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Fingerprint className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                      {language === 'hi' ? 'फिंगरप्रिंट लॉक' : 'Fingerprint Lock'}
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      {hasBiometricSupport
+                        ? language === 'hi' ? 'डिवाइस के फिंगरप्रिंट सेंसर से अनलॉक' : 'Uses phone fingerprint / biometrics'
+                        : language === 'hi' ? 'हार्डवेयर सेंसर उपलब्ध नहीं (पिन काम करेगा)' : 'Sensor unavailable, PIN fallback active'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleBiometric}
+                  className={`w-10 h-6 rounded-full transition-colors relative p-0.5 ${
+                    isBiometricEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                      isBiometricEnabled ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Anti-Deletion & Reset Protection */}
+              <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-950 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                      {language === 'hi' ? 'एंटी-डिलीट सुरक्षा (Anti-Delete Protection)' : 'Anti-Delete & Wipe Protection'}
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      {language === 'hi'
+                        ? 'साइट पर कोई गलती से ऐप व डेटा डिलीट न कर सके'
+                        : 'Blocks accidental uninstall & restricts data reset'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleAntiDelete}
+                  className={`w-10 h-6 rounded-full transition-colors relative p-0.5 ${
+                    isAntiDeleteEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                      isAntiDeleteEnabled ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* 5. Device Transfer & Data Backup (JSON Export / Import) */}
+            <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs uppercase tracking-wider text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                  <Download className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>{language === 'hi' ? 'डेटा बैकअप व ट्रांसफर' : 'Data Backup & Device Transfer'}</span>
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
+                  100% Offline
+                </span>
+              </div>
+
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                {language === 'hi'
+                  ? 'जब आप नया फोन लें या डिवाइस बदलें, तो यहाँ से बैकअप डाउनलोड करें और नए फोन में लोड कर लें। कोई इंटरनेट नहीं चाहिए।'
+                  : 'Switching devices? Export your entire offline database and import it on your new phone without internet.'}
+              </p>
+
+              {backupStatus && (
+                <div className="p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-200 text-xs font-semibold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{backupStatus}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleExportBackup}
+                  className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-bold flex items-center justify-center gap-2 shadow-xs transition-colors"
+                >
+                  <Download className="w-4 h-4 text-emerald-600" />
+                  <span>{language === 'hi' ? 'बैकअप डाउनलोड करें (JSON)' : 'Export Backup File'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-bold flex items-center justify-center gap-2 shadow-xs transition-colors"
+                >
+                  <Upload className="w-4 h-4 text-emerald-600" />
+                  <span>{language === 'hi' ? 'बैकअप रीस्टोर करें' : 'Restore from Backup'}</span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  className="hidden"
+                  onChange={handleImportBackup}
+                />
+              </div>
+            </div>
+
+            {/* 6. Interactive Tutorial Action */}
+            <div>
               <button
                 type="button"
                 onClick={() => {
@@ -249,16 +770,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 text-blue-500" />
-                  <span>{language === 'hi' ? 'ट्यूटोरियल फिर से देखें (Replay Guide)' : 'Show Interactive Tutorial Again'}</span>
+                  <span>{language === 'hi' ? 'ट्यूटोरियल फिर से देखें' : 'Show Interactive Tutorial Again'}</span>
                 </div>
                 <span className="text-[11px] font-extrabold text-blue-600">Replay →</span>
               </button>
             </div>
 
-            {/* 5. Data Management & Recruiter Seeder */}
+            {/* 7. Data Tools (No '&' or '/') */}
             <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
               <span className="font-extrabold text-slate-500 uppercase tracking-wider block">
-                {language === 'hi' ? 'डेटा व डेमो प्रबंधन' : 'Data Management & Demo Tools'}
+                {language === 'hi' ? 'डेटा टूल्स' : 'Data Tools'}
               </span>
 
               {/* Load Sample Demo Data (Opt-In) */}
@@ -270,7 +791,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span>
-                    {language === 'hi' ? '⚡ नमूना डेटा लोड करें (Load Sample Data)' : '⚡ Load Sample Data (For Reviewers)'}
+                    {language === 'hi' ? '⚡ नमूना डेटा लोड करें (Sample Data)' : '⚡ Load Sample Data'}
                   </span>
                 </div>
                 <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
@@ -281,20 +802,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Clear All Data / Reset App */}
               <button
                 type="button"
-                onClick={() => setIsConfirmClearOpen(true)}
+                onClick={handleRequestClearData}
                 className="w-full p-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 font-bold flex items-center justify-between transition-all hover:bg-red-100 dark:hover:bg-red-950/50"
               >
                 <div className="flex items-center gap-2">
                   <Trash2 className="w-4 h-4 text-red-500" />
                   <span>
-                    {language === 'hi' ? '⚠️ सभी डेटा हटाएं (Clear All Data / Fresh Start)' : '⚠️ Clear All Data (Start Empty)'}
+                    {language === 'hi' ? '⚠️ सभी डेटा हटाएं (Clear All Data)' : '⚠️ Clear All Data (Start Empty)'}
                   </span>
                 </div>
                 <span className="text-[10px] font-black uppercase text-red-600">Wipe Clean</span>
               </button>
             </div>
 
-            {/* 6. Log Out / Switch Account */}
+            {/* 8. Log Out / Switch Account */}
             <div className="pt-2">
               <button
                 type="button"
@@ -302,10 +823,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onClose();
                   onLogOut();
                 }}
-                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3 px-4 rounded-xl text-xs font-bold text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900 flex items-center justify-center gap-2 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                <span>{language === 'hi' ? 'लॉगआउट / खाता बदलें' : 'Log Out / Switch Contractor Account'}</span>
+                <span>{language === 'hi' ? 'लॉगआउट करें' : 'Log Out Account'}</span>
               </button>
             </div>
 
@@ -313,6 +834,54 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         </div>
       </div>
+
+      {/* PIN Verification Modal for Anti-Delete / Clear All Data */}
+      {pinPromptOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setPinPromptOpen(false)} />
+          <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+              <Lock className="w-5 h-5" />
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                {language === 'hi' ? 'एंटी-डिलीट सुरक्षा पिन' : 'Security PIN Required'}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              {language === 'hi'
+                ? 'डेटा हटाने के लिए अपना सुरक्षा पिन दर्ज करें:'
+                : 'Enter your security PIN to authorize wiping data:'}
+            </p>
+            {pinError && (
+              <p className="text-xs text-red-600 font-semibold">{pinError}</p>
+            )}
+            <input
+              type="password"
+              autoFocus
+              maxLength={6}
+              value={enteredPin}
+              onChange={(e) => setEnteredPin(e.target.value)}
+              placeholder="••••"
+              className="w-full px-3 py-2 text-center font-mono font-bold text-base rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleVerifyPinForClear}
+                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs"
+              >
+                {language === 'hi' ? 'सत्यापित करें' : 'Verify'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPinPromptOpen(false)}
+                className="py-2 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+              >
+                {language === 'hi' ? 'रद्द' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal for Clearing All Data */}
       <ConfirmDeleteModal

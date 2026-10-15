@@ -7,7 +7,6 @@ import {
   Zap,
   Bell,
   MoreVertical,
-  LogOut,
   Paintbrush,
   Hammer,
   Shield,
@@ -125,22 +124,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenSettings}
             className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 btn-tactile transition-colors"
-            title="Menu / Settings"
+            title="Settings"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
-
-          {/* Logout */}
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 btn-tactile"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          )}
-
         </div>
       </div>
     </header>

@@ -20,11 +20,16 @@ export interface ContractorAccount {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   password?: string;
   trade: TradeCategory;
   language: Language;
   themeMode: ThemeMode;
   companyName?: string;
+  pinLock?: string;
+  isPinLockEnabled?: boolean;
+  isBiometricEnabled?: boolean;
+  isAntiDeleteEnabled?: boolean;
   tutorialCompleted: boolean;
   createdAt: string;
 }

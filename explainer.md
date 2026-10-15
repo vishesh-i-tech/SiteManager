@@ -21,6 +21,8 @@ This document tracks all technologies, libraries, and architectural modules used
 | **MediaRecorder API** | Audio Utility | Voice note capture for site audio reminders |
 | **Dynamic Trade Token Engine**| Architecture / Theming | Real-time theme switching (Civil, Plumbing, Electrical) |
 | **Bilingual i18n Engine** | Localization | Instant reactive switching between Hindi and English |
+| **JSON Database Backup Engine**| Storage & Migration | Full offline database export & restore for switching phones |
+| **App Lock & Anti-Delete System** | Security & Protection | Device PIN, Biometric Fingerprint & Accidental Wipe Shield |
 
 ---
 
@@ -63,10 +65,13 @@ This document tracks all technologies, libraries, and architectural modules used
 
 ---
 
-### 6. Tesseract.js (Client-Side OCR)
+### 6. Tesseract.js (Client-Side OCR) & Offline Scanner Architecture
 - **What it does:** Digitizes handwritten worker registers from photos taken of paper diaries or notebooks.
-- **How it works:** Runs a compiled WebAssembly version of Google's Tesseract OCR engine directly inside the browser. It recognizes text lines, identifies worker names, roles, and wage amounts, and populates a draft attendance table.
-- **Small Summary:** Converts paper diary muster photos into digital attendance records.
+- **How it works (Internet vs. Offline):** 
+  - **Does it need internet?** **NO**, the recognition engine runs **100% offline** on the user's smartphone.
+  - When the app or APK is built/installed, the Tesseract language models and WebAssembly runtime are cached in persistent storage (`IndexedDB` / Service Worker cache).
+  - During photo scanning, the image never leaves the user's phone. HTML5 Canvas preprocesses pixel contrast locally in memory, and the WebAssembly engine parses characters directly on the device's CPU/GPU.
+- **Small Summary:** 100% offline document digitizer running completely in-phone without cloud servers.
 
 ---
 
@@ -119,6 +124,23 @@ This document tracks all technologies, libraries, and architectural modules used
 
 ---
 
+### 14. JSON Database Backup & Cross-Device Migration Engine (`database.ts`)
+- **What it does:** Enables contractors to export their entire offline database into a single `.json` file and restore it on any new phone or device when switching phones.
+- **How it works:** Uses transactional IndexedDB reading (`exportBackupJson()`) across all 10 tables (`account`, `sites`, `tools`, `labourRecords`, `labourEntries`, `materials`, `machinery`, `dues`, `vendors`, `reminders`). The resulting JSON payload is downloaded as a timestamped backup. On the new device, `importBackupJson(jsonString)` performs atomic bulk insertion inside an IndexedDB read-write transaction.
+- **Small Summary:** Seamless 1-tap device-to-device data migration without cloud dependency.
+
+---
+
+### 15. Security PIN, Biometric Fingerprint & Anti-Delete System (`AppLockScreen.tsx`)
+- **What it does:** Protects the contractor's data with a security PIN, optional device biometric/fingerprint authentication, and accidental deletion protection.
+- **How it works:**
+  - **PIN Lock:** Validates a 4-to-6 digit security PIN upon opening or resuming the app.
+  - **Biometrics:** Queries `window.PublicKeyCredential` for native device fingerprint/face biometric availability. If supported, triggers hardware biometric verification; if the device lacks biometric hardware, gracefully falls back to PIN lock.
+  - **Anti-Delete Protection:** Protects destructive actions (such as data wipe, resetting the app, or bulk record deletion) behind PIN verification, preventing workers or unauthorized personnel on site from accidentally wiping the app.
+- **Small Summary:** Full device-level privacy lock and accidental data deletion prevention.
+
+---
+
 ## 📝 Change Log & Phase History
 
 - **Phase 0 (Baseline Setup):** Initial project baseline, Git repository setup, README badges, executive PDF document in `docx/`, and creation of this `explainer.md` file.
@@ -131,4 +153,15 @@ This document tracks all technologies, libraries, and architectural modules used
   - Added equipment ownership toggle (Rental vs Self-Owned) in machinery logs.
   - Removed "Size/Specs" field and cleaned "e.g." from all input placeholders across the app.
   - Compacted Pending Dues banner and simplified Smart Insights descriptions for high-visibility mobile glanceability.
+- **Phase 2 (Settings, Security, Backup Export, Dashboard & Labour Redesign):**
+  - Renamed "Settings & Preferences" to strictly **"Settings"** (`सेटिंग्स`) and cleaned headers (e.g. "Mode", "Active Trade", "Data Tools") eliminating all congested `/` and `&` text.
+  - Added inline **Contractor Profile Editor** with real-time updates for Name, strict 10-digit Phone, Display/Firm Name (`companyName`), and Email/Gmail (`email`).
+  - Enforced strict **10-digit mobile phone restriction** across Registration, Login, and Profile editing.
+  - Added full **Data Backup & Device Transfer Engine** with 1-tap JSON export and JSON restore for phone switching.
+  - Built **App Lock & Security Suite** featuring 4-digit PIN lock, device Fingerprint Biometric integration with automatic fallback, and **Anti-Delete Protection** restricting accidental app data wipes.
+  - Cleaned Dashboard header by removing repeated "General Construction" badge and dynamically rendering contractor's custom Firm/Business name.
+  - Removed Operational Alerts section from Dashboard (offline app design) and relocated Logout button into Settings modal.
+  - Redesigned Labour Register into **Worker Entry** (`कारीगर हाजिरी`): removed long subtitle, simplified manual add to an icon-only `+` button, renamed photo OCR to **Scan** (`स्कैन करें`), and deleted the 3 summary KPI cards.
+  - Clarified 100% offline OCR processing architecture without cloud/internet dependency.
+
 

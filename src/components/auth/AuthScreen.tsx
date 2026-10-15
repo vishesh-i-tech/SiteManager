@@ -12,6 +12,7 @@ import {
   User,
   Phone,
   Building,
+  Mail,
   Lock,
   LogIn,
   UserPlus,
@@ -50,6 +51,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -65,10 +67,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       return;
     }
 
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      setErrorMsg(language === 'hi' ? 'मोबाइल नंबर ठीक 10 अंकों का होना चाहिए' : 'Phone number must be exactly 10 digits');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg('');
     try {
-      const cleanPhone = phone.trim().replace(/\D/g, '');
       const existing = await db.account.where('phone').equals(cleanPhone).first();
       if (existing) {
         setErrorMsg(
@@ -84,6 +91,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         id: `contractor-${Date.now()}`,
         name: name.trim(),
         phone: cleanPhone,
+        email: email.trim() || undefined,
         password: password.trim() || undefined,
         companyName: companyName.trim() || undefined,
         trade: selectedTrade,
@@ -260,8 +268,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   <input
                     type="tel"
                     required
+                    maxLength={10}
                     value={loginPhone}
-                    onChange={(e) => setLoginPhone(e.target.value)}
+                    onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="9876543210"
                     className="w-full px-3.5 py-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-600 text-slate-900 dark:text-white transition-colors"
                   />
@@ -405,15 +414,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                      {language === 'hi' ? 'मोबाइल नंबर *' : 'Mobile Phone Number *'}
+                      {language === 'hi' ? 'मोबाइल नंबर (10 अंक) *' : 'Mobile Phone Number (10 digits) *'}
                     </label>
                     <div className="relative">
                       <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                       <input
                         type="tel"
                         required
+                        maxLength={10}
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                         placeholder="9876543210"
                         className="w-full pl-9 pr-3.5 py-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-600 text-slate-900 dark:text-white transition-colors"
                       />
@@ -431,6 +441,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder={language === 'hi' ? 'शर्मा कंस्ट्रक्शन एंड सप्लायर्स' : 'Sharma Construction & Suppliers'}
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-600 text-slate-900 dark:text-white transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      {language === 'hi' ? 'ईमेल / जीमेल (वैकल्पिक)' : 'Email / Gmail (Optional)'}
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="contractor@gmail.com"
                         className="w-full pl-9 pr-3.5 py-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-600 text-slate-900 dark:text-white transition-colors"
                       />
                     </div>

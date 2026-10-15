@@ -14,6 +14,7 @@ import {
   User,
   Phone,
   Building,
+  Mail,
   LogIn,
   UserPlus,
   ChevronRight,
@@ -52,6 +53,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -68,7 +70,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) {
-      setErrorMsg('Please enter both name and mobile number');
+      setErrorMsg(language === 'hi' ? 'कृपया नाम और मोबाइल नंबर भरें' : 'Please enter both name and mobile number');
+      return;
+    }
+
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      setErrorMsg(language === 'hi' ? 'मोबाइल नंबर ठीक 10 अंकों का होना चाहिए' : 'Mobile number must be exactly 10 digits');
       return;
     }
 
@@ -78,8 +86,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const newAccount: ContractorAccount = {
         id: `contractor-${Date.now()}`,
         name: name.trim(),
-        phone: phone.trim(),
+        phone: cleanPhone,
         companyName: companyName.trim() || undefined,
+        email: email.trim() || undefined,
         trade,
         language,
         themeMode: 'light',
@@ -363,14 +372,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <div>
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-blue-500" />
-                        <span>{t('yourPhone')} *</span>
+                        <span>{t('yourPhone')} (10 digits) *</span>
                       </label>
                       <input
                         type="tel"
                         required
+                        maxLength={10}
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+91 98765 43210"
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="9876543210"
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>
@@ -385,6 +395,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder={language === 'hi' ? 'शर्मा कंस्ट्रक्शन' : 'Sharma Construction Co.'}
+                        className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-blue-500" />
+                        <span>{language === 'hi' ? 'ईमेल / जीमेल (वैकल्पिक)' : 'Email / Gmail (Optional)'}</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="contractor@gmail.com"
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>
@@ -455,9 +479,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <input
                     type="tel"
                     required
+                    maxLength={10}
                     value={loginPhone}
-                    onChange={(e) => setLoginPhone(e.target.value)}
-                    placeholder="+91 98765 43210"
+                    onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="9876543210"
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                   />
                 </div>

@@ -2,7 +2,6 @@ import React from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site, ToolRecord, LabourRecord, MaterialRecord, MachineryRecord, ExpenseDue, SmartInsight } from '../../types';
 import { SiteCard } from '../sites/SiteCard';
-import { SmartInsightsCard } from '../insights/SmartInsightsCard';
 import { ActiveTab } from '../common/BottomNav';
 import { CountUpNumber } from '../common/CountUpNumber';
 import {
@@ -31,6 +30,7 @@ interface DashboardOverviewProps {
   onNavigateTab: (tab: ActiveTab, filter?: 'all' | 'ongoing' | 'completed' | 'planning') => void;
   onOpenReport: (site: Site) => void;
   contractorName?: string;
+  companyName?: string;
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
@@ -46,6 +46,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onNavigateTab,
   onOpenReport,
   contractorName,
+  companyName,
 }) => {
   const { t, language, tradeConfig } = useTheme();
 
@@ -72,9 +73,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
-              {language === 'hi' ? tradeConfig.nameHi : tradeConfig.nameEn}
-            </span>
+            {companyName ? (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
+                {companyName}
+              </span>
+            ) : null}
             <span className="text-[10px] text-slate-400 font-medium">
               {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
             </span>
@@ -108,7 +111,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             className="py-2 px-1 rounded-xl font-semibold text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 flex flex-col items-center justify-center gap-1 btn-tactile transition-colors"
           >
             <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <span className="truncate">{language === 'hi' ? 'फोटो हाज़िरी' : 'Photo OCR'}</span>
+            <span className="truncate">{language === 'hi' ? 'स्कैन' : 'Scan'}</span>
           </button>
 
           <button
@@ -120,9 +123,6 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Operational Insights & Alerts Card */}
-      <SmartInsightsCard insights={insights} onNavigateTab={onNavigateTab} />
 
       {/* Mobile 2x2 KPI Widgets (Zero Horizontal Truncation) */}
       <div className="grid grid-cols-2 gap-2.5">

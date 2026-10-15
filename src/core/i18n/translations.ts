@@ -138,10 +138,10 @@ export const translations = {
     tutStep4Desc: 'Never forget an unpaid bill. Dues stay visible and remind you even after a site is marked Completed.',
 
     // Settings
-    settingsTitle: 'Settings & Preferences',
+    settingsTitle: 'Settings',
     languagePreference: 'App Language',
-    tradePreference: 'Active Trade / Category',
-    themePreference: 'Appearance / Mode',
+    tradePreference: 'Active Trade',
+    themePreference: 'Mode',
     modeLight: 'Light Mode',
     modeDark: 'Dark Mode',
     modeSystem: 'System Default',
@@ -291,10 +291,10 @@ export const translations = {
     tutStep4Desc: 'साइट का काम खत्म होने पर भी उसका बाकी पैसा और बिल पेंडिंग ड्यूज में दिखता रहेगा।',
 
     // Settings
-    settingsTitle: 'सेटिंग्स व प्राथमिकताएं',
+    settingsTitle: 'सेटिंग्स',
     languagePreference: 'ऐप की भाषा',
-    tradePreference: 'मुख्य काम (ट्रेड)',
-    themePreference: 'थीम व डिस्प्ले',
+    tradePreference: 'सक्रिय ट्रेड',
+    themePreference: 'मोड',
     modeLight: 'लाइट मोड',
     modeDark: 'डार्क मोड',
     modeSystem: 'सिस्टम डिफॉल्ट',

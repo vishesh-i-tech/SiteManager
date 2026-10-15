@@ -41,6 +41,7 @@ import { VoiceInputModal } from './components/common/VoiceInputModal';
 import { QuickAddModal } from './components/common/QuickAddModal';
 import { RemindersModal } from './components/common/RemindersModal';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { AppLockScreen } from './components/common/AppLockScreen';
 import { AuthModal } from './components/auth/AuthModal';
 import { AuthScreen } from './components/auth/AuthScreen';
 import { OnboardingModal } from './components/onboarding/OnboardingModal';
@@ -61,6 +62,7 @@ export const App: React.FC = () => {
   const [activeAccountId, setActiveAccountId] = useState<string | null>(() => {
     return localStorage.getItem('sitesaathi_active_user_id');
   });
+  const [isAppLocked, setIsAppLocked] = useState(false);
 
   // Modal open states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -157,6 +159,13 @@ export const App: React.FC = () => {
     checkAuth();
   }, []);
 
+  // Monitor PIN Lock state
+  useEffect(() => {
+    if (currentAccount?.isPinLockEnabled && currentAccount.pinLock && !sessionStorage.getItem('sitesaathi_unlocked')) {
+      setIsAppLocked(true);
+    }
+  }, [currentAccount?.id, currentAccount?.isPinLockEnabled, currentAccount?.pinLock]);
+
   const refreshInsights = async () => {
     const smartIns = await db.generateSmartInsights();
     setInsights(smartIns);
@@ -165,6 +174,8 @@ export const App: React.FC = () => {
   const handleAuthenticated = (account: ContractorAccount, isNewAccount: boolean) => {
     setActiveAccountId(account.id);
     localStorage.setItem('sitesaathi_active_user_id', account.id);
+    sessionStorage.setItem('sitesaathi_unlocked', 'true');
+    setIsAppLocked(false);
     setTrade(account.trade);
     setLanguage(account.language);
     setIsAuthModalOpen(false);
@@ -178,9 +189,10 @@ export const App: React.FC = () => {
 
   const handleLogOut = () => {
     localStorage.removeItem('sitesaathi_active_user_id');
+    sessionStorage.removeItem('sitesaathi_unlocked');
     setActiveAccountId(null);
+    setIsAppLocked(false);
     setIsSettingsModalOpen(false);
-    setIsAuthModalOpen(true);
     showToast('Logged out successfully', 'info');
   };
 
@@ -253,6 +265,15 @@ export const App: React.FC = () => {
             existingAccounts={accounts}
           />
         </>
+      ) : isAppLocked ? (
+        <AppLockScreen
+          account={currentAccount}
+          onUnlock={() => {
+            sessionStorage.setItem('sitesaathi_unlocked', 'true');
+            setIsAppLocked(false);
+          }}
+          onLogOut={handleLogOut}
+        />
       ) : (
         <div className="min-h-full bg-theme-base text-theme-main flex flex-col font-body transition-colors flex-1">
           
@@ -291,6 +312,7 @@ export const App: React.FC = () => {
             onNavigateTab={handleNavigateTab}
             onOpenReport={handleOpenReportFromSite}
             contractorName={currentAccount?.name}
+            companyName={currentAccount?.companyName}
           />
         )}
 

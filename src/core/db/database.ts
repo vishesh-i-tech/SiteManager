@@ -296,6 +296,64 @@ export class SiteSaathiDatabase extends Dexie {
 
     return insights;
   }
+
+  // Full Database Backup Export (JSON)
+  async exportBackupJson(): Promise<string> {
+    const backup = {
+      app: 'SiteSaathi',
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      account: await this.account.toArray(),
+      sites: await this.sites.toArray(),
+      tools: await this.tools.toArray(),
+      labourRecords: await this.labourRecords.toArray(),
+      labourEntries: await this.labourEntries.toArray(),
+      materials: await this.materials.toArray(),
+      machinery: await this.machinery.toArray(),
+      dues: await this.dues.toArray(),
+      vendors: await this.vendors.toArray(),
+      reminders: await this.reminders.toArray(),
+    };
+    return JSON.stringify(backup, null, 2);
+  }
+
+  // Full Database Backup Import (JSON)
+  async importBackupJson(jsonString: string): Promise<boolean> {
+    const data = JSON.parse(jsonString);
+    if (!data.sites || !data.account) {
+      throw new Error('Invalid backup file format');
+    }
+
+    await this.transaction(
+      'rw',
+      [
+        this.account,
+        this.sites,
+        this.tools,
+        this.labourRecords,
+        this.labourEntries,
+        this.materials,
+        this.machinery,
+        this.dues,
+        this.vendors,
+        this.reminders,
+      ],
+      async () => {
+        if (data.account?.length) await this.account.bulkPut(data.account);
+        if (data.sites?.length) await this.sites.bulkPut(data.sites);
+        if (data.tools?.length) await this.tools.bulkPut(data.tools);
+        if (data.labourRecords?.length) await this.labourRecords.bulkPut(data.labourRecords);
+        if (data.labourEntries?.length) await this.labourEntries.bulkPut(data.labourEntries);
+        if (data.materials?.length) await this.materials.bulkPut(data.materials);
+        if (data.machinery?.length) await this.machinery.bulkPut(data.machinery);
+        if (data.dues?.length) await this.dues.bulkPut(data.dues);
+        if (data.vendors?.length) await this.vendors.bulkPut(data.vendors);
+        if (data.reminders?.length) await this.reminders.bulkPut(data.reminders);
+      }
+    );
+
+    return true;
+  }
 }
 
 export const db = new SiteSaathiDatabase();
