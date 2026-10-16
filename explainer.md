@@ -294,6 +294,12 @@ This document tracks all technologies, libraries, and architectural modules used
     - **Dynamic Balance Due Calculations:** The system automatically computes and displays remaining dues per worker (`Due: ₹...`) and aggregates Total Wages, Paid/Advance, and Total Pending at the top of the muster sheet.
     - **Seamless Synchronization Across Modals:** Fully synchronized across `EditLabourModal`, `AddLabourModal`, and `LabourDateDetailModal` with persistence to IndexedDB (`labourEntries` and `labourRecords`).
 
+- **Phase 2.11 (Clean English Role Standard for Labour Attendance & Muster Rolls):**
+  - Standardized all worker role dropdown options and form controls to clean, professional English:
+    - **Eliminated Bilingual Clutter in Dropdowns:** Removed Hindi parenthetical strings like `(मजदूर)`, `(मिस्त्री)`, `(बढ़ई)`, and `(शटरिंग)` from worker role options across `EditLabourModal`, `PhotoOcrModal`, and `AddLabourModal`.
+    - **Clean Standardized Roles:** Options now render clearly as `Mason`, `Helper`, `Carpenter`, `Electrician`, `Plumber`, `Plasterer`, `Painter`, `Welder`, and `Supervisor`.
+    - **Syntax & Redundancy Cleanup:** Removed accidental duplicate form controls and ensured smooth, high-speed attendance review.
+
 ---
 
 ### 18. Streamlined Contractor Payment & Udhaar Ledger Engine
@@ -322,6 +328,15 @@ This document tracks all technologies, libraries, and architectural modules used
   - Automatically calculates shift earnings based on attendance status (`full_day`, `half_day`, `overtime`, `absent`).
   - Dynamically updates unpaid balances when advance payments are issued and rolls them into site financial totals.
 - **Small Summary:** A field-tested daily wage payment and advance tracking system tailored to Indian construction labor management.
+
+---
+
+### 21. Standardized English Role Engine for Muster Rolls
+- **What it does:** Provides a streamlined, unambiguous English role taxonomy for construction workers across all manual and camera-assisted attendance flows.
+- **How it works:**
+  - Standardizes the `LabourEntry['role']` enumeration across UI controls so dropdown selectors display concise English values without cluttered dual-language brackets.
+  - Ensures seamless matching between optical character recognition (OCR) parsing, manual entry, and PDF attendance reports.
+- **Small Summary:** A clean, professional English role selection interface for fast, error-free muster roll logging.
 
 
 

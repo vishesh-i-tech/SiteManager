@@ -208,7 +208,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
             </div>
             <div>
               <h2 className="font-extrabold text-base text-slate-900 dark:text-white font-heading">
-                {language === 'hi' ? 'हाजिरी शीट बदलें (Edit Labour Sheet)' : 'Edit Labour Attendance Sheet'}
+                Edit Labour Attendance Sheet
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Date: {date}
@@ -231,7 +231,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                 <Building className="w-3.5 h-3.5 text-orange-500" />
-                <span>{language === 'hi' ? 'साइट *' : 'Target Site *'}</span>
+                <span>Target Site *</span>
               </label>
               <select
                 required
@@ -250,7 +250,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-blue-500" />
-                <span>{language === 'hi' ? 'तारीख *' : 'Date *'}</span>
+                <span>Date *</span>
               </label>
               <input
                 type="date"
@@ -267,21 +267,21 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
               <div className="flex items-center gap-2.5 flex-wrap text-xs">
                 <span className="font-extrabold text-slate-700 dark:text-slate-300">
-                  {entries.length} {language === 'hi' ? 'कारीगर' : 'Workers'}
+                  {entries.length} Workers
                 </span>
                 <span className="text-slate-400">•</span>
                 <span className="font-black text-slate-900 dark:text-white">
-                  {language === 'hi' ? 'कुल मजदूरी:' : 'Wages:'} ₹{totalWages.toLocaleString('en-IN')}
+                  Wages: ₹{totalWages.toLocaleString('en-IN')}
                 </span>
                 <span className="text-slate-400">•</span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {language === 'hi' ? 'भुगतान / एडवांस:' : 'Paid/Adv:'} ₹{totalPaid.toLocaleString('en-IN')}
+                  Paid/Adv: ₹{totalPaid.toLocaleString('en-IN')}
                 </span>
                 {totalBalanceDue > 0 && (
                   <>
                     <span className="text-slate-400">•</span>
                     <span className="font-bold text-rose-600 dark:text-rose-400">
-                      {language === 'hi' ? 'बाकी:' : 'Pending:'} ₹{totalBalanceDue.toLocaleString('en-IN')}
+                      Pending: ₹{totalBalanceDue.toLocaleString('en-IN')}
                     </span>
                   </>
                 )}
@@ -293,7 +293,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                 className="px-2.5 py-1 rounded-lg text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 flex items-center gap-1 hover:bg-orange-100 self-start sm:self-auto cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>{t('addWorker')}</span>
+                <span>Add Worker</span>
               </button>
             </div>
 
@@ -322,7 +322,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                           type="text"
                           value={entry.workerName}
                           onChange={(e) => handleUpdateEntry(idx, 'workerName', e.target.value)}
-                          placeholder={language === 'hi' ? 'कारीगर का नाम' : 'Worker Name'}
+                          placeholder="Worker Name"
                           className="w-full px-2.5 py-1.5 rounded-xl font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white"
                         />
                       </div>
@@ -334,9 +334,9 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                           onChange={(e) => handleUpdateEntry(idx, 'role', e.target.value)}
                           className="w-full px-2 py-1.5 rounded-xl font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white text-[11px]"
                         >
-                          <option value="Mason">Mason (मिस्त्री)</option>
-                          <option value="Helper">Helper (मजदूर)</option>
-                          <option value="Carpenter">Carpenter (बढ़ई)</option>
+                          <option value="Mason">Mason</option>
+                          <option value="Helper">Helper</option>
+                          <option value="Carpenter">Carpenter</option>
                           <option value="Electrician">Electrician</option>
                           <option value="Plumber">Plumber</option>
                           <option value="Painter">Painter</option>
@@ -395,7 +395,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                     <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">
-                          {language === 'hi' ? 'भुगतान स्थिति:' : 'Payment:'}
+                          Payment:
                         </span>
 
                         {/* Paid Button */}
@@ -409,7 +409,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                           }`}
                         >
                           <Check className="w-3 h-3 stroke-[2.5]" />
-                          <span>{language === 'hi' ? 'चुकता (Paid)' : 'Paid'}</span>
+                          <span>Paid</span>
                         </button>
 
                         {/* Unpaid Button */}
@@ -423,7 +423,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                           }`}
                         >
                           <X className="w-3 h-3 stroke-[2.5]" />
-                          <span>{language === 'hi' ? 'बाकी (Unpaid)' : 'Unpaid'}</span>
+                          <span>Unpaid</span>
                         </button>
 
                         {/* Pending Button */}
@@ -437,7 +437,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                           }`}
                         >
                           <Clock className="w-3 h-3 stroke-[2.5]" />
-                          <span>{language === 'hi' ? 'लंबित (Pending)' : 'Pending'}</span>
+                          <span>Pending</span>
                         </button>
 
                         {/* Advance Button */}
@@ -451,7 +451,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                           }`}
                         >
                           <Coins className="w-3 h-3 stroke-[2.5]" />
-                          <span>{language === 'hi' ? 'एडवांस (Advance)' : 'Advance'}</span>
+                          <span>Advance</span>
                         </button>
                       </div>
 
@@ -460,7 +460,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                         {currentStatus === 'advance' && (
                           <div className="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-blue-300 dark:border-blue-700">
                             <span className="text-[10px] font-bold text-slate-400">
-                              {language === 'hi' ? 'एडवांस: ₹' : 'Adv: ₹'}
+                              Adv: ₹
                             </span>
                             <input
                               type="number"
@@ -474,7 +474,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
 
                         <div className="flex items-center gap-1 text-[11px]">
                           <span className="text-slate-400 font-semibold">
-                            {language === 'hi' ? 'देय बाकी:' : 'Due:'}
+                            Due:
                           </span>
                           <span className={`font-black ${remainingDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                             ₹{remainingDue.toLocaleString('en-IN')}
@@ -492,7 +492,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
           {/* Notes */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              {language === 'hi' ? 'दैनिक टिप्पणी' : 'Daily Log Notes'}
+              Daily Log Notes
             </label>
             <input
               type="text"

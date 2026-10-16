@@ -23,15 +23,15 @@ interface AddLabourModalProps {
 }
 
 const ROLES: { id: LabourEntry['role']; labelEn: string; labelHi: string; defaultWage: number }[] = [
-  { id: 'Mason', labelEn: 'Mason (Rajmistri)', labelHi: 'राजमिस्त्री (Mason)', defaultWage: 800 },
-  { id: 'Helper', labelEn: 'Helper (Labour)', labelHi: 'मजदूर / हेल्पर (Helper)', defaultWage: 550 },
-  { id: 'Carpenter', labelEn: 'Carpenter (Shuttering)', labelHi: 'बढ़ई / शटरिंग (Carpenter)', defaultWage: 750 },
-  { id: 'Electrician', labelEn: 'Electrician', labelHi: 'इलेक्ट्रीशियन (Electrician)', defaultWage: 750 },
-  { id: 'Plumber', labelEn: 'Plumber', labelHi: 'प्लम्बर (Plumber)', defaultWage: 750 },
-  { id: 'Plasterer', labelEn: 'Plasterer', labelHi: 'प्लास्टर मिस्त्री (Plasterer)', defaultWage: 800 },
-  { id: 'Welder', labelEn: 'Welder', labelHi: 'वेल्डर (Welder)', defaultWage: 750 },
-  { id: 'Painter', labelEn: 'Painter', labelHi: 'पेंटर (Painter)', defaultWage: 700 },
-  { id: 'Supervisor', labelEn: 'Supervisor', labelHi: 'सुपरवाइजर (Supervisor)', defaultWage: 900 },
+  { id: 'Mason', labelEn: 'Mason', labelHi: 'Mason', defaultWage: 800 },
+  { id: 'Helper', labelEn: 'Helper', labelHi: 'Helper', defaultWage: 550 },
+  { id: 'Carpenter', labelEn: 'Carpenter', labelHi: 'Carpenter', defaultWage: 750 },
+  { id: 'Electrician', labelEn: 'Electrician', labelHi: 'Electrician', defaultWage: 750 },
+  { id: 'Plumber', labelEn: 'Plumber', labelHi: 'Plumber', defaultWage: 750 },
+  { id: 'Plasterer', labelEn: 'Plasterer', labelHi: 'Plasterer', defaultWage: 800 },
+  { id: 'Welder', labelEn: 'Welder', labelHi: 'Welder', defaultWage: 750 },
+  { id: 'Painter', labelEn: 'Painter', labelHi: 'Painter', defaultWage: 700 },
+  { id: 'Supervisor', labelEn: 'Supervisor', labelHi: 'Supervisor', defaultWage: 900 },
 ];
 
 export const AddLabourModal: React.FC<AddLabourModalProps> = ({

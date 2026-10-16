@@ -396,12 +396,13 @@ export const PhotoOcrModal: React.FC<PhotoOcrModalProps> = ({
                           onChange={(e) => handleUpdateEntry(idx, 'role', e.target.value)}
                           className="w-full px-2 py-1.5 rounded-lg font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white text-[11px]"
                         >
-                          <option value="Mason">Mason (मिस्त्री)</option>
-                          <option value="Helper">Helper (मजदूर)</option>
+                          <option value="Mason">Mason</option>
+                          <option value="Helper">Helper</option>
+                          <option value="Carpenter">Carpenter</option>
                           <option value="Electrician">Electrician</option>
                           <option value="Plumber">Plumber</option>
-                          <option value="Carpenter">Carpenter</option>
                           <option value="Painter">Painter</option>
+                          <option value="Welder">Welder</option>
                           <option value="Supervisor">Supervisor</option>
                         </select>
                       </div>
