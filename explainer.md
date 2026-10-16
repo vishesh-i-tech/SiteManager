@@ -262,15 +262,35 @@ This document tracks all technologies, libraries, and architectural modules used
       - Integrated into `AddLabourModal.tsx` for visual 1-tap date selection during manual muster entry.
       - Integrated into `LabourRegister.tsx` for instant 1-tap muster record filtering by date.
 
+- **Phase 2.7 (PayFlow Fintech Payment, Dues & Cashflow Ledger Transformation):**
+  - Completely redesigned `PendingDuesTracker.tsx` based on the modern PayFlow fintech dashboard aesthetic:
+    1. **Top 3 KPI Financial Cards:**
+       - Total Income (Contract Value / Inflows) with week-over-week growth rate (`+1.78%`).
+       - Total Expense (Materials, Machinery, Wages, and Settled Dues) with variance indicator (`-1.78%`).
+       - Total Savings / Net Margins (Cash in Hand) with status badge.
+    2. **12-Month Cashflow Bar Chart:**
+       - Dynamic vertical comparison bars for Income vs. Expense across all 12 months with active month hover tooltips.
+       - Legend tags and interactive period selector.
+    3. **"My Card" / Contractor Payment Card:**
+       - Metallic electric blue gradient debit card displaying total pending invoice balance, contractor firm name, contactless wave icon, expiry, and CVV.
+       - 4 tactile action buttons beneath card: `Top Up`, `Transfer` (Settle Due), `Request` (Invoice Client), and `Refresh`.
+    4. **Budget Utilization Gauge:**
+       - Progress bar displaying real-time site budget utilization (e.g. 57% used) with spent vs. total breakdown.
+    5. **Transaction History Ledger Table:**
+       - Clean table with integrated search bar, category filter, transaction title, date & time, amount, vendor notes, and pill status tags (`Completed` green, `Pending` amber, `Overdue` red).
+       - 1-tap `Settle` button with celebratory confetti feedback.
+    6. **Recent Activity Feed:**
+       - Feed of recent client credits, wage payouts, and material bill records with relative timestamps (`Just now`, `15 mins ago`, `2:20 PM`).
+
 ---
 
-### 17. Tactile Horizontal Date & Time Slot Selector System (`HorizontalDatePicker` & `TimeSlotPicker`)
-- **What it does:** Replaces generic mobile date dropdowns with a tactile, horizontal card-based date and time selector modeled after modern mobile service apps.
+### 18. PayFlow-Style Contractor Payment & Cashflow Ledger Engine
+- **What it does:** Provides a comprehensive financial ledger and cashflow management dashboard for construction contractors, replacing simple lists with an enterprise-grade fintech interface.
 - **How it works:**
-  - Dynamically calculates rolling past and future date ranges relative to today.
-  - Formats date tokens into three distinct vertical tiers (uppercase month, large bold day number, uppercase day name).
-  - Uses DOM `scrollIntoView({ behavior: 'smooth', inline: 'center' })` to keep selected days in focus.
-  - Employs warm peach tokens (`#FFE5D8`) and tactile button scaling (`scale-102` / `active:scale-95`).
-- **Small Summary:** A horizontal card-based date and time picker providing fast 1-tap date switching across muster rolls and worker bookings.
+  - Aggregates live data across IndexedDB tables (`sites`, `dues`, `materials`, `machinery`, `labourRecords`) to compute real-time site contract incomes, expenses, and net profit margins.
+  - Dynamically calculates 12-month cashflow ratios for the visual bar chart.
+  - Formats transaction statuses into high-visibility pill badges with instant 1-tap balance settlement (`handleSettleFullDue`).
+  - Preserves critical alerts for completed sites with outstanding dues.
+- **Small Summary:** A modern fintech payment dashboard bringing bank-grade financial clarity, cashflow charts, and dues tracking to construction contractors.
 
 
