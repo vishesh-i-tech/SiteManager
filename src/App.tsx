@@ -48,10 +48,6 @@ import { ConfirmDeleteModal } from './components/common/ConfirmDeleteModal';
 import { ToastNotification, ToastMessage } from './components/common/ToastNotification';
 import { MobileDeviceShell } from './components/common/MobileDeviceShell';
 import { exportSiteReportPdf } from './utils/reportExporter';
-import { PopularServicesDirectory } from './components/discovery/PopularServicesDirectory';
-import { WorkerProfileModal } from './components/discovery/WorkerProfileModal';
-import { AssignWorkerModal } from './components/discovery/AssignWorkerModal';
-import { WorkerProfile } from './data/workersDirectory';
 
 export const App: React.FC = () => {
   const { trade, setTrade, language, setLanguage, t, tradeConfig } = useTheme();
@@ -61,10 +57,7 @@ export const App: React.FC = () => {
   const [insights, setInsights] = useState<SmartInsight[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Discovery / Worker profiles & booking states (Screen 2 & 3 UI)
-  const [selectedWorkerForProfile, setSelectedWorkerForProfile] = useState<WorkerProfile | null>(null);
-  const [bookingWorker, setBookingWorker] = useState<WorkerProfile | null>(null);
-  const [servicesCategoryFilter, setServicesCategoryFilter] = useState<string>('all');
+  // Search state across active dashboard
   const [globalSearchQuery, setGlobalSearchQuery] = useState<string>('');
 
   // User session state
@@ -304,12 +297,7 @@ export const App: React.FC = () => {
             contractorName={currentAccount?.name || 'Alex Carter'}
             onLogout={handleLogOut}
             searchQuery={globalSearchQuery}
-            onSearchChange={(q) => {
-              setGlobalSearchQuery(q);
-              if (activeTab === 'dashboard') {
-                setActiveTab('services');
-              }
-            }}
+            onSearchChange={(q) => setGlobalSearchQuery(q)}
             showSearchBar={activeTab === 'dashboard'}
           />
 
@@ -332,23 +320,9 @@ export const App: React.FC = () => {
             onOpenOcrModal={() => setIsOcrModalOpen(true)}
             onNavigateTab={handleNavigateTab}
             onOpenReport={handleOpenReportFromSite}
-            onViewWorkerProfile={(worker) => setSelectedWorkerForProfile(worker)}
-            onBookWorker={(worker) => setBookingWorker(worker)}
-            onOpenDirectory={(cat) => {
-              setServicesCategoryFilter(cat || 'all');
-              setActiveTab('services');
-            }}
             contractorName={currentAccount?.name}
             companyName={currentAccount?.companyName}
-          />
-        )}
-
-        {activeTab === 'services' && (
-          <PopularServicesDirectory
-            initialCategory={servicesCategoryFilter}
-            onBack={() => setActiveTab('dashboard')}
-            onViewProfile={(worker) => setSelectedWorkerForProfile(worker)}
-            onBookNow={(worker) => setBookingWorker(worker)}
+            searchQuery={globalSearchQuery}
           />
         )}
 
@@ -779,29 +753,6 @@ export const App: React.FC = () => {
             ? `क्या आप वाकई "${deletingItem?.name}" को हटाना चाहते हैं? यह क्रिया वापस नहीं की जा सकती।`
             : `Are you sure you want to delete "${deletingItem?.name}"? This action cannot be undone.`
         }
-      />
-
-      {/* Worker Detailed Profile Modal (Screen 3) */}
-      <WorkerProfileModal
-        worker={selectedWorkerForProfile}
-        isOpen={!!selectedWorkerForProfile}
-        onClose={() => setSelectedWorkerForProfile(null)}
-        onBookNow={(worker) => {
-          setSelectedWorkerForProfile(null);
-          setBookingWorker(worker);
-        }}
-      />
-
-      {/* Assign & Book Worker Modal */}
-      <AssignWorkerModal
-        worker={bookingWorker}
-        sites={sites}
-        isOpen={!!bookingWorker}
-        onClose={() => setBookingWorker(null)}
-        onSuccess={(msg) => {
-          showToast(msg);
-          refreshInsights();
-        }}
       />
 
         </div>

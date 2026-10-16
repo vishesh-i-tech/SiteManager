@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Calendar, ArrowRight } from 'lucide-react';
+import { Sparkles, Calendar, ArrowRight, HardHat } from 'lucide-react';
 
 interface ExploreBannerProps {
   onActionClick: () => void;
@@ -11,15 +11,14 @@ interface ExploreBannerProps {
 
 export const ExploreBanner: React.FC<ExploreBannerProps> = ({
   onActionClick,
-  title = 'Exclusive discounts on home service',
-  subtitle = 'Save 25% Today!',
-  badgeText = 'Save 25% Today!',
-  buttonText = 'Book Now',
+  title = 'Log Daily Muster & Track Site Expenses',
+  badgeText = '100% Offline Contractor Suite',
+  buttonText = '+ New Site',
 }) => {
   return (
     <div className="relative overflow-hidden rounded-[26px] bg-gradient-to-r from-[#D7EBFF] via-[#E2EEFF] to-[#FFE8DA] p-4 sm:p-5 shadow-[0_8px_25px_rgba(37,99,235,0.08)] border border-blue-100/70 transition-all hover:shadow-[0_12px_32px_rgba(37,99,235,0.12)]">
       
-      {/* Soft background ambient glow circles */}
+      {/* Ambient background glow */}
       <div className="absolute -top-10 -left-10 w-36 h-36 bg-blue-300/30 rounded-full blur-2xl pointer-events-none" />
       <div className="absolute -bottom-10 right-24 w-32 h-32 bg-orange-300/30 rounded-full blur-2xl pointer-events-none" />
 
@@ -30,7 +29,7 @@ export const ExploreBanner: React.FC<ExploreBannerProps> = ({
           
           {/* Top Pill Tag */}
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-100/90 text-[#FF5A26] border border-orange-200/60 shadow-xs">
-            <Sparkles className="w-3 h-3 fill-[#FF5A26]" />
+            <HardHat className="w-3 h-3 text-[#FF5A26]" />
             <span className="text-[11px] font-bold tracking-tight">
               {badgeText}
             </span>
@@ -41,7 +40,7 @@ export const ExploreBanner: React.FC<ExploreBannerProps> = ({
             {title}
           </h2>
 
-          {/* CTA Pill Button (Matching user screenshot orange button) */}
+          {/* CTA Pill Button */}
           <div className="pt-1">
             <button
               onClick={onActionClick}
@@ -54,12 +53,12 @@ export const ExploreBanner: React.FC<ExploreBannerProps> = ({
           </div>
         </div>
 
-        {/* Right Column: 3D Character Illustration */}
+        {/* Right Column: 3D Contractor Mascot */}
         <div className="relative shrink-0 w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center">
           <div className="absolute inset-0 bg-white/40 rounded-full blur-md" />
           <img
             src="/images/builder_character.jpg"
-            alt="Site Saathi Builder"
+            alt="SiteSaathi Contractor"
             className="w-full h-full object-cover rounded-2xl drop-shadow-lg transform transition-transform hover:scale-105"
             loading="eager"
           />

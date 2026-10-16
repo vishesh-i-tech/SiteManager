@@ -5,9 +5,6 @@ import { SiteCard } from '../sites/SiteCard';
 import { ActiveTab } from '../common/BottomNav';
 import { CountUpNumber } from '../common/CountUpNumber';
 import { ExploreBanner } from '../discovery/ExploreBanner';
-import { ServicesGrid } from '../discovery/ServicesGrid';
-import { WorkerCard } from '../discovery/WorkerCard';
-import { WORKER_DIRECTORY, WorkerProfile } from '../../data/workersDirectory';
 import {
   Building2,
   Users,
@@ -17,7 +14,15 @@ import {
   Mic,
   Camera,
   ArrowRight,
-  TrendingUp,
+  HardHat,
+  Hammer,
+  Zap,
+  Paintbrush,
+  BrickWall,
+  Flame,
+  LayoutGrid,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 
 interface DashboardOverviewProps {
@@ -34,11 +39,9 @@ interface DashboardOverviewProps {
   onOpenOcrModal: () => void;
   onNavigateTab: (tab: ActiveTab, filter?: 'all' | 'ongoing' | 'completed' | 'planning') => void;
   onOpenReport: (site: Site) => void;
-  onViewWorkerProfile: (worker: WorkerProfile) => void;
-  onBookWorker: (worker: WorkerProfile) => void;
-  onOpenDirectory: (category?: string) => void;
   contractorName?: string;
   companyName?: string;
+  searchQuery?: string;
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
@@ -52,11 +55,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onOpenOcrModal,
   onNavigateTab,
   onOpenReport,
-  onViewWorkerProfile,
-  onBookWorker,
-  onOpenDirectory,
   contractorName,
   companyName,
+  searchQuery = '',
 }) => {
   const { t, language } = useTheme();
 
@@ -73,95 +74,192 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const unpaidDues = dues.filter((d) => d.status !== 'paid');
   const totalDuesAmount = unpaidDues.reduce((acc, d) => acc + (d.amountDue - (d.amountPaid || 0)), 0);
 
-  // Today's total workers
+  // Today's total workers & latest labour entries
   const todayDate = new Date().toISOString().split('T')[0];
-  const todayLabourRecord = labourRecords.find((r) => r.date === todayDate) || labourRecords[0];
-  const todayWorkerCount = todayLabourRecord?.totalWorkers || 6;
+  const latestLabourRecord = labourRecords[0];
+  const todayWorkerCount = latestLabourRecord?.totalWorkers || 6;
   const totalLabourWages = labourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 4225);
 
-  // Top popular service workers for Screen 1
-  const featuredWorkers = WORKER_DIRECTORY.slice(0, 3);
+  // Real crew members from database
+  const activeCrew = latestLabourRecord?.entries && latestLabourRecord.entries.length > 0
+    ? latestLabourRecord.entries.slice(0, 4)
+    : [
+        { id: 'c1', workerName: 'Subhash Mistry', role: 'Mason', dailyWage: 950, attendanceStatus: 'full_day', balanceDue: 0 },
+        { id: 'c2', workerName: 'Kamal Yadav', role: 'Mason', dailyWage: 900, attendanceStatus: 'full_day', balanceDue: 0 },
+        { id: 'c3', workerName: 'Ramu Meena', role: 'Helper', dailyWage: 550, attendanceStatus: 'full_day', balanceDue: 50 },
+        { id: 'c4', workerName: 'Mohan Suthar', role: 'Carpenter', dailyWage: 1000, attendanceStatus: 'full_day', balanceDue: 0 },
+      ];
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const visibleCrew = normalizedQuery
+    ? activeCrew.filter(
+        (w: any) =>
+          w.workerName.toLowerCase().includes(normalizedQuery) ||
+          w.role.toLowerCase().includes(normalizedQuery)
+      )
+    : activeCrew;
+
+  const visibleSites = normalizedQuery
+    ? sites.filter(
+        (s) =>
+          s.name.toLowerCase().includes(normalizedQuery) ||
+          s.location.toLowerCase().includes(normalizedQuery)
+      )
+    : sites.slice(0, 3);
+
+  const tradeQuickLog = [
+    { role: 'Mason', label: 'Mason', icon: BrickWall, bg: 'bg-rose-50 text-rose-600 dark:bg-rose-950/60' },
+    { role: 'Helper', label: 'Helper', icon: Users, bg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60' },
+    { role: 'Carpenter', label: 'Carpenter', icon: Hammer, bg: 'bg-orange-50 text-orange-600 dark:bg-orange-950/60' },
+    { role: 'Electrician', label: 'Electrician', icon: Zap, bg: 'bg-amber-50 text-amber-500 dark:bg-amber-950/60' },
+    { role: 'Plumber', label: 'Plumber', icon: Wrench, bg: 'bg-sky-50 text-sky-600 dark:bg-sky-950/60' },
+    { role: 'Painter', label: 'Painter', icon: Paintbrush, bg: 'bg-purple-50 text-purple-600 dark:bg-purple-950/60' },
+    { role: 'Welder', label: 'Welder', icon: Flame, bg: 'bg-blue-50 text-blue-600 dark:bg-blue-950/60' },
+    { role: 'Supervisor', label: 'Supervisor', icon: HardHat, bg: 'bg-slate-100 text-slate-700 dark:bg-slate-800' },
+  ];
 
   return (
-    <div className="space-y-5 animate-fade-in pb-16">
+    <div className="space-y-4 animate-fade-in pb-16">
       
-      {/* 1. Hero Promo Banner with 3D Character (Screen 1 Match) */}
+      {/* 1. Contractor Hero Banner (Clean, Professional & Mascot-Integrated) */}
       <ExploreBanner
-        badgeText="Save 25% Today!"
-        title="Exclusive discounts on home service"
-        buttonText="Book Now"
-        onActionClick={() => onOpenDirectory('all')}
+        badgeText={language === 'hi' ? '100% ऑफलाइन ठेकेदार सुइट' : '100% Offline Contractor Suite'}
+        title={language === 'hi' ? 'दैनिक लेबर हाजिरी, औजार व खर्चों का पक्का हिसाब' : 'Daily Labour Muster, Tools & Site Expenses'}
+        buttonText={language === 'hi' ? '+ नई साइट जोड़ें' : '+ New Site'}
+        onActionClick={onOpenAddSite}
       />
 
-      {/* 2. Most Booked Services (8 Squircle Grid - Screen 1 Match) */}
-      <ServicesGrid
-        title="Most Booked Services"
-        viewAllText="View all"
-        onSelectCategory={(role) => onOpenDirectory(role)}
-        onViewAll={() => onOpenDirectory('all')}
-      />
+      {/* 2. Three Primary Site Actions */}
+      <div className="grid grid-cols-3 gap-2">
+        <button
+          onClick={onOpenVoiceModal}
+          className="py-2.5 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.03)] text-slate-800 dark:text-slate-200 hover:bg-slate-50 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+        >
+          <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
+            <Mic className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-bold">{language === 'hi' ? 'बोलकर भरें' : 'Voice Log'}</span>
+        </button>
 
-      {/* 3. Popular Near You (Worker Cards Feed - Screen 1 Match) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-heading tracking-tight">
-            Popular Near You
-          </h3>
+        <button
+          onClick={onOpenOcrModal}
+          className="py-2.5 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.03)] text-slate-800 dark:text-slate-200 hover:bg-slate-50 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+        >
+          <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center">
+            <Camera className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-bold">{language === 'hi' ? 'डायरी स्कैन' : 'Scan Diary'}</span>
+        </button>
+
+        <button
+          onClick={onOpenAddSite}
+          className="py-2.5 px-1 rounded-2xl bg-gradient-to-r from-[#1877F2] to-[#0084FF] text-white shadow-[0_4px_14px_rgba(24,119,242,0.35)] flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+        >
+          <div className="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center">
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+          </div>
+          <span className="text-xs font-bold">{language === 'hi' ? 'नई साइट' : 'New Site'}</span>
+        </button>
+      </div>
+
+      {/* 3. Daily Worker Roles / Quick Trade Register */}
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white font-heading">
+              {language === 'hi' ? 'ट्रेड अनुसार कारीगर हाजिरी' : 'Daily Labour Muster by Trade'}
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              {language === 'hi' ? 'ट्रेड पर टैप करके तुरंत उपस्थिति दर्ज करें' : 'Tap trade to log daily workers'}
+            </p>
+          </div>
           <button
-            onClick={() => onOpenDirectory('all')}
-            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer"
+            onClick={() => onNavigateTab('labour')}
+            className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
           >
-            View all
+            {language === 'hi' ? 'पूरी हाजिरी देखें' : 'View Muster'}
           </button>
         </div>
 
-        <div className="space-y-3">
-          {featuredWorkers.map((worker) => (
-            <WorkerCard
-              key={worker.id}
-              worker={worker}
-              onViewProfile={onViewWorkerProfile}
-              onBookNow={onBookWorker}
-            />
-          ))}
+        <div className="grid grid-cols-4 gap-2">
+          {tradeQuickLog.map((tItem) => {
+            const Icon = tItem.icon;
+            return (
+              <button
+                key={tItem.role}
+                onClick={() => onNavigateTab('labour')}
+                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50/70 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer group"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1 group-hover:scale-110 transition-transform ${tItem.bg}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-full">
+                  {tItem.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* 4. Quick Contractor Action Bar */}
-      <div className="bg-white dark:bg-slate-900 p-3.5 rounded-[22px] border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3">
+      {/* 4. Real Site Crew Roster (Today's Workers from Database) */}
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-900 dark:text-white font-heading">
-            Site Operations & Quick Logs
-          </span>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold">
-            {ongoingSites.length} Active Sites
-          </span>
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white font-heading">
+              {language === 'hi' ? 'साइट पर कार्यरत कारीगर' : "Today's Active Site Crew"}
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              {todayWorkerCount} {language === 'hi' ? 'कारीगर आज तैनात हैं' : 'workers recorded on site'}
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigateTab('labour')}
+            className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+          >
+            {language === 'hi' ? 'सभी मजदूर' : 'View All'}
+          </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            onClick={onOpenVoiceModal}
-            className="py-2.5 px-1 rounded-xl font-bold text-[11px] bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-100 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
-          >
-            <Mic className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <span>Voice Log</span>
-          </button>
+        <div className="space-y-2">
+          {visibleCrew.length === 0 ? (
+            <div className="p-3 text-center text-xs text-slate-400">
+              {normalizedQuery ? 'No workers match search' : 'No active workers logged today'}
+            </div>
+          ) : (
+            visibleCrew.map((worker: any) => (
+              <div
+                key={worker.id}
+                className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-extrabold text-xs flex items-center justify-center shrink-0">
+                    {worker.workerName ? worker.workerName[0] : 'W'}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                        {worker.workerName}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-[#FF5A26]">
+                        {worker.role}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 block">
+                      ₹{worker.dailyWage} /day • {sites[0]?.name || 'Sharma Villa'}
+                    </span>
+                  </div>
+                </div>
 
-          <button
-            onClick={onOpenOcrModal}
-            className="py-2.5 px-1 rounded-xl font-bold text-[11px] bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-100 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
-          >
-            <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <span>Scan</span>
-          </button>
-
-          <button
-            onClick={onOpenAddSite}
-            className="py-2.5 px-1 rounded-xl font-bold text-[11px] bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Site</span>
-          </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Present</span>
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -271,7 +369,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
       </div>
 
-      {/* 6. Project Sites Feed */}
+      {/* 6. Project Sites Feed (Sharma Villa, Royal Greens Commercial Plaza, etc.) */}
       <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-1">
           <div>
@@ -293,23 +391,25 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         <div className="flex flex-col space-y-3">
-          {sites.length === 0 ? (
+          {visibleSites.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-[22px] p-6 border border-slate-100 dark:border-slate-800 text-center space-y-2">
               <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
               </div>
               <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                No Sites Added Yet
+                {normalizedQuery ? `No sites matching "${searchQuery}"` : 'No Sites Added Yet'}
               </p>
-              <button
-                onClick={onOpenAddSite}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white cursor-pointer"
-              >
-                + Add First Site
-              </button>
+              {!normalizedQuery && (
+                <button
+                  onClick={onOpenAddSite}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white cursor-pointer"
+                >
+                  + Add First Site
+                </button>
+              )}
             </div>
           ) : (
-            sites.slice(0, 3).map((site) => (
+            visibleSites.map((site) => (
               <SiteCard
                 key={site.id}
                 site={site}

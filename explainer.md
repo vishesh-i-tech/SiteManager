@@ -262,35 +262,46 @@ This document tracks all technologies, libraries, and architectural modules used
       - Integrated into `AddLabourModal.tsx` for visual 1-tap date selection during manual muster entry.
       - Integrated into `LabourRegister.tsx` for instant 1-tap muster record filtering by date.
 
-- **Phase 2.7 (PayFlow Fintech Payment, Dues & Cashflow Ledger Transformation):**
-  - Completely redesigned `PendingDuesTracker.tsx` based on the modern PayFlow fintech dashboard aesthetic:
-    1. **Top 3 KPI Financial Cards:**
-       - Total Income (Contract Value / Inflows) with week-over-week growth rate (`+1.78%`).
-       - Total Expense (Materials, Machinery, Wages, and Settled Dues) with variance indicator (`-1.78%`).
-       - Total Savings / Net Margins (Cash in Hand) with status badge.
-    2. **12-Month Cashflow Bar Chart:**
-       - Dynamic vertical comparison bars for Income vs. Expense across all 12 months with active month hover tooltips.
-       - Legend tags and interactive period selector.
-    3. **"My Card" / Contractor Payment Card:**
-       - Metallic electric blue gradient debit card displaying total pending invoice balance, contractor firm name, contactless wave icon, expiry, and CVV.
-       - 4 tactile action buttons beneath card: `Top Up`, `Transfer` (Settle Due), `Request` (Invoice Client), and `Refresh`.
-    4. **Budget Utilization Gauge:**
-       - Progress bar displaying real-time site budget utilization (e.g. 57% used) with spent vs. total breakdown.
-    5. **Transaction History Ledger Table:**
-       - Clean table with integrated search bar, category filter, transaction title, date & time, amount, vendor notes, and pill status tags (`Completed` green, `Pending` amber, `Overdue` red).
-       - 1-tap `Settle` button with celebratory confetti feedback.
-    6. **Recent Activity Feed:**
-       - Feed of recent client credits, wage payouts, and material bill records with relative timestamps (`Just now`, `15 mins ago`, `2:20 PM`).
+- **Phase 2.7 (Contractor-Centric Payment & Site Ledger Streamlining):**
+  - Refined the dashboard and payments section to strictly match real construction contractor data and operational needs:
+    1. **Dashboard Alignment:**
+       - Replaced consumer discount text with contractor-focused messaging: *"100% Offline Contractor Suite"* and *"Daily Labour Muster, Tools & Site Expenses"*.
+       - Maintained the clean mascot graphic and integrated 3 primary shortcuts: `Voice Log` (बोलकर भरें), `Scan Diary` (डायरी स्कैन), and `+ New Site` (नई साइट).
+       - Converted trade buttons into **Daily Labour Muster by Trade** (Mason, Helper, Carpenter, Electrician, Plumber, Painter, Welder, Supervisor) for 1-tap muster access.
+       - Replaced consumer handyman cards with **Today's Active Site Crew** showing real workers from the database (Subhash Mistry, Kamal Yadav, Ramu Meena, Mohan Suthar), their daily wages (`₹950/day`, `₹550/day`), and assigned sites.
+       - Prominently displays active project sites and the 4 core KPI widgets.
+    2. **Payments & Dues Ledger (`PendingDuesTracker.tsx`):**
+       - Eliminated consumer fintech gimmicks (fake credit card numbers, CVVs, and cloud hosting bills).
+       - Implemented clean, contractor-focused financial tracking:
+         - **Total Outstanding Udhaar:** Real vendor credit across ongoing jobs.
+         - **Completed Sites Udhaar:** Urgent warning for unpaid bills on finished projects.
+         - **Settled / Paid Bills:** Real-time tally of cleared supplier invoices.
+       - Category filter tabs (`All`, `Material`, `Machinery`, `Tools`, `Labour`), search bar, and 1-tap **"Mark Settled"** (`चुकता करें`) action with celebratory confetti feedback.
+
+- **Phase 2.8 (Full Purge of Consumer Marketplace Artifacts & Contractor Search Alignment):**
+  - Completed strict alignment to civil/construction contractor domain logic:
+    1. **Decommissioned Consumer Artifacts:** Completely removed consumer marketplace files (`PopularServicesDirectory`, `WorkerProfileModal`, `AssignWorkerModal`, `ServicesGrid`, `WorkerCard`, and `workersDirectory.ts`).
+    2. **Direct Dashboard Search:** Search queries entered in the header now filter actual local project sites (`sites`) and active crew (`activeCrew`) in real-time right on the contractor's dashboard without navigating away.
+    3. **Domain-Specific Visual Reference Adoption:** Preserved the visual polish from design references (soft rounded cards, pastel badge chips, horizontal date picker for attendance) while ensuring 100% of the data structures and user journeys represent real contractor sites, daily muster rolls, and supplier bills.
 
 ---
 
-### 18. PayFlow-Style Contractor Payment & Cashflow Ledger Engine
-- **What it does:** Provides a comprehensive financial ledger and cashflow management dashboard for construction contractors, replacing simple lists with an enterprise-grade fintech interface.
+### 18. Streamlined Contractor Payment & Udhaar Ledger Engine
+- **What it does:** Provides a clear, practical financial ledger for construction contractors to track supplier udhaar, hardware store invoices, and equipment rental dues across active and completed sites.
 - **How it works:**
-  - Aggregates live data across IndexedDB tables (`sites`, `dues`, `materials`, `machinery`, `labourRecords`) to compute real-time site contract incomes, expenses, and net profit margins.
-  - Dynamically calculates 12-month cashflow ratios for the visual bar chart.
-  - Formats transaction statuses into high-visibility pill badges with instant 1-tap balance settlement (`handleSettleFullDue`).
-  - Preserves critical alerts for completed sites with outstanding dues.
-- **Small Summary:** A modern fintech payment dashboard bringing bank-grade financial clarity, cashflow charts, and dues tracking to construction contractors.
+  - Reads directly from IndexedDB (`dues` and `sites` tables) without consumer mock data.
+  - Highlights urgent uncollected balances on finished projects so contractors never lose money.
+  - Provides fast category filtering and instant 1-tap bill settlement.
+- **Small Summary:** A clean, practical construction ledger tailored specifically to vendor bills, material credit, and contractor cashflow.
+
+---
+
+### 19. Contractor Domain Search & Live Roster Filtering
+- **What it does:** Allows contractors to instantly search and filter their active construction sites, on-site craftsmen, and pending bills directly from the dashboard header without clutter or consumer marketplace redirects.
+- **How it works:**
+  - Performs non-blocking client-side search across Dexie-backed site objects (`name`, `location`) and daily labour muster records (`workerName`, `role`).
+  - Seamlessly updates visible cards on the dashboard with zero latency and full offline compatibility.
+- **Small Summary:** A fast, local search engine built specifically for a contractor's on-site records and active projects.
+
 
 

@@ -9,7 +9,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-export type ActiveTab = 'dashboard' | 'services' | 'sites' | 'labour' | 'tools' | 'materials' | 'machinery' | 'dues' | 'reports';
+export type ActiveTab = 'dashboard' | 'sites' | 'labour' | 'tools' | 'materials' | 'machinery' | 'dues' | 'reports';
 
 interface BottomNavProps {
   activeTab: ActiveTab;
@@ -25,7 +25,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   const mainNavItems = [
     { id: 'dashboard' as ActiveTab, label: 'Home', icon: LayoutDashboard },
-    { id: 'services' as ActiveTab, label: 'Services', icon: Wrench },
     { id: 'sites' as ActiveTab, label: 'Sites', icon: Building2 },
     { id: 'labour' as ActiveTab, label: 'Workers', icon: Users },
     { id: 'dues' as ActiveTab, label: 'Dues', icon: Receipt },
