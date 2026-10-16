@@ -1,71 +1,41 @@
 import React from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
-import { SiteSaathiLogo } from './SiteSaathiLogo';
 import {
+  Bell,
+  SlidersHorizontal,
+  Search,
   HardHat,
   Wrench,
   Zap,
-  Bell,
-  MoreVertical,
   Paintbrush,
   Hammer,
-  Shield,
-  Layers,
-  Grid,
-  Wind,
-  Sparkles,
-  Truck,
 } from 'lucide-react';
 import { TradeCategory } from '../../types';
 
 interface HeaderProps {
-  onOpenVoiceModal: () => void;
+  onOpenVoiceModal?: () => void;
   onOpenNotifications: () => void;
   onOpenSettings: () => void;
   unreadRemindersCount?: number;
-  onOpenTutorial: () => void;
-  onResetData: () => void;
+  onOpenTutorial?: () => void;
+  onResetData?: () => void;
   contractorName?: string;
   onLogout?: () => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  showSearchBar?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenNotifications,
   onOpenSettings,
-  unreadRemindersCount = 0,
-  contractorName,
-  onLogout,
+  unreadRemindersCount = 2,
+  contractorName = 'Alex Carter',
+  searchQuery = '',
+  onSearchChange,
+  showSearchBar = true,
 }) => {
-  const { trade, language, tradeConfig } = useTheme();
-
-  const getTradeIcon = (cat: TradeCategory) => {
-    switch (cat) {
-      case 'construction':
-        return <HardHat className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />;
-      case 'plumbing':
-        return <Wrench className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />;
-      case 'electrical':
-        return <Zap className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />;
-      case 'painting':
-        return <Paintbrush className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />;
-      case 'carpentry':
-        return <Hammer className="w-3.5 h-3.5 text-amber-700 dark:text-amber-500" />;
-      case 'fabrication':
-        return <Shield className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />;
-      case 'flooring':
-        return <Layers className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />;
-      case 'ceiling':
-        return <Grid className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />;
-      case 'hvac':
-        return <Wind className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />;
-      case 'interior':
-        return <Sparkles className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />;
-      case 'infra':
-        return <Truck className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />;
-      default:
-        return <HardHat className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />;
-    }
-  };
+  const { trade } = useTheme();
 
   const initials = contractorName
     ? contractorName
@@ -74,62 +44,82 @@ export const Header: React.FC<HeaderProps> = ({
         .join('')
         .slice(0, 2)
         .toUpperCase()
-    : 'SS';
+    : 'AC';
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-      <div className="w-full px-3 py-2 flex items-center justify-between gap-2">
+    <header className="w-full bg-[#f4f7fc] dark:bg-slate-950 transition-colors pt-2 px-3 pb-2 space-y-2.5">
+      
+      {/* Top Greeting Row (Matching Screen 1) */}
+      <div className="flex items-center justify-between">
         
-        {/* Left: App Identity / Contractor Avatar & Trade */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+        {/* Left: User Avatar & Greeting */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(37,99,235,0.25)] border-2 border-white dark:border-slate-800">
             {initials}
           </div>
 
-          <div className="min-w-0 flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm text-slate-900 dark:text-white truncate font-heading leading-tight">
-                {contractorName || 'SiteSaathi'}
-              </span>
-            </div>
-            
-            {/* Trade Badge */}
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 leading-none">
-              {getTradeIcon(trade)}
-              <span className="truncate">
-                {language === 'hi' ? tradeConfig.nameHi.split(' ')[0] : tradeConfig.nameEn.split(' ')[0]}
-              </span>
-            </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">
+              Hello 👋
+            </span>
+            <span className="font-extrabold text-sm text-slate-900 dark:text-white truncate font-heading tracking-tight leading-tight">
+              {contractorName}
+            </span>
           </div>
         </div>
 
-        {/* Right: Clean Action Bar */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Right: Notification Bell & Filter / Settings Button */}
+        <div className="flex items-center gap-2 shrink-0">
           
-          {/* Notifications Bell */}
+          {/* Bell Icon with Badge */}
           <button
             onClick={onOpenNotifications}
-            className="relative p-1.5 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 btn-tactile transition-colors"
+            className="relative w-9 h-9 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
             title="Notifications"
           >
             <Bell className="w-4 h-4" />
             {unreadRemindersCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#1877F2] text-white rounded-full text-[9px] font-black flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-xs">
                 {unreadRemindersCount}
               </span>
             )}
           </button>
 
-          {/* Menu / Settings Modal (3 Dots) */}
+          {/* Filter / Settings Button */}
           <button
             onClick={onOpenSettings}
-            className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 btn-tactile transition-colors"
-            title="Settings"
+            className="w-9 h-9 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+            title="Filters & Settings"
           >
-            <MoreVertical className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4" />
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* Rounded Search Bar (Matching Screen 1) */}
+      {showSearchBar && (
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <Search className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            placeholder="Search for any service..."
+            className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-[0_2px_12px_rgba(0,0,0,0.03)] transition-all"
+          />
+          <button
+            onClick={onOpenSettings}
+            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      )}
+
     </header>
   );
 };

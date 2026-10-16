@@ -231,5 +231,30 @@ This document tracks all technologies, libraries, and architectural modules used
   - Converted the bottom navigation to a clean, uncrowded 4-tab bar (`Dashboard`, `Sites`, `Labour`, `Pending Dues`) with wider touch targets and no truncated labels.
   - Upgraded the in-site Tools tab in `SiteDetailsModal.tsx` to directly manage all self-owned dispatched tools and site-purchased tools with rich cards, return-to-godown actions, and empty states.
   - Re-routed tool-related dashboard widgets and reminders to open `Sites` directly.
+- **Phase 2.5 (Pinterest Modern UI Transformation & Services Discovery Engine):**
+  - Integrated the Pinterest 3-Screen UI design system adapted for SiteSaathi data:
+    1. **Screen 1 (Explore & Dashboard Home):**
+       - Personal greeting header with avatar, "Hello 👋 [Contractor]", notification bell counter, and integrated search input.
+       - Modern `ExploreBanner` featuring an exclusive 3D builder character graphic, soft gradient styling, and quick-action booking CTA.
+       - 8-squircle `ServicesGrid` (Plumber, Electrician, Carpenter, Painter, Mason, Welder, Roofer/Supervisor, More) with micro-bounce animations.
+       - "Popular Near You" feed of verified worker cards with dual action buttons (`View Profile` and `Book Now`).
+       - Sleek floating frosted-glass bottom navigation dock with active glowing circular pill.
+    2. **Screen 2 (Most Popular Services / Directory Screen):**
+       - Dedicated `PopularServicesDirectory` with back navigation, real-time keyword search, and horizontal category filter pills (`All`, `Plumbing`, `Electrical`, `Masonry`, `Carpentry`, `Painting`, `Cleaning`, `Welding`, `Supervisor`).
+       - Filtered worker cards displaying daily wages, star ratings, review counts, and verified badges.
+    3. **Screen 3 (Worker & Contractor Detailed Profile Sheet):**
+       - Comprehensive profile modal (`WorkerProfileModal`) featuring hero portrait photo in work attire, bookmarking, location, rating, experience badge, "About Me" bio, key trade skills, recent site work gallery thumbnails, and sticky contact/hire buttons (`Message` and `Book Now`).
+    4. **Direct Site Booking & Attendance Integration (`AssignWorkerModal`):**
+       - Connects the discovery UI directly to active project sites in Dexie DB.
+       - Contractors can pick an active site, specify shift type (Full Day / Half Day / Overtime), wage and advance, immediately recording the worker into the local offline muster roll with celebratory confetti animation.
+
+---
+
+### 16. Pinterest-Style Modern Contractor & Services Discovery System
+- **What it does:** Provides a modern visual discovery, booking, and trade specialty workflow inspired by leading Pinterest mobile UI designs.
+- **How it works:** 
+  - Combines `ExploreBanner`, `ServicesGrid`, `WorkerCard`, `PopularServicesDirectory`, and `WorkerProfileModal` into a fluid 3-screen experience.
+  - Connects skilled worker profiles (`WORKER_DIRECTORY`) directly to the project's IndexedDB database through `AssignWorkerModal`, so booking a worker updates the contractor's real-time site muster and daily wages.
+- **Small Summary:** An award-winning, card-based mobile UI for discovering, exploring, and assigning skilled trade workers to construction sites.
 
 
