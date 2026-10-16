@@ -214,16 +214,54 @@ export const LabourDateDetailModal: React.FC<LabourDateDetailModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Right: Wages & Paid Amount */}
-                    <div className="text-right shrink-0">
+                    {/* Right: Wages & Paid / Due Status */}
+                    <div className="text-right shrink-0 space-y-0.5">
                       <span className="font-black text-xs text-slate-900 dark:text-white block">
                         ₹{worker.dailyWage}
                       </span>
-                      {worker.paidAmount !== undefined && (
-                        <span className="text-[10px] text-slate-400 block">
-                          {language === 'hi' ? 'भुगतान:' : 'Paid:'} ₹{worker.paidAmount}
-                        </span>
-                      )}
+                      {(() => {
+                        const earned = worker.attendanceStatus === 'half_day'
+                          ? Math.round((worker.dailyWage || 0) * 0.5)
+                          : worker.attendanceStatus === 'absent'
+                          ? 0
+                          : (worker.dailyWage || 0);
+                        const paid = worker.paidAmount !== undefined ? worker.paidAmount : earned;
+                        const due = worker.balanceDue !== undefined ? worker.balanceDue : Math.max(0, earned - paid);
+                        const status = worker.paymentStatus || (paid === 0 ? 'unpaid' : paid >= earned ? 'paid' : 'advance');
+
+                        if (status === 'paid') {
+                          return (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              <span>{language === 'hi' ? 'पूरा चुकता' : 'Paid'}</span>
+                            </span>
+                          );
+                        }
+                        if (status === 'advance') {
+                          return (
+                            <div className="space-y-0.5">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
+                                <span>{language === 'hi' ? 'एडवांस:' : 'Adv:'} ₹{paid}</span>
+                              </span>
+                              <span className="text-[10px] text-rose-600 dark:text-rose-400 block font-bold">
+                                {language === 'hi' ? 'बाकी: ₹' : 'Due: ₹'}{due}
+                              </span>
+                            </div>
+                          );
+                        }
+                        if (status === 'pending') {
+                          return (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                              <span>{language === 'hi' ? 'लंबित' : 'Pending'}</span>
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                            <span>{language === 'hi' ? 'बाकी:' : 'Unpaid:'} ₹{due || earned}</span>
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 );

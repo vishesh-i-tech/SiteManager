@@ -78,6 +78,7 @@ export interface LabourEntry {
   dailyWage: number;
   paidAmount: number;
   balanceDue: number;
+  paymentStatus?: 'paid' | 'unpaid' | 'advance' | 'pending';
 }
 
 export interface LabourRecord {

@@ -287,6 +287,13 @@ This document tracks all technologies, libraries, and architectural modules used
     - Replaced the wordy `Voice-Fill` and `Add New Site` buttons with compact, tactile icon-only buttons (`Mic` and `+`).
     - Aligned buttons horizontally with the page title and subtitle for a cleaner mobile interface with zero text overflow.
 
+- **Phase 2.10 (Daily Worker Payment Status: Paid, Unpaid, Pending & Advance):**
+  - Integrated comprehensive daily worker payment and advance tracking into the Labour Attendance sheets:
+    - **Payment Status Options for Each Worker:** Introduced 4 instant status options per worker: `Paid` (चुकता), `Unpaid` (बाकी), `Pending` (लंबित), and `Advance` (एडवांस).
+    - **Advance Cash Tracking:** Selecting `Advance` opens an inline advance amount input (`Adv: ₹`) allowing contractors to record partial daily wages or food money (खुराकी) paid in cash.
+    - **Dynamic Balance Due Calculations:** The system automatically computes and displays remaining dues per worker (`Due: ₹...`) and aggregates Total Wages, Paid/Advance, and Total Pending at the top of the muster sheet.
+    - **Seamless Synchronization Across Modals:** Fully synchronized across `EditLabourModal`, `AddLabourModal`, and `LabourDateDetailModal` with persistence to IndexedDB (`labourEntries` and `labourRecords`).
+
 ---
 
 ### 18. Streamlined Contractor Payment & Udhaar Ledger Engine
@@ -305,6 +312,17 @@ This document tracks all technologies, libraries, and architectural modules used
   - Performs non-blocking client-side search across Dexie-backed site objects (`name`, `location`) and daily labour muster records (`workerName`, `role`).
   - Seamlessly updates visible cards on the dashboard with zero latency and full offline compatibility.
 - **Small Summary:** A fast, local search engine built specifically for a contractor's on-site records and active projects.
+
+---
+
+### 20. Daily Worker Payment & Advance Ledger Engine
+- **What it does:** Tracks per-worker daily wage settlements, advance cash payments, and pending dues directly inside daily muster attendance sheets.
+- **How it works:**
+  - Extends `LabourEntry` with `paymentStatus` (`'paid' | 'unpaid' | 'pending' | 'advance'`), `paidAmount`, and `balanceDue`.
+  - Automatically calculates shift earnings based on attendance status (`full_day`, `half_day`, `overtime`, `absent`).
+  - Dynamically updates unpaid balances when advance payments are issued and rolls them into site financial totals.
+- **Small Summary:** A field-tested daily wage payment and advance tracking system tailored to Indian construction labor management.
+
 
 
 
