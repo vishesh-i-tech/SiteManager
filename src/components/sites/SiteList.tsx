@@ -57,7 +57,7 @@ export const SiteList: React.FC<SiteListProps> = ({
     <div className="space-y-4">
       
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-heading">
             {t('navSites')}
@@ -67,22 +67,24 @@ export const SiteList: React.FC<SiteListProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={onOpenVoiceModal}
-            className="px-3 py-2 rounded-xl text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 flex items-center gap-1.5 btn-tactile hover:bg-orange-100 transition-colors"
+            className="w-10 h-10 rounded-xl text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 flex items-center justify-center btn-tactile hover:bg-orange-100 transition-all cursor-pointer shadow-2xs"
+            title={language === 'hi' ? 'बोलकर साइट जोड़ें' : 'Voice-Fill Site'}
+            aria-label={language === 'hi' ? 'बोलकर साइट जोड़ें' : 'Voice-Fill Site'}
           >
-            <Mic className="w-3.5 h-3.5" />
-            <span>{language === 'hi' ? 'बोलकर जोड़ें' : 'Voice-Fill'}</span>
+            <Mic className="w-5 h-5" />
           </button>
 
           <button
             onClick={onOpenAddSite}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1.5 transition-all btn-tactile"
+            className="w-10 h-10 rounded-xl text-white shadow-sm flex items-center justify-center transition-all btn-tactile cursor-pointer"
             style={{ backgroundColor: tradeConfig.primaryColor }}
+            title={language === 'hi' ? 'नई साइट जोड़ें' : 'Add New Site'}
+            aria-label={language === 'hi' ? 'नई साइट जोड़ें' : 'Add New Site'}
           >
-            <Plus className="w-4 h-4" />
-            <span>{t('addSite')}</span>
+            <Plus className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
       </div>

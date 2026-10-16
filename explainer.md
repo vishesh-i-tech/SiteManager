@@ -282,7 +282,10 @@ This document tracks all technologies, libraries, and architectural modules used
   - Completed strict alignment to civil/construction contractor domain logic:
     1. **Decommissioned Consumer Artifacts:** Completely removed consumer marketplace files (`PopularServicesDirectory`, `WorkerProfileModal`, `AssignWorkerModal`, `ServicesGrid`, `WorkerCard`, and `workersDirectory.ts`).
     2. **Direct Dashboard Search:** Search queries entered in the header now filter actual local project sites (`sites`) and active crew (`activeCrew`) in real-time right on the contractor's dashboard without navigating away.
-    3. **Domain-Specific Visual Reference Adoption:** Preserved the visual polish from design references (soft rounded cards, pastel badge chips, horizontal date picker for attendance) while ensuring 100% of the data structures and user journeys represent real contractor sites, daily muster rolls, and supplier bills.
+- **Phase 2.9 (Minimalist Icon-Only Action Controls in Site Headers):**
+  - Streamlined the Site management header:
+    - Replaced the wordy `Voice-Fill` and `Add New Site` buttons with compact, tactile icon-only buttons (`Mic` and `+`).
+    - Aligned buttons horizontally with the page title and subtitle for a cleaner mobile interface with zero text overflow.
 
 ---
 
