@@ -248,13 +248,29 @@ This document tracks all technologies, libraries, and architectural modules used
        - Connects the discovery UI directly to active project sites in Dexie DB.
        - Contractors can pick an active site, specify shift type (Full Day / Half Day / Overtime), wage and advance, immediately recording the worker into the local offline muster roll with celebratory confetti animation.
 
+- **Phase 2.6 (Tactile Horizontal Date & Time Slot Picker Integration):**
+  - Implemented the Pinterest reference date and time selection UI system:
+    - **Horizontal Card Date Picker (`HorizontalDatePicker.tsx`):**
+      - Displays smooth horizontal scrolling date cards with Month (`MAY`), bold Day number (`12`), and Day of week (`MON`).
+      - Warm peach / coral orange active card state (`#FFE5D8` background, `#E64A19` text, soft drop shadow).
+      - Auto-scrolls selected date into center view with chevron navigation buttons and optional calendar modal jump.
+    - **Time Slot & Crew Count Selector (`TimeSlotPicker.tsx`):**
+      - Grid of tactile shift/time pills (`08:00 AM`, `09:00 AM`, `10:00 AM`, `11:00 AM`, `12:00 PM`, etc.) with active peach pill highlight.
+      - "Number of Workers / Crew" pill selector (`01`, `02`, `03`, `+`).
+    - **Integrated Across App Workflows:**
+      - Upgraded `AssignWorkerModal.tsx` for direct worker assignment with date cards, time slots, worker quantity, phone input, and dark navy "Confirm" action button.
+      - Integrated into `AddLabourModal.tsx` for visual 1-tap date selection during manual muster entry.
+      - Integrated into `LabourRegister.tsx` for instant 1-tap muster record filtering by date.
+
 ---
 
-### 16. Pinterest-Style Modern Contractor & Services Discovery System
-- **What it does:** Provides a modern visual discovery, booking, and trade specialty workflow inspired by leading Pinterest mobile UI designs.
-- **How it works:** 
-  - Combines `ExploreBanner`, `ServicesGrid`, `WorkerCard`, `PopularServicesDirectory`, and `WorkerProfileModal` into a fluid 3-screen experience.
-  - Connects skilled worker profiles (`WORKER_DIRECTORY`) directly to the project's IndexedDB database through `AssignWorkerModal`, so booking a worker updates the contractor's real-time site muster and daily wages.
-- **Small Summary:** An award-winning, card-based mobile UI for discovering, exploring, and assigning skilled trade workers to construction sites.
+### 17. Tactile Horizontal Date & Time Slot Selector System (`HorizontalDatePicker` & `TimeSlotPicker`)
+- **What it does:** Replaces generic mobile date dropdowns with a tactile, horizontal card-based date and time selector modeled after modern mobile service apps.
+- **How it works:**
+  - Dynamically calculates rolling past and future date ranges relative to today.
+  - Formats date tokens into three distinct vertical tiers (uppercase month, large bold day number, uppercase day name).
+  - Uses DOM `scrollIntoView({ behavior: 'smooth', inline: 'center' })` to keep selected days in focus.
+  - Employs warm peach tokens (`#FFE5D8`) and tactile button scaling (`scale-102` / `active:scale-95`).
+- **Small Summary:** A horizontal card-based date and time picker providing fast 1-tap date switching across muster rolls and worker bookings.
 
 

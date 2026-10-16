@@ -3,6 +3,7 @@ import { useTheme } from '../../core/theme/ThemeContext';
 import { LabourRecord, Site } from '../../types';
 import { exportDailyAttendancePdf, exportSiteTotalAttendancePdf } from '../../utils/reportExporter';
 import { LabourDateDetailModal } from './LabourDateDetailModal';
+import { HorizontalDatePicker } from '../common/HorizontalDatePicker';
 import {
   Users,
   Camera,
@@ -36,6 +37,7 @@ export const LabourRegister: React.FC<LabourRegisterProps> = ({
 }) => {
   const { language, tradeConfig } = useTheme();
   const [selectedSiteId, setSelectedSiteId] = useState<string>('all');
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
   
   // Track selected record for the dedicated detail page / modal
   const [selectedRecordForDetail, setSelectedRecordForDetail] = useState<LabourRecord | null>(null);
@@ -48,6 +50,7 @@ export const LabourRegister: React.FC<LabourRegisterProps> = ({
     .map((site) => {
       const records = labourRecords
         .filter((r) => r.siteId === site.id)
+        .filter((r) => !selectedDateFilter || r.date === selectedDateFilter)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
       const totalWages = records.reduce((acc, r) => acc + (r.totalDailyWage || 0), 0);
@@ -158,6 +161,29 @@ export const LabourRegister: React.FC<LabourRegisterProps> = ({
             {site.name}
           </button>
         ))}
+      </div>
+
+      {/* Date Filter Strip (Pinterest Reference UI Match) */}
+      <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-2">
+        <div className="flex items-center justify-between px-0.5">
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            {language === 'hi' ? 'तारीख अनुसार रिकॉर्ड देखें' : 'Filter Attendance by Date'}
+          </span>
+          {selectedDateFilter && (
+            <button
+              onClick={() => setSelectedDateFilter(null)}
+              className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+            >
+              {language === 'hi' ? 'सभी तारीखें देखें (Reset)' : 'View All Dates (Reset)'}
+            </button>
+          )}
+        </div>
+        <HorizontalDatePicker
+          title=""
+          selectedDate={selectedDateFilter || new Date().toISOString().split('T')[0]}
+          onDateChange={(d) => setSelectedDateFilter(d)}
+          showCalendarToggle={true}
+        />
       </div>
 
       {/* Grouped by Site (Outer Layer: Site Name & Total PDF -> Inner Layer: Date Cards -> Click opens separate detail page) */}

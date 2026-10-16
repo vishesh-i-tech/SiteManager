@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site, LabourRecord, LabourEntry } from '../../types';
 import { db } from '../../core/db/database';
+import { HorizontalDatePicker } from '../common/HorizontalDatePicker';
 import {
   Building,
   Calendar,
@@ -258,17 +259,12 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
               </select>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1">
-                <Calendar className="w-3.5 h-3.5 text-orange-500" />
-                {language === 'hi' ? 'हाजिरी दिनांक' : 'Attendance Date'} *
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+            {/* Horizontal Date Picker (Pinterest Reference Match) */}
+            <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <HorizontalDatePicker
+                title={language === 'hi' ? 'तारीख चुनें (Select Date)' : 'Select Date'}
+                selectedDate={date}
+                onDateChange={setDate}
               />
             </div>
           </div>
