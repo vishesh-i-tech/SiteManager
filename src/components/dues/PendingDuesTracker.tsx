@@ -129,10 +129,11 @@ export const PendingDuesTracker: React.FC<PendingDuesTrackerProps> = ({
 
         <button
           onClick={onOpenAddDue}
-          className="px-4 py-2 rounded-xl text-xs font-bold bg-[#1877F2] hover:bg-blue-700 text-white shadow-[0_4px_14px_rgba(24,119,242,0.35)] flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shrink-0"
+          className="w-10 h-10 rounded-xl bg-[#1877F2] hover:bg-blue-700 text-white shadow-[0_4px_14px_rgba(24,119,242,0.35)] flex items-center justify-center active:scale-95 transition-all cursor-pointer shrink-0"
+          title={language === 'hi' ? 'नया बिल जोड़ें' : 'Add Bill'}
+          aria-label={language === 'hi' ? 'नया बिल जोड़ें' : 'Add Bill'}
         >
-          <Plus className="w-4 h-4" />
-          <span>{language === 'hi' ? '+ नया बिल' : '+ Add Bill'}</span>
+          <Plus className="w-5 h-5 stroke-[2.5]" />
         </button>
       </div>
 

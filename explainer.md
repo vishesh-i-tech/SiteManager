@@ -483,4 +483,19 @@ This document tracks all technologies, libraries, and architectural modules used
   - Kept the "Workers Today" 2x2 KPI widget with active worker counter and daily wage total, maintaining a direct tap shortcut (`onNavigateTab('labour')`) to the full Labour Register.
 - **Small Summary:** Removed the redundant "Today's Active Site Crew" feed from the dashboard, keeping the home screen clean, lightweight, and fast while preserving quick KPI access to the Labour tab.
 
+---
+
+## Phase 2.21: Pending Dues Header Icon Simplification
+
+### 1. Technology: Tactile Icon-Only Action Button (`PendingDuesTracker.tsx`)
+- **Role & Purpose:**
+  - Replaced the text-heavy `+ + Add Bill` button in the "Pending Bills & Supplier Udhaar" header with a sleek, minimalist `+` icon button.
+  - Aligns the Dues header with the application's clean mobile design language (matching the icon buttons on the Sites and Labour pages).
+  - Eliminates redundant text and label overflow on narrow mobile screens while preserving immediate accessibility and tapability.
+- **Under the Hood:**
+  - Replaced `<button className="px-4 py-2 ..."><span>+ Add Bill</span></button>` with `<button className="w-10 h-10 rounded-xl ..."><Plus className="w-5 h-5 stroke-[2.5]" /></button>`.
+  - Maintained accessibility standards with semantic `title` and `aria-label` attributes (`"Add Bill"` / `"नया बिल जोड़ें"`).
+- **Small Summary:** Swapped the text-based "+ Add Bill" button on the Dues page header for a clean, square `+` icon button to match the rest of the mobile interface.
+
+
 
