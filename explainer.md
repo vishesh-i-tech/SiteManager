@@ -468,3 +468,19 @@ This document tracks all technologies, libraries, and architectural modules used
     - **Financial Statement PDF Exporter (`reportExporter.ts`):** Added a dedicated "4. Client Payments Received History" table to the exported project PDF statement.
 - **Small Summary:** Added end-to-end client contract payment receipts tracking with Dexie version 3 storage, SiteCard balance meters, a dedicated Client Receipts tab with milestone timeline, and PDF report integration.
 
+---
+
+## Phase 2.20: Dashboard Active Site Crew Roster Removal & Workspace De-cluttering
+
+### 1. Technology: Dashboard Overview Streamlining
+- **Role & Purpose:**
+  - Removed the "Today's Active Site Crew" worker card feed from the main Home dashboard overview.
+  - Labour attendance, worker wages, and daily muster management are already comprehensively handled in the dedicated **Labour** tab (`LabourView.tsx`) and per-site inside the **Site Details Dialog** (`SiteDetailsModal.tsx`).
+  - Eliminates visual clutter from the mobile dashboard view, resulting in a cleaner, faster-loading interface focused on the 3D mascot interaction hub and the 2x2 key operational metrics (Active Sites, Today's Workers, Tool Inventory, Pending Dues).
+- **Under the Hood:**
+  - Removed `activeCrew` slicing and `visibleCrew` filtering state from `DashboardOverview.tsx`.
+  - Removed the "Today's Active Site Crew" container card, empty-state attendance prompt, and unused Lucide icon imports (`CheckCircle2`, `Plus`, `Clock`).
+  - Kept the "Workers Today" 2x2 KPI widget with active worker counter and daily wage total, maintaining a direct tap shortcut (`onNavigateTab('labour')`) to the full Labour Register.
+- **Small Summary:** Removed the redundant "Today's Active Site Crew" feed from the dashboard, keeping the home screen clean, lightweight, and fast while preserving quick KPI access to the Labour tab.
+
+
