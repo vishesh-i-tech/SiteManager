@@ -431,3 +431,40 @@ This document tracks all technologies, libraries, and architectural modules used
   - Unmounted `SiteCard` component and removed unused `visibleSites` query state from `DashboardOverview.tsx`.
   - Retained the `Active Sites` KPI widget as a smart, direct navigation shortcut (`onNavigateTab('sites')`) into the full Sites page.
 - **Small Summary:** Streamlined the home dashboard by removing the redundant Project Sites card feed, maintaining clean separation with the dedicated Sites tab.
+
+---
+
+## Phase 2.19: Client Contract Payments Tracking & Milestone Receipts System
+
+### 1. Technology: Client Contract Payments System (`ClientPayment`, `clientPayments` Dexie Table, `RecordClientPaymentModal`)
+- **Role & Purpose:**
+  - Allows contractors to track all payments, advance deposits, running account (RA) bills, and milestone receipts received from the client/party who awarded the contract.
+  - Answers the critical contractor questions:
+    - *Who gave the contract?* (Client / Awarder Name & Phone)
+    - *When did they pay?* (`paymentDate` - date picker)
+    - *How much was paid?* (`amount` - numeric INR amount with quick-fill presets)
+    - *How was it paid?* (`paymentMode` - UPI / Online, Bank Transfer, Cash, Cheque)
+    - *For what milestone?* (`notes` - Booking Advance, Plinth Beam Stage, 1st Slab, Running Bill, Final Settlement)
+    - *What is the transaction proof?* (`referenceNo` - UTR / Cheque / Txn ID)
+  - Seamlessly tracks contract collection progress:
+    - **Total Contract Budget** (`₹{budget}`)
+    - **Total Client Received** (`₹{totalReceived}`)
+    - **Remaining Client Due** (`₹{clientDue}`)
+    - **Collection Progress %** (`{clientPaymentProgress}%`)
+- **Under the Hood:**
+  - **Dexie.js Schema Upgrade (Version 3):**
+    - Added `clientPayments` table indexed by `id, siteId, paymentDate, paymentMode`.
+    - Enhanced `Site` entity with optional `clientName?: string` and `clientPhone?: string`.
+    - Extended `getSiteFinanceSummary(siteId)` to compute `totalClientReceived`, `clientBalanceDue`, and `clientPaymentProgress`.
+  - **Automated Site Payment Status Sync:**
+    - `recordClientPayment` and `deleteClientPayment` recalculate cumulative receipts vs estimated contract budget and automatically synchronize the site's `paymentStatus` (`unpaid`, `partially_paid`, `paid`).
+  - **Cascade Delete & Backup Engine Integration:**
+    - Integrated `clientPayments` into `deleteSite(siteId)`, `clearAllData()`, `exportBackupJson()`, and `importBackupJson()`.
+  - **UI Integration Across Multiple Views:**
+    - **Main Sites Cards (`SiteCard.tsx`):** Displays a dedicated `Client Received: ₹X / ₹Y (Z%)` and `Client Due: ₹W` card with payer name and real-time status.
+    - **Site Details Overview Tab (`SiteDetailsModal.tsx`):** Displays a prominent "Client Contract & Payments Received" card with contract collection progress bar and quick "+ Record Payment" and "History" actions.
+    - **Site Details Client Receipts Sub-Tab:** A dedicated sub-tab displaying the full chronological payment history, complete with payment mode badges, reference IDs, milestone notes, received amounts in emerald green, and delete entry support.
+    - **Add & Edit Site Modals (`AddSiteModal.tsx`, `EditSiteModal.tsx`):** Added `Client / Awarder Name` and `Client Phone` fields.
+    - **Financial Statement PDF Exporter (`reportExporter.ts`):** Added a dedicated "4. Client Payments Received History" table to the exported project PDF statement.
+- **Small Summary:** Added end-to-end client contract payment receipts tracking with Dexie version 3 storage, SiteCard balance meters, a dedicated Client Receipts tab with milestone timeline, and PDF report integration.
+

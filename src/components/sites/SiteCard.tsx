@@ -171,6 +171,42 @@ export const SiteCard: React.FC<SiteCardProps> = ({
           </div>
         </div>
 
+        {/* Client Contract Payment Received & Balance */}
+        <div className="px-3 py-2 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-100/90 dark:border-emerald-900/40 flex items-center justify-between text-xs">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-wide text-emerald-800 dark:text-emerald-400">
+                {language === 'hi' ? 'क्लाइंट से प्राप्त' : 'Client Received'}
+              </span>
+              {site.clientName && (
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[130px]" title={site.clientName}>
+                  • {site.clientName}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1 font-bold text-slate-900 dark:text-white">
+              <span className="text-emerald-700 dark:text-emerald-300">
+                ₹{(finance?.totalClientReceived || 0).toLocaleString('en-IN')}
+              </span>
+              <span className="text-[11px] text-slate-400 font-normal">
+                / ₹{site.estimatedBudget.toLocaleString('en-IN')}
+              </span>
+              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 ml-0.5">
+                ({finance?.clientPaymentProgress || 0}%)
+              </span>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">
+              {language === 'hi' ? 'बाकी लेना' : 'Client Due'}
+            </span>
+            <span className={`text-xs font-black ${(finance?.clientBalanceDue || 0) > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-600'}`}>
+              ₹{(finance?.clientBalanceDue ?? site.estimatedBudget).toLocaleString('en-IN')}
+            </span>
+          </div>
+        </div>
+
         {/* Warnings / Alerts */}
         {(overdueCount > 0 || (site.workStatus === 'completed' && site.paymentStatus !== 'paid')) && (
           <div className="flex flex-wrap gap-1.5 pt-1">

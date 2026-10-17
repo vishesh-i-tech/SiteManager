@@ -11,6 +11,7 @@ import {
   FileText,
   X,
   CheckCircle2,
+  Phone,
 } from 'lucide-react';
 
 interface EditSiteModalProps {
@@ -32,6 +33,8 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
   const [location, setLocation] = useState('');
   const [siteType, setSiteType] = useState<Site['siteType']>('Residential');
   const [customCategory, setCustomCategory] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
   const [budget, setBudget] = useState<number>(500000);
   const [workStatus, setWorkStatus] = useState<Site['workStatus']>('ongoing');
   const [paymentStatus, setPaymentStatus] = useState<Site['paymentStatus']>('unpaid');
@@ -44,6 +47,8 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
     if (site) {
       setName(site.name);
       setLocation(site.location);
+      setClientName(site.clientName || '');
+      setClientPhone(site.clientPhone || '');
       const standardTypes = ['Residential', 'Commercial', 'Building', 'Apartment', 'Road', 'Bridge', 'Renovation', 'Industrial'];
       if (standardTypes.includes(site.siteType)) {
         setSiteType(site.siteType);
@@ -74,6 +79,8 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
         name: name.trim(),
         location: location.trim() || 'Site Area',
         siteType: finalType,
+        clientName: clientName.trim() || undefined,
+        clientPhone: clientPhone.trim() || undefined,
         estimatedBudget: Number(budget) || 0,
         workStatus,
         paymentStatus,
@@ -154,6 +161,37 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
               onChange={(e) => setLocation(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             />
+          </div>
+
+          {/* Client / Contract Awarder Information */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                <span>{language === 'hi' ? 'ठेका देने वाले का नाम / क्लाइंट' : 'Client / Awarder Name'}</span>
+              </label>
+              <input
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder={language === 'hi' ? 'उदा. पीडब्ल्यूडी, शर्मा जी, बिल्डर' : 'e.g. PWD, Mr. Sharma, Apex Builders'}
+                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-slate-400" />
+                <span>{language === 'hi' ? 'क्लाइंट फ़ोन नंबर' : 'Client Phone'}</span>
+              </label>
+              <input
+                type="tel"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder={language === 'hi' ? 'फ़ोन नंबर' : 'e.g. 9829012345'}
+                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+              />
+            </div>
           </div>
 
           {/* Site Type & Budget */}

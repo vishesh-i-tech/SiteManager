@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useTheme } from '../../core/theme/ThemeContext';
-import { Site, ToolRecord, MaterialRecord, LabourRecord, MachineryRecord, ExpenseDue } from '../../types';
+import { Site, ToolRecord, MaterialRecord, LabourRecord, MachineryRecord, ExpenseDue, ClientPayment } from '../../types';
 import { db } from '../../core/db/database';
 import { exportSiteReportPdf } from '../../utils/reportExporter';
 import {
@@ -25,8 +25,13 @@ import {
   Warehouse,
   ShoppingBag,
   Eye,
+  HandCoins,
+  CreditCard,
+  ArrowRight,
+  Phone,
 } from 'lucide-react';
 import { LabourDateDetailModal } from '../labour/LabourDateDetailModal';
+import { RecordClientPaymentModal } from './RecordClientPaymentModal';
 
 interface SiteDetailsModalProps {
   site: Site | null;
@@ -73,8 +78,9 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
 }) => {
   const { t, language, tradeConfig } = useTheme();
 
-  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'tools' | 'labour' | 'materials' | 'machinery' | 'dues'>('overview');
+  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'client_payments' | 'tools' | 'labour' | 'materials' | 'machinery' | 'dues'>('overview');
   const [selectedRecordForDetail, setSelectedRecordForDetail] = useState<LabourRecord | null>(null);
+  const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
 
   const account = useLiveQuery(() => db.account.toCollection().first());
 
@@ -90,6 +96,15 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
   const finance = useLiveQuery(
     () => (siteId ? db.getSiteFinanceSummary(siteId) : null),
     [siteId]
+  );
+
+  const clientPayments = useLiveQuery(
+    () => (siteId ? db.clientPayments.where('siteId').equals(siteId).toArray() : []),
+    [siteId]
+  ) || [];
+
+  const sortedClientPayments = [...clientPayments].sort(
+    (a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
   );
 
   const tools = useLiveQuery(
@@ -119,6 +134,12 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
 
   if (!currentSite) return null;
 
+  const handleDeleteClientPayment = async (paymentId: string) => {
+    if (window.confirm(language === 'hi' ? 'क्या आप इस पेमेंट रसीद को हटाना चाहते हैं?' : 'Are you sure you want to delete this payment record?')) {
+      await db.deleteClientPayment(paymentId, currentSite.id);
+    }
+  };
+
   const handleUpdateWorkStatus = async (status: Site['workStatus']) => {
     await db.sites.update(currentSite.id, {
       workStatus: status,
@@ -145,7 +166,7 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
   };
 
   const handleDownloadPdf = () => {
-    exportSiteReportPdf(currentSite, finance, tools, materials, dues);
+    exportSiteReportPdf(currentSite, finance, tools, materials, dues, sortedClientPayments, account?.companyName);
   };
 
   return (
@@ -253,6 +274,7 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
         <div className="px-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto no-scrollbar py-2 bg-white dark:bg-slate-900">
           {[
             { id: 'overview', label: language === 'hi' ? 'ओवरव्यू व बचत' : 'Overview & P&L', icon: IndianRupee },
+            { id: 'client_payments', label: `${language === 'hi' ? 'क्लाइंट पेमेंट' : 'Client Receipts'} (${clientPayments.length})`, icon: HandCoins },
             { id: 'tools', label: `${t('navTools')} (${tools.length})`, icon: Wrench },
             { id: 'labour', label: `${t('navLabour')} (${labourRecords.length})`, icon: Users },
             { id: 'materials', label: `${t('navMaterials')} (${materials.length})`, icon: Package },
@@ -327,6 +349,95 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                 </div>
               </div>
 
+              {/* Client Contract & Payment Progress Section */}
+              <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <HandCoins className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>{language === 'hi' ? 'क्लाइंट अनुबंध व प्राप्त भुगतान' : 'Client Contract & Payments Received'}</span>
+                    </span>
+                    {(currentSite.clientName || currentSite.clientPhone) && (
+                      <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                        {currentSite.clientName && <span className="font-semibold">{currentSite.clientName}</span>}
+                        {currentSite.clientPhone && (
+                          <span className="text-slate-500 flex items-center gap-1">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            {currentSite.clientPhone}
+                          </span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsRecordPaymentOpen(true)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs flex items-center gap-1 btn-tactile"
+                      style={{ backgroundColor: tradeConfig.primaryColor }}
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>{language === 'hi' ? 'पेमेंट दर्ज करें' : 'Record Payment'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSubTab('client_payments')}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 flex items-center gap-1"
+                    >
+                      <span>{language === 'hi' ? 'विवरण' : 'History'} ({clientPayments.length})</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Contract Financial Breakdown */}
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span className="text-slate-500 text-[10px] block">
+                      {language === 'hi' ? 'कुल अनुबंध बजट' : 'Total Contract'}
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      ₹{(currentSite.estimatedBudget || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span className="text-slate-500 text-[10px] block">
+                      {language === 'hi' ? 'क्लाइंट से प्राप्त' : 'Received So Far'}
+                    </span>
+                    <span className="font-black text-emerald-700 dark:text-emerald-400">
+                      ₹{(finance?.totalClientReceived || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span className="text-slate-500 text-[10px] block">
+                      {language === 'hi' ? 'बाकी लेना' : 'Client Due'}
+                    </span>
+                    <span className={`font-black ${(finance?.clientBalanceDue || 0) > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-600'}`}>
+                      ₹{(finance?.clientBalanceDue ?? currentSite.estimatedBudget).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="space-y-1 pt-1">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                    <span>
+                      {finance?.clientPaymentProgress || 0}% {language === 'hi' ? 'भुगतान प्राप्त' : 'collected'}
+                    </span>
+                    <span>
+                      {currentSite.paymentStatus === 'paid' ? 'Fully Settled' : currentSite.paymentStatus === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all bg-emerald-500"
+                      style={{ width: `${finance?.clientPaymentProgress || 0}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Expense Breakdown Categories */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
                 <h3 className="font-extrabold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider">
@@ -358,6 +469,170 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                 <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-300">
                   <span className="font-bold block mb-0.5">📝 Notes / Instructions:</span>
                   <p>{currentSite.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CLIENT PAYMENTS SUB-TAB */}
+          {activeSubTab === 'client_payments' && (
+            <div className="space-y-4">
+              {/* Header Banner & Stats */}
+              <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                      {language === 'hi'
+                        ? `क्लाइंट से मिली कुल पेमेंट (${clientPayments.length})`
+                        : `Client Payments Received (${clientPayments.length})`}
+                    </span>
+                    {currentSite.clientName && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        • {currentSite.clientName}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <div>
+                      <span className="text-slate-500 text-[10px] block">
+                        {language === 'hi' ? 'कुल अनुबंध' : 'Total Contract'}
+                      </span>
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        ₹{(currentSite.estimatedBudget || 0).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 text-[10px] block">
+                        {language === 'hi' ? 'प्राप्त राशि' : 'Total Received'}
+                      </span>
+                      <span className="font-black text-emerald-700 dark:text-emerald-400">
+                        ₹{(finance?.totalClientReceived || 0).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 text-[10px] block">
+                        {language === 'hi' ? 'बाकी लेना' : 'Balance Receivable'}
+                      </span>
+                      <span className={`font-black ${(finance?.clientBalanceDue || 0) > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-600'}`}>
+                        ₹{(finance?.clientBalanceDue ?? currentSite.estimatedBudget).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsRecordPaymentOpen(true)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1.5 btn-tactile"
+                  style={{ backgroundColor: tradeConfig.primaryColor }}
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>{language === 'hi' ? 'पेमेंट दर्ज करें' : 'Record Client Payment'}</span>
+                </button>
+              </div>
+
+              {/* Progress bar */}
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {language === 'hi' ? 'अनुबंध भुगतान स्थिति' : 'Contract Collection Progress'}
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {finance?.clientPaymentProgress || 0}% ({language === 'hi' ? 'प्राप्त' : 'Collected'})
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all bg-emerald-500"
+                    style={{ width: `${finance?.clientPaymentProgress || 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Payment Records Timeline */}
+              {sortedClientPayments.length > 0 ? (
+                <div className="space-y-2.5">
+                  {sortedClientPayments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                            {payment.notes || (language === 'hi' ? 'क्लाइंट भुगतान' : 'Milestone Payment')}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                            {payment.paymentMode}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            {new Date(payment.paymentDate).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </span>
+                          {payment.payerName && (
+                            <span>
+                              {language === 'hi' ? 'द्वारा:' : 'From:'} <span className="font-semibold text-slate-700 dark:text-slate-200">{payment.payerName}</span>
+                            </span>
+                          )}
+                          {payment.referenceNo && (
+                            <span className="text-slate-400">
+                              Ref: {payment.referenceNo}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-700/60">
+                        <div className="text-left sm:text-right">
+                          <span className="font-black text-base text-emerald-600 dark:text-emerald-400 block">
+                            + ₹{payment.amount.toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400">
+                            {language === 'hi' ? 'जमा हुआ' : 'Received in Account'}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteClientPayment(payment.id)}
+                          className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                          title="Delete Payment Entry"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-slate-50/70 dark:bg-slate-800/40 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-6 space-y-3">
+                  <HandCoins className="w-12 h-12 mx-auto text-slate-400" />
+                  <div className="space-y-1">
+                    <h4 className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-200">
+                      {language === 'hi' ? 'इस साइट के लिए कोई क्लाइंट पेमेंट दर्ज नहीं है' : 'No client payments recorded yet'}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                      {language === 'hi'
+                        ? 'साइट के ठेकेदार या क्लाइंट से मिले एडवांस, माइलस्टोन या रनिंग बिल की पेमेंट को दर्ज करें।'
+                        : 'Record advance deposits, milestone payments, or running bill receipts from the client who awarded this contract.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsRecordPaymentOpen(true)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm inline-flex items-center gap-1.5 btn-tactile"
+                    style={{ backgroundColor: tradeConfig.primaryColor }}
+                  >
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span>{language === 'hi' ? 'पहली पेमेंट दर्ज करें' : 'Record First Payment'}</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -883,6 +1158,17 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
         companyName={account?.companyName}
         onEditLabour={onEditLabour}
         onDeleteLabour={onDeleteLabour}
+      />
+
+      {/* Record Client Payment Modal */}
+      <RecordClientPaymentModal
+        site={currentSite}
+        isOpen={isRecordPaymentOpen}
+        onClose={() => setIsRecordPaymentOpen(false)}
+        onPaymentRecorded={() => {
+          setIsRecordPaymentOpen(false);
+        }}
+        clientBalanceDue={finance?.clientBalanceDue ?? currentSite.estimatedBudget}
       />
     </div>
   );

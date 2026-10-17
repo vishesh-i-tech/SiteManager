@@ -11,6 +11,7 @@ import {
   Vendor,
   Reminder,
   SmartInsight,
+  ClientPayment,
 } from '../../types';
 import {
   SEED_ACCOUNT,
@@ -24,6 +25,7 @@ import {
   SEED_DUES,
   SEED_VENDORS,
   SEED_REMINDERS,
+  SEED_CLIENT_PAYMENTS,
 } from './seedData';
 
 export class SiteSaathiDatabase extends Dexie {
@@ -37,6 +39,7 @@ export class SiteSaathiDatabase extends Dexie {
   dues!: EntityTable<ExpenseDue, 'id'>;
   vendors!: EntityTable<Vendor, 'id'>;
   reminders!: EntityTable<Reminder, 'id'>;
+  clientPayments!: EntityTable<ClientPayment, 'id'>;
 
   constructor() {
     super('SiteSaathiDB');
@@ -51,6 +54,9 @@ export class SiteSaathiDatabase extends Dexie {
       dues: 'id, siteId, vendorId, status, dueDate',
       vendors: 'id, contractorId, name',
       reminders: 'id, type, siteId, dueDate, isDismissed',
+    });
+    this.version(3).stores({
+      clientPayments: 'id, siteId, paymentDate, paymentMode',
     });
   }
 
@@ -88,6 +94,7 @@ export class SiteSaathiDatabase extends Dexie {
         this.dues,
         this.vendors,
         this.reminders,
+        this.clientPayments,
       ],
       async () => {
         // Clear previous and load clean sample data
@@ -106,6 +113,7 @@ export class SiteSaathiDatabase extends Dexie {
         await this.dues.bulkPut(SEED_DUES);
         await this.vendors.bulkPut(customVendors);
         await this.reminders.bulkPut(SEED_REMINDERS);
+        await this.clientPayments.bulkPut(SEED_CLIENT_PAYMENTS);
       }
     );
   }
@@ -125,6 +133,7 @@ export class SiteSaathiDatabase extends Dexie {
         this.dues,
         this.vendors,
         this.reminders,
+        this.clientPayments,
       ],
       async () => {
         await this.account.clear();
@@ -137,6 +146,7 @@ export class SiteSaathiDatabase extends Dexie {
         await this.dues.clear();
         await this.vendors.clear();
         await this.reminders.clear();
+        await this.clientPayments.clear();
       }
     );
   }
@@ -154,6 +164,7 @@ export class SiteSaathiDatabase extends Dexie {
         this.machinery,
         this.dues,
         this.reminders,
+        this.clientPayments,
       ],
       async () => {
         // Get labour records for this site to delete entries
@@ -168,9 +179,44 @@ export class SiteSaathiDatabase extends Dexie {
         await this.machinery.where('siteId').equals(siteId).delete();
         await this.dues.where('siteId').equals(siteId).delete();
         await this.reminders.where('siteId').equals(siteId).delete();
+        await this.clientPayments.where('siteId').equals(siteId).delete();
         await this.sites.delete(siteId);
       }
     );
+  }
+
+  // Record Client / Contract Payment Received & sync Site paymentStatus
+  async recordClientPayment(payment: ClientPayment) {
+    await this.clientPayments.put(payment);
+    const site = await this.sites.get(payment.siteId);
+    if (site && site.estimatedBudget > 0) {
+      const allPayments = await this.clientPayments.where('siteId').equals(payment.siteId).toArray();
+      const total = allPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+      let newStatus: Site['paymentStatus'] = 'unpaid';
+      if (total >= site.estimatedBudget) {
+        newStatus = 'paid';
+      } else if (total > 0) {
+        newStatus = 'partially_paid';
+      }
+      await this.sites.update(payment.siteId, { paymentStatus: newStatus });
+    }
+  }
+
+  // Delete a client payment record & re-sync Site paymentStatus
+  async deleteClientPayment(paymentId: string, siteId: string) {
+    await this.clientPayments.delete(paymentId);
+    const site = await this.sites.get(siteId);
+    if (site && site.estimatedBudget > 0) {
+      const allPayments = await this.clientPayments.where('siteId').equals(siteId).toArray();
+      const total = allPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+      let newStatus: Site['paymentStatus'] = 'unpaid';
+      if (total >= site.estimatedBudget) {
+        newStatus = 'paid';
+      } else if (total > 0) {
+        newStatus = 'partially_paid';
+      }
+      await this.sites.update(siteId, { paymentStatus: newStatus });
+    }
   }
 
   // Delete individual records
@@ -230,6 +276,11 @@ export class SiteSaathiDatabase extends Dexie {
     const dues = await this.dues.where('siteId').equals(siteId).toArray();
     const unpaidDues = dues.filter((d) => d.status !== 'paid').reduce((acc, d) => acc + (d.amountDue - (d.amountPaid || 0)), 0);
 
+    const clientPayments = await this.clientPayments.where('siteId').equals(siteId).toArray();
+    const totalClientReceived = clientPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const clientBalanceDue = Math.max(0, (site.estimatedBudget || 0) - totalClientReceived);
+    const clientPaymentProgress = site.estimatedBudget > 0 ? Math.min(100, Math.round((totalClientReceived / site.estimatedBudget) * 100)) : 0;
+
     return {
       site,
       materialCost,
@@ -242,6 +293,10 @@ export class SiteSaathiDatabase extends Dexie {
       estimatedProfit,
       profitMarginPercent: Math.round(profitMarginPercent * 10) / 10,
       unpaidDues,
+      totalClientReceived,
+      clientBalanceDue,
+      clientPaymentProgress,
+      clientPaymentsCount: clientPayments.length,
     };
   }
 
@@ -332,6 +387,7 @@ export class SiteSaathiDatabase extends Dexie {
       dues: await this.dues.toArray(),
       vendors: await this.vendors.toArray(),
       reminders: await this.reminders.toArray(),
+      clientPayments: await this.clientPayments.toArray(),
     };
     return JSON.stringify(backup, null, 2);
   }
@@ -356,6 +412,7 @@ export class SiteSaathiDatabase extends Dexie {
         this.dues,
         this.vendors,
         this.reminders,
+        this.clientPayments,
       ],
       async () => {
         if (data.account?.length) await this.account.bulkPut(data.account);
@@ -368,6 +425,7 @@ export class SiteSaathiDatabase extends Dexie {
         if (data.dues?.length) await this.dues.bulkPut(data.dues);
         if (data.vendors?.length) await this.vendors.bulkPut(data.vendors);
         if (data.reminders?.length) await this.reminders.bulkPut(data.reminders);
+        if (data.clientPayments?.length) await this.clientPayments.bulkPut(data.clientPayments);
       }
     );
 

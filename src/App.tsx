@@ -257,7 +257,8 @@ export const App: React.FC = () => {
     const sTools = tools.filter((t) => t.siteId === site.id);
     const sMaterials = materials.filter((m) => m.siteId === site.id);
     const sDues = dues.filter((d) => d.siteId === site.id);
-    exportSiteReportPdf(site, finance, sTools, sMaterials, sDues);
+    const sClientPayments = await db.clientPayments.where('siteId').equals(site.id).toArray();
+    exportSiteReportPdf(site, finance, sTools, sMaterials, sDues, sClientPayments, currentAccount?.companyName);
     showToast(`Exported statement for ${site.name}`);
   };
 

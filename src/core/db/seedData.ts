@@ -9,6 +9,7 @@ import {
   ExpenseDue,
   Vendor,
   Reminder,
+  ClientPayment,
 } from '../../types';
 
 export const SEED_ACCOUNTS: ContractorAccount[] = [
@@ -62,6 +63,8 @@ export const SEED_SITES: Site[] = [
     estimatedBudget: 1450000,
     workStatus: 'ongoing',
     paymentStatus: 'partially_paid',
+    clientName: 'Mr. H.K. Sharma',
+    clientPhone: '9829012345',
     startDate: '2026-08-01',
     expectedEndDate: '2026-11-30',
     notes: 'Ground floor slab casting complete. First floor column work underway.',
@@ -76,6 +79,8 @@ export const SEED_SITES: Site[] = [
     estimatedBudget: 3200000,
     workStatus: 'ongoing',
     paymentStatus: 'unpaid',
+    clientName: 'Royal Greens Developers Ltd.',
+    clientPhone: '9829067890',
     startDate: '2026-07-15',
     expectedEndDate: '2027-02-28',
     notes: 'Basement excavation and retaining wall completed. Waiting for 2nd installment.',
@@ -90,6 +95,8 @@ export const SEED_SITES: Site[] = [
     estimatedBudget: 850000,
     workStatus: 'completed',
     paymentStatus: 'partially_paid',
+    clientName: 'PWD Infrastructure Division',
+    clientPhone: '0141-223344',
     startDate: '2026-05-10',
     completedDate: '2026-08-20',
     notes: 'Structural repair & expansion joint replacement complete. Final PWD measurement bill pending clearance.',
@@ -104,6 +111,8 @@ export const SEED_SITES: Site[] = [
     estimatedBudget: 420000,
     workStatus: 'completed',
     paymentStatus: 'unpaid',
+    clientName: 'Apeksha Society Committee',
+    clientPhone: '9829054321',
     startDate: '2026-06-01',
     completedDate: '2026-07-28',
     notes: 'Main water line and drainage replacement done. Society committee approval awaited for balance payment.',
@@ -353,3 +362,40 @@ export const SEED_REMINDERS: Reminder[] = [
     amount: 73600,
   },
 ];
+
+export const SEED_CLIENT_PAYMENTS: ClientPayment[] = [
+  {
+    id: 'cp-1',
+    siteId: 'site-1',
+    amount: 300000,
+    paymentDate: '2026-08-02',
+    paymentMode: 'Bank Transfer',
+    payerName: 'Mr. H.K. Sharma',
+    referenceNo: 'NEFT-8849201',
+    notes: 'Initial booking advance received on contract signing',
+    createdAt: '2026-08-02T10:30:00Z',
+  },
+  {
+    id: 'cp-2',
+    siteId: 'site-1',
+    amount: 400000,
+    paymentDate: '2026-08-28',
+    paymentMode: 'Cheque',
+    payerName: 'Mr. H.K. Sharma',
+    referenceNo: 'CHQ-449102',
+    notes: 'Plinth level completion & column reinforcement milestone payment',
+    createdAt: '2026-08-28T14:15:00Z',
+  },
+  {
+    id: 'cp-3',
+    siteId: 'site-3',
+    amount: 500000,
+    paymentDate: '2026-06-15',
+    paymentMode: 'Bank Transfer',
+    payerName: 'PWD Executive Engineer',
+    referenceNo: 'RTGS-PWD-9021',
+    notes: '1st Running Account (RA) Bill payment cleared by department',
+    createdAt: '2026-06-15T11:00:00Z',
+  },
+];
+

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Site, ExpenseDue, ToolRecord, LabourRecord, MaterialRecord } from '../types';
+import { Site, ExpenseDue, ToolRecord, LabourRecord, MaterialRecord, ClientPayment } from '../types';
 
 export const exportSiteReportPdf = (
   site: Site,
@@ -8,6 +8,7 @@ export const exportSiteReportPdf = (
   tools: ToolRecord[],
   materials: MaterialRecord[],
   dues: ExpenseDue[],
+  clientPayments: ClientPayment[] = [],
   companyName: string = 'SiteSaathi Contractor'
 ) => {
   const doc = new jsPDF();
@@ -143,6 +144,35 @@ export const exportSiteReportPdf = (
     body: dueRows.length > 0 ? dueRows : [['-', 'No pending dues', '-', '-', '-', '-', '-']],
     theme: 'grid',
     headStyles: { fillColor: [220, 38, 38] },
+    styles: { fontSize: 8 },
+  });
+
+  // Client Payments Table
+  currentY = (doc as any).lastAutoTable.finalY + 12;
+  if (currentY > 230) {
+    doc.addPage();
+    currentY = 20;
+  }
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('4. Client Payments Received History', 14, currentY);
+
+  const clientPaymentRows = clientPayments.map((p) => [
+    p.paymentDate,
+    p.notes || 'Milestone Receipt',
+    p.payerName || (site.clientName || '-'),
+    p.paymentMode,
+    p.referenceNo || '-',
+    `Rs. ${p.amount.toLocaleString('en-IN')}`,
+  ]);
+
+  autoTable(doc, {
+    startY: currentY + 4,
+    head: [['Date', 'Milestone / Notes', 'Payer / Client', 'Mode', 'Ref No', 'Amount Received']],
+    body: clientPaymentRows.length > 0 ? clientPaymentRows : [['-', 'No client payments recorded', '-', '-', '-', '-']],
+    theme: 'grid',
+    headStyles: { fillColor: [16, 185, 129] }, // Emerald-500
     styles: { fontSize: 8 },
   });
 

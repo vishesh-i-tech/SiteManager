@@ -34,6 +34,20 @@ export interface ContractorAccount {
   createdAt: string;
 }
 
+export type PaymentMode = 'UPI / Online' | 'Cash' | 'Bank Transfer' | 'Cheque';
+
+export interface ClientPayment {
+  id: string;
+  siteId: string;
+  amount: number;
+  paymentDate: string;
+  paymentMode: PaymentMode;
+  payerName?: string;
+  referenceNo?: string;
+  notes?: string;
+  createdAt: string;
+}
+
 export interface Site {
   id: string;
   contractorId: string;
@@ -43,6 +57,8 @@ export interface Site {
   estimatedBudget: number;
   workStatus: SiteWorkStatus;
   paymentStatus: SitePaymentStatus;
+  clientName?: string;
+  clientPhone?: string;
   startDate: string;
   expectedEndDate?: string;
   completedDate?: string;
