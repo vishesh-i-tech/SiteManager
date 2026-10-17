@@ -279,7 +279,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                    <span>{language === 'hi' ? 'सुरक्षा पिन / पासवर्ड (वैकल्पिक)' : 'PIN / Password (Optional)'}</span>
+                    <span>{language === 'hi' ? 'सुरक्षा पिन / पासवर्ड' : 'PIN / Password'}</span>
                   </label>
                   <input
                     type="password"
@@ -432,7 +432,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                      {language === 'hi' ? 'दुकान / फर्म का नाम (वैकल्पिक)' : 'Firm / Business Name (Optional)'}
+                      {language === 'hi' ? 'दुकान / फर्म का नाम' : 'Firm / Business Name'}
                     </label>
                     <div className="relative">
                       <Building className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
@@ -448,7 +448,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                      {language === 'hi' ? 'ईमेल / जीमेल (वैकल्पिक)' : 'Email / Gmail (Optional)'}
+                      {language === 'hi' ? 'ईमेल / जीमेल' : 'Email / Gmail'}
                     </label>
                     <div className="relative">
                       <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
@@ -464,7 +464,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                      {language === 'hi' ? 'लॉगिन पिन / पासवर्ड (वैकल्पिक)' : 'Security PIN / Password (Optional)'}
+                      {language === 'hi' ? 'लॉगिन पिन / पासवर्ड' : 'Security PIN / Password'}
                     </label>
                     <div className="relative">
                       <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />

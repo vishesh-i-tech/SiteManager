@@ -402,7 +402,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <div>
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                         <Mail className="w-3.5 h-3.5 text-blue-500" />
-                        <span>{language === 'hi' ? 'ईमेल / जीमेल (वैकल्पिक)' : 'Email / Gmail (Optional)'}</span>
+                        <span>{language === 'hi' ? 'ईमेल / जीमेल' : 'Email / Gmail'}</span>
                       </label>
                       <input
                         type="email"

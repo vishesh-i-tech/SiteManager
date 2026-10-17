@@ -621,6 +621,23 @@ This document tracks all technologies, libraries, and architectural modules used
   - Retained all horizontal scrolling, month/day badges, and native calendar picker functionality.
 - **Small Summary:** Removed the redundant "Filter Attendance by Date" and "View All Dates (Reset)" header row above the attendance calendar filter strip.
 
+---
+
+## Phase 2.29: Removal of "(Optional)" and "(वैकल्पिक)" Across the Application
+
+### 1. Technology: Clean Labeling Architecture Across All Modals & Screens
+- **Role & Purpose:**
+  - Eliminated the redundant word `"(Optional)"` and its Hindi counterpart `"(वैकल्पिक)"` from all input field labels, form controls, and onboarding screens throughout the entire application.
+  - Ensures a cleaner, modern mobile aesthetic where essential fields use clear asterisks (`*`) when mandatory, and non-mandatory fields avoid visual clutter.
+- **Under the Hood:**
+  - **Labour Modal (`AddLabourModal.tsx`):** Changed `"Notes / Diary Remarks (Optional)"` to `"Notes / Diary Remarks"` (`"टिप्पणी / विवरण"`).
+  - **Tools Modal (`AddToolModal.tsx`):** Changed `"Size / Spec (Optional)"` to `"Size / Spec"` (`"साइज / विवरण"`).
+  - **Auth Screen (`AuthScreen.tsx`):** Changed `"PIN / Password (Optional)"`, `"Firm / Business Name (Optional)"`, `"Email / Gmail (Optional)"`, and `"Security PIN / Password (Optional)"` to clean direct labels without parenthesis tags.
+  - **Auth Modal (`AuthModal.tsx`):** Changed `"Email / Gmail (Optional)"` to `"Email / Gmail"`.
+  - **Translations Dictionary (`translations.ts`):** Cleaned English and Hindi dictionaries for `companyName` to remove trailing `(Optional)` / `(वैकल्पिक)`.
+- **Small Summary:** Purged all occurrences of the keyword "Optional" and "(वैकल्पिक)" across all forms, modals, and translations in the application.
+
+
 
 
 

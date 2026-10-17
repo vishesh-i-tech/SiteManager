@@ -533,7 +533,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
           {/* Notes */}
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-              {language === 'hi' ? 'टिप्पणी / विवरण (वैकल्पिक)' : 'Notes / Diary Remarks (Optional)'}
+              {language === 'hi' ? 'टिप्पणी / विवरण' : 'Notes / Diary Remarks'}
             </label>
             <input
               type="text"

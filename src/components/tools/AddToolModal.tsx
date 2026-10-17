@@ -269,7 +269,7 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {language === 'hi' ? 'साइज / विवरण (वैकल्पिक)' : 'Size / Spec (Optional)'}
+                {language === 'hi' ? 'साइज / विवरण' : 'Size / Spec'}
               </label>
               <input
                 type="text"
