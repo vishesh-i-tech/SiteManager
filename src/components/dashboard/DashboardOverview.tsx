@@ -13,7 +13,6 @@ import {
   Receipt,
   HandCoins,
   ArrowRight,
-  Calendar,
 } from 'lucide-react';
 
 interface DashboardOverviewProps {
@@ -78,10 +77,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const totalClientDue = Math.max(0, totalContract - totalReceived);
   const collectionProgress = totalContract > 0 ? Math.min(100, Math.round((totalReceived / totalContract) * 100)) : 0;
 
-  // Latest 3 client payments sorted descending (view only)
-  const recentPayments = [...allClientPayments]
-    .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
-    .slice(0, 3);
+
 
   return (
     <div className="space-y-4 animate-fade-in pb-16">
@@ -281,52 +277,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
 
-        {/* Recent receipts preview list (Read Only, up to 3 latest receipts) */}
-        {recentPayments.length > 0 && (
-          <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40 space-y-1.5">
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">
-              {language === 'hi' ? 'हालिया प्राप्त पेमेंट (केवल देखें)' : 'Recent Client Receipts (View Only)'}
-            </span>
-            <div className="space-y-1">
-              {recentPayments.map((p) => {
-                const siteObj = sites.find((s) => s.id === p.siteId);
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => siteObj && onSelectSite(siteObj)}
-                    className="p-2 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-emerald-100 dark:border-emerald-950/60 flex items-center justify-between gap-2 text-xs hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors cursor-pointer"
-                    title={language === 'hi' ? 'साइट का विवरण देखें' : 'View Site Details'}
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
-                          {p.notes || siteObj?.name || 'Milestone Receipt'}
-                        </span>
-                        {siteObj && (
-                          <span className="text-[10px] text-slate-400 shrink-0">
-                            • {siteObj.name}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-2.5 h-2.5" />
-                          {p.paymentDate}
-                        </span>
-                        <span>•</span>
-                        <span>{p.paymentMode}</span>
-                        {p.payerName && <span>• By {p.payerName}</span>}
-                      </div>
-                    </div>
-                    <span className="font-black text-xs text-emerald-600 dark:text-emerald-400 shrink-0">
-                      + ₹{p.amount.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+
       </div>
 
     </div>

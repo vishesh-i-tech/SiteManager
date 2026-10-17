@@ -576,6 +576,22 @@ This document tracks all technologies, libraries, and architectural modules used
     `{language === 'hi' ? 'स्कैन' : 'Scan'}`
 - **Small Summary:** Shortened the dashboard action shortcut from "Scan Diary" to "Scan" for a cleaner, unified mobile interface.
 
+---
+
+## Phase 2.26: Dashboard Client Contract Widget Streamlining
+
+### 1. Technology: High-Level Financial Card De-cluttering (`DashboardOverview.tsx`)
+- **Role & Purpose:**
+  - Removed the detailed `"Recent Client Receipts (View Only)"` stream and individual receipt preview rows from the dashboard's "Client Contract & Payments Received" card.
+  - Kept the dashboard focused purely on high-level executive summaries (Total Contract, Received So Far, Client Due, collection progress meter, and `View Sites` navigation).
+  - Individual client receipts and payment history remain safely accessible and manageable inside their respective Site Details modals (`Client Receipts` tab).
+- **Under the Hood:**
+  - Removed the `recentPayments` query slice and unused `Calendar` icon import from `DashboardOverview.tsx`.
+  - Removed the conditional `{recentPayments.length > 0 && (...) }` list container.
+  - Reduced DOM node overhead and preserved a compact mobile layout height without vertical clutter.
+- **Small Summary:** Streamlined the Dashboard Client Contract card by removing the itemized recent receipts section while preserving cumulative financial totals and progress indicators.
+
+
 
 
 
