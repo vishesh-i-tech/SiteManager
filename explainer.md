@@ -591,6 +591,22 @@ This document tracks all technologies, libraries, and architectural modules used
   - Reduced DOM node overhead and preserved a compact mobile layout height without vertical clutter.
 - **Small Summary:** Streamlined the Dashboard Client Contract card by removing the itemized recent receipts section while preserving cumulative financial totals and progress indicators.
 
+---
+
+## Phase 2.27: Labour Empty State Button Simplification
+
+### 1. Technology: Compact Tactile Icon Actions (`LabourRegister.tsx`)
+- **Role & Purpose:**
+  - Replaced the verbose `+ + Add Muster` (`+ हाजिरी जोड़ें`) text button in the Worker Entry / Attendance empty state with a sleek, minimalist **`+` icon-only** button.
+  - Replaced `"Scan Register"` with the unified, concise **`"Scan"`** (`"स्कैन"`) button.
+  - Creates visual symmetry with the top navigation header which also features the `+` icon button alongside the `Scan` pill button.
+- **Under the Hood:**
+  - Replaced the text span with a `w-10 h-10` square rounded icon button utilizing `Plus` icon from `lucide-react`, primary brand theme styling, and accessible `aria-label="Add Muster"`.
+  - Styled the OCR scan button with `h-10 px-4 rounded-xl` containing the camera icon and `"Scan"` label (`"स्कैन"` in Hindi).
+  - Aligned header scan button attributes and labels for full UI consistency.
+- **Small Summary:** Simplified the Labour empty state buttons by replacing "+ Add Muster" with a clean "+" icon button and shortening "Scan Register" to "Scan".
+
+
 
 
 

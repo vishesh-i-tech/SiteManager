@@ -127,10 +127,10 @@ export const LabourRegister: React.FC<LabourRegisterProps> = ({
           <button
             onClick={onOpenOcrModal}
             className="px-3 py-2 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-800 shadow-sm flex items-center gap-1.5 transition-all btn-tactile"
-            title="Scan Register"
+            title={language === 'hi' ? 'स्कैन' : 'Scan'}
           >
             <Camera className="w-4 h-4" />
-            <span>{language === 'hi' ? 'स्कैन करें' : 'Scan'}</span>
+            <span>{language === 'hi' ? 'स्कैन' : 'Scan'}</span>
           </button>
         </div>
       </div>
@@ -334,21 +334,23 @@ export const LabourRegister: React.FC<LabourRegisterProps> = ({
               ? 'डायरी की फोटो खींचे (Scan) या हाथ से दैनिक हाजिरी व मजदूरी दर्ज करें।'
               : 'Scan your paper notebook or log daily worker wages manually.'}
           </p>
-          <div className="flex items-center justify-center gap-3 pt-1 flex-wrap">
+          <div className="flex items-center justify-center gap-3 pt-1">
             <button
               onClick={onOpenAddManual}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md flex items-center gap-1.5 btn-tactile"
+              className="w-10 h-10 rounded-xl text-white shadow-md flex items-center justify-center transition-all btn-tactile glow-theme"
               style={{ backgroundColor: tradeConfig.primaryColor }}
+              title={language === 'hi' ? 'हाजिरी जोड़ें' : 'Add Muster'}
+              aria-label="Add Muster"
             >
-              <Plus className="w-4 h-4" />
-              <span>{language === 'hi' ? '+ हाजिरी जोड़ें' : '+ Add Muster'}</span>
+              <Plus className="w-5 h-5" />
             </button>
             <button
               onClick={onOpenOcrModal}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 flex items-center gap-1.5 btn-tactile"
+              className="h-10 px-4 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 flex items-center gap-1.5 btn-tactile"
+              title={language === 'hi' ? 'स्कैन' : 'Scan'}
             >
               <Camera className="w-4 h-4" />
-              <span>{language === 'hi' ? 'स्कैन करें' : 'Scan Register'}</span>
+              <span>{language === 'hi' ? 'स्कैन' : 'Scan'}</span>
             </button>
           </div>
         </div>
