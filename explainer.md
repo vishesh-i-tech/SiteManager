@@ -946,3 +946,18 @@ This document tracks all technologies, libraries, and architectural modules used
   - Generated strictly in documentation-only mode without touching application source code, stylesheets, or database records.
   - References verified source paths, exact Dexie method calls, and real UI behavior discovered from code inspection and test execution.
 - **A short, simple summary:** Added four comprehensive technical documentation specifications to `docs/` establishing an unalterable single source of truth for UI design, Dexie database architecture, local environment setup, and future feature change management.
+
+---
+
+## Phase 2.45: Comprehensive Authentication & Application Security Audit Specification (`docs/AUTHENTICATION.md`)
+
+### 1. Technology: SiteSaathi Authentication Security Architecture & Audit Report
+- **Name of the Technology:** SiteSaathi Authentication Architecture & Security Audit Specification
+- **What it does (Role & Purpose):**
+  - **Authoritative Security Audit:** Evaluates the complete offline-first authentication, app-lock, session lifecycle, and data-isolation architecture of SiteSaathi.
+  - **Defect Register & Exploit Paths:** Documents verified vulnerabilities with code line citations, including plaintext credential storage in IndexedDB (`SEC-DEF-001`), quick login PIN bypass (`SEC-DEF-002`), unauthenticated PIN reset (`SEC-DEF-003`), mock biometric auto-unlock (`SEC-DEF-004`), cross-account data leakage in global site queries (`DATA-DEF-005`), and unencrypted JSON backups (`DATA-DEF-006`).
+  - **Prioritized Remediation Roadmap:** Lays out a phased, non-breaking implementation blueprint (P0 through P3) leveraging native Web Crypto API (`crypto.subtle`) for SHA-256 password hashing and AES-GCM backup encryption without introducing external server dependencies.
+- **How it works (Under the Hood):**
+  - Synthesized strictly in read-only audit mode without altering any application code, database records, or UI components.
+  - Establishes clear trust boundary distinctions between UI-level guards, client-side cryptographic checks, server-enforced authentication, and device-level OS biometrics.
+- **A short, simple summary:** Created `docs/AUTHENTICATION.md` establishing an exhaustive, evidence-based security audit, threat analysis, and non-breaking P0-P3 hardening roadmap for offline-first contractor authentication.
