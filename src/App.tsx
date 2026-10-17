@@ -171,6 +171,13 @@ export const App: React.FC = () => {
     }
   }, [currentAccount?.id, currentAccount?.isPinLockEnabled, currentAccount?.pinLock]);
 
+  // Clean orphan/ghost data when no sites exist
+  useEffect(() => {
+    if (sites.length === 0) {
+      db.cleanupOrphanRecords();
+    }
+  }, [sites.length]);
+
   const refreshInsights = async () => {
     const smartIns = await db.generateSmartInsights();
     setInsights(smartIns);

@@ -54,26 +54,33 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const ongoingSites = sites.filter((s) => s.workStatus === 'ongoing');
   const totalContractBudget = sites.reduce((acc, s) => acc + (s.estimatedBudget || 0), 0);
 
-  const overdueTools = tools.filter(
+  // Ensure all dashboard metrics only count active/valid sites (no orphan sample records)
+  const validSiteIds = new Set(sites.map((s) => s.id));
+  const activeTools = sites.length > 0 ? tools.filter((t) => validSiteIds.has(t.siteId)) : [];
+
+  const overdueTools = activeTools.filter(
     (tItem) =>
       (tItem.status === 'overdue' ||
         (tItem.actualReturnDate === null && new Date(tItem.expectedReturnDate) < new Date())) &&
       !tItem.actualReturnDate
   );
 
-  const unpaidDues = dues.filter((d) => d.status !== 'paid');
+  const validDues = sites.length > 0 ? dues.filter((d) => validSiteIds.has(d.siteId)) : [];
+  const unpaidDues = validDues.filter((d) => d.status !== 'paid');
   const totalDuesAmount = unpaidDues.reduce((acc, d) => acc + (d.amountDue - (d.amountPaid || 0)), 0);
 
   // Today's total workers & latest labour entries
-  const latestLabourRecord = labourRecords[0];
+  const validLabourRecords = sites.length > 0 ? labourRecords.filter((l) => validSiteIds.has(l.siteId)) : [];
+  const latestLabourRecord = validLabourRecords[0];
   const todayWorkerCount = latestLabourRecord?.totalWorkers || 0;
-  const totalLabourWages = labourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 0);
+  const totalLabourWages = validLabourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 0);
 
-  // Real-time client payments query across all sites
+  // Real-time client payments query across all valid sites
   const allClientPayments = useLiveQuery(() => db.clientPayments.toArray()) || [];
+  const validClientPayments = sites.length > 0 ? allClientPayments.filter((p) => validSiteIds.has(p.siteId)) : [];
 
   const totalContract = sites.reduce((acc, s) => acc + (s.estimatedBudget || 0), 0);
-  const totalReceived = allClientPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const totalReceived = validClientPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
   const totalClientDue = Math.max(0, totalContract - totalReceived);
   const collectionProgress = totalContract > 0 ? Math.min(100, Math.round((totalReceived / totalContract) * 100)) : 0;
 
@@ -165,7 +172,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </span>
             </div>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate font-medium">
-              {tools.length} Total Tools
+              {activeTools.length} Total Tools
             </span>
           </div>
         </div>

@@ -716,6 +716,28 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Project Details Audit (`SiteDetailsModal.tsx`):** Renders a 3-badge audit card in the Overview tab displaying Start Date, Created On, and Last Edited timestamps.
 - **Small Summary:** Added comprehensive audit tracking to sites, displaying when records were created and last modified across cards, modals, and overview screens.
 
+---
+
+## Phase 2.34: Orphan / Demo Data Auto-Purge & Site-Scoped KPI Aggregation
+
+### 1. Technology: Cascade Orphan Cleanup & Site-Scoped Dashboard Metrics (`database.ts`, `DashboardOverview.tsx`, `App.tsx`)
+- **Role & Purpose:**
+  - Resolved the ghost count issue where the Dashboard's **Tool Inventory** widget displayed *"2 Overdue / 2 Total Tools"* even when no sites had been created by the user (`0 Sites`).
+  - Automatically purges orphan records (tools, materials, machinery, dues, worker attendance, client receipts) when all sites are deleted or when a child record's parent site no longer exists in IndexedDB.
+  - Ensures the Dashboard Overview dynamically scopes all KPI metrics strictly to active, existing sites (`validSiteIds`).
+- **How it Works (Under the Hood):**
+  - **Why it occurred:** The browser's persistent IndexedDB retained demo equipment records (`tool-1` and `tool-3`) from the initial seed dataset after the demo sites had been deleted from the UI.
+  - **Orphan Sweeper Engine (`database.ts` -> `cleanupOrphanRecords()`):**
+    - Checks the active `sites` collection on application initialization (`ensureDefaultAccounts`).
+    - If `siteIds.size === 0`, it completely clears all child tables (`tools`, `materials`, `machinery`, `dues`, `labourRecords`, `labourEntries`, `clientPayments`), ensuring a 100% clean slate.
+    - If sites exist, it identifies any child records whose `siteId` is not present in the active sites collection and performs a bulk delete on them.
+  - **Reactive Watcher (`App.tsx`):** Added a reactive `useEffect` hook listening to `sites.length`. If all sites are deleted or cleared, it instantly triggers `db.cleanupOrphanRecords()`.
+  - **Site-Scoped Aggregations (`DashboardOverview.tsx`):**
+    - Scopes `activeTools = sites.length > 0 ? tools.filter((t) => validSiteIds.has(t.siteId)) : []`.
+    - When `sites.length === 0`, `activeTools.length === 0` and `overdueTools.length === 0`, reliably displaying **"0 On Track / 0 Total Tools"**.
+- **Small Summary:** Eliminated leftover ghost demo tools and ensured all dashboard KPI widgets calculate strictly from existing sites, showing 0 across all cards on a fresh slate.
+
+
 
 
 

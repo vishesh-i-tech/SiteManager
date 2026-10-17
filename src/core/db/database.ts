@@ -60,13 +60,56 @@ export class SiteSaathiDatabase extends Dexie {
     });
   }
 
-  // Purge pre-seeded sample labour entries so only user's real muster data is shown
-  async cleanupSampleLabourRecords() {
+  // Purge pre-seeded demo records and orphan records so user has a 100% clean slate
+  async cleanupOrphanRecords() {
     try {
-      await this.labourRecords.where('id').equals('lr-1').delete();
-      await this.labourEntries.where('recordId').equals('lr-1').delete();
+      const allSites = await this.sites.toArray();
+      const siteIds = new Set(allSites.map((s) => s.id));
+
+      // If no sites exist, wipe any leftover demo/orphan tools, materials, machinery, dues, labour
+      if (siteIds.size === 0) {
+        await this.tools.clear();
+        await this.materials.clear();
+        await this.machinery.clear();
+        await this.dues.clear();
+        await this.labourRecords.clear();
+        await this.labourEntries.clear();
+        await this.clientPayments.clear();
+        return;
+      }
+
+      // If sites exist, remove any orphan records whose siteId was deleted
+      const tools = await this.tools.toArray();
+      const orphanToolIds = tools.filter((t) => !siteIds.has(t.siteId)).map((t) => t.id);
+      if (orphanToolIds.length > 0) {
+        await this.tools.bulkDelete(orphanToolIds);
+      }
+
+      const materials = await this.materials.toArray();
+      const orphanMaterialIds = materials.filter((m) => !siteIds.has(m.siteId)).map((m) => m.id);
+      if (orphanMaterialIds.length > 0) {
+        await this.materials.bulkDelete(orphanMaterialIds);
+      }
+
+      const dues = await this.dues.toArray();
+      const orphanDueIds = dues.filter((d) => !siteIds.has(d.siteId)).map((d) => d.id);
+      if (orphanDueIds.length > 0) {
+        await this.dues.bulkDelete(orphanDueIds);
+      }
+
+      const machinery = await this.machinery.toArray();
+      const orphanMachineryIds = machinery.filter((m) => !siteIds.has(m.siteId)).map((m) => m.id);
+      if (orphanMachineryIds.length > 0) {
+        await this.machinery.bulkDelete(orphanMachineryIds);
+      }
+
+      const clientPayments = await this.clientPayments.toArray();
+      const orphanPaymentIds = clientPayments.filter((p) => !siteIds.has(p.siteId)).map((p) => p.id);
+      if (orphanPaymentIds.length > 0) {
+        await this.clientPayments.bulkDelete(orphanPaymentIds);
+      }
     } catch (e) {
-      console.warn('Failed to clean sample labour records', e);
+      console.warn('Failed to clean orphan records', e);
     }
   }
 
@@ -75,8 +118,8 @@ export class SiteSaathiDatabase extends Dexie {
     if (count === 0) {
       await this.account.bulkPut(SEED_ACCOUNTS);
     }
-    // Automatically purge old demo records so the user starts with clean manual labour entry
-    await this.cleanupSampleLabourRecords();
+    // Automatically purge old demo records & orphans so the user starts with 100% clean data
+    await this.cleanupOrphanRecords();
   }
 
   // Explicit opt-in sample data seeder for recruiters/reviewers
