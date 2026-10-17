@@ -669,6 +669,22 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Reminders Modal (`RemindersModal.tsx`):** Routed dues reminders directly to the Sites tab where individual site records are managed.
 - **Small Summary:** Removed the standalone Pending Dues page from bottom navigation, creating a balanced 3-tab bar (Home, Sites, Workers) while preserving site-level dues tracking.
 
+---
+
+## Phase 2.32: Add Site Modal Label Simplification
+
+### 1. Technology: Concise Form Label Architecture (`AddSiteModal.tsx`, `EditSiteModal.tsx`)
+- **Role & Purpose:**
+  - Simplified multi-term slashed field labels in the **Add New Site** and **Edit Site** modals as requested.
+  - Removed secondary trailing descriptors after the slash character (`/`) to keep form typography clean, punchy, and readable on mobile screens.
+- **Under the Hood:**
+  - `Site / Project Name *` -> Simplified to **`Site Name *`** (`साइट का नाम *`).
+  - `Location / Address *` -> Simplified to **`Location *`** (`लोकेशन *`).
+  - `Client / Awarder Name` -> Simplified to **`Client Name`** (`क्लाइंट का नाम`).
+  - `Site Notes / Terms` -> Simplified to **`Site Notes`** (`साइट टिप्पणी`).
+- **Small Summary:** Simplified the Add Site form labels by removing trailing slashed words ("Site Name", "Location", "Client Name", "Site Notes").
+
+
 
 
 

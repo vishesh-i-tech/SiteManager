@@ -152,7 +152,7 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-blue-500" />
-              <span>{language === 'hi' ? 'लोकेशन / पता *' : 'Location *'}</span>
+              <span>{language === 'hi' ? 'लोकेशन *' : 'Location *'}</span>
             </label>
             <input
               type="text"
@@ -168,7 +168,7 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5 text-blue-500" />
-                <span>{language === 'hi' ? 'ठेका देने वाले का नाम / क्लाइंट' : 'Client / Awarder Name'}</span>
+                <span>{language === 'hi' ? 'क्लाइंट का नाम' : 'Client Name'}</span>
               </label>
               <input
                 type="text"

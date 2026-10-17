@@ -132,7 +132,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
           {/* Site Name */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              {language === 'hi' ? 'साइट का नाम *' : 'Site / Project Name *'}
+              {language === 'hi' ? 'साइट का नाम *' : 'Site Name *'}
             </label>
             <input
               type="text"
@@ -148,7 +148,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-blue-500" />
-              <span>{language === 'hi' ? 'लोकेशन / पता *' : 'Location / Address *'}</span>
+              <span>{language === 'hi' ? 'लोकेशन *' : 'Location *'}</span>
             </label>
             <input
               type="text"
@@ -165,7 +165,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5 text-blue-500" />
-                <span>{language === 'hi' ? 'ठेका देने वाले का नाम / क्लाइंट' : 'Client / Awarder Name'}</span>
+                <span>{language === 'hi' ? 'क्लाइंट का नाम' : 'Client Name'}</span>
               </label>
               <input
                 type="text"
@@ -292,7 +292,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span>{language === 'hi' ? 'अतिरिक्त टिप्पणी / शर्तें' : 'Site Notes / Terms'}</span>
+              <span>{language === 'hi' ? 'साइट टिप्पणी' : 'Site Notes'}</span>
             </label>
             <textarea
               rows={2}
