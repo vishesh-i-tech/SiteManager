@@ -165,24 +165,11 @@ export const LabourRegister: React.FC<LabourRegisterProps> = ({
 
       {/* Date Filter Strip (Only shown when records exist) */}
       {labourRecords.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-2">
-          <div className="flex items-center justify-between px-0.5">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {language === 'hi' ? 'तारीख अनुसार रिकॉर्ड देखें' : 'Filter Attendance by Date'}
-            </span>
-            {selectedDateFilter && (
-              <button
-                onClick={() => setSelectedDateFilter(null)}
-                className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-              >
-                {language === 'hi' ? 'सभी तारीखें देखें (Reset)' : 'View All Dates (Reset)'}
-              </button>
-            )}
-          </div>
+        <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
           <HorizontalDatePicker
             title=""
             selectedDate={selectedDateFilter || new Date().toISOString().split('T')[0]}
-            onDateChange={(d) => setSelectedDateFilter(d)}
+            onDateChange={(d) => setSelectedDateFilter((prev) => (prev === d ? null : d))}
             showCalendarToggle={true}
           />
         </div>

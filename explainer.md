@@ -606,6 +606,22 @@ This document tracks all technologies, libraries, and architectural modules used
   - Aligned header scan button attributes and labels for full UI consistency.
 - **Small Summary:** Simplified the Labour empty state buttons by replacing "+ Add Muster" with a clean "+" icon button and shortening "Scan Register" to "Scan".
 
+---
+
+## Phase 2.28: Worker Entry Date Filter Strip De-cluttering
+
+### 1. Technology: Streamlined Calendar Filter Header (`LabourRegister.tsx`)
+- **Role & Purpose:**
+  - Removed the redundant `"Filter Attendance by Date"` label and `"View All Dates (Reset)"` link located above the horizontal date strip.
+  - Leaves the clean horizontal calendar card with date pills, navigation chevrons, and calendar picker toggle directly accessible without vertical padding overhead.
+  - Supports intuitive toggle filtering: tapping the currently selected date deselects it and restores the full dates view automatically.
+- **Under the Hood:**
+  - Removed the `flex items-center justify-between` header wrapper above `<HorizontalDatePicker />`.
+  - Updated the date change callback to support toggle deselection: `setSelectedDateFilter((prev) => (prev === d ? null : d))`.
+  - Retained all horizontal scrolling, month/day badges, and native calendar picker functionality.
+- **Small Summary:** Removed the redundant "Filter Attendance by Date" and "View All Dates (Reset)" header row above the attendance calendar filter strip.
+
+
 
 
 
