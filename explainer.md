@@ -306,6 +306,12 @@ This document tracks all technologies, libraries, and architectural modules used
     - **Clean Empty State & Live Crew Count:** Removed hardcoded fallback counts (`6 workers`, `₹4225`, and fake crew cards) in `DashboardOverview.tsx`. The dashboard now reflects real entries with a prominent `+ Log Worker Attendance` prompt when empty.
     - **Unified Direct Date Input:** Replaced the horizontal date scroller in `AddLabourModal.tsx` with the clean, standard `Date *` input field, matching `EditLabourModal.tsx` for fast, direct manual entry.
 
+- **Phase 2.13 (Decommission of Redundant Dashboard Trade Muster Grid):**
+  - Streamlined the dashboard hierarchy by removing the redundant "Daily Labour Muster by Trade" grid:
+    - **Eliminated Unneeded Trade Grid:** Removed the 8-button trade selector grid (`Mason`, `Helper`, `Carpenter`, `Electrician`, `Plumber`, `Painter`, `Welder`, `Supervisor`) from [DashboardOverview.tsx](file:///d:/TECH/site%20sathi/src/components/dashboard/DashboardOverview.tsx).
+    - **Reduced Bundle & Asset Footprint:** Cleaned up unused Lucide icons (`HardHat`, `Hammer`, `Zap`, `Paintbrush`, `BrickWall`, `Flame`) and the static `tradeQuickLog` data array.
+    - **Focused Contractor UX:** The dashboard directly displays active projects and real crew records without confusing intermediate role cards.
+
 ---
 
 ### 18. Streamlined Contractor Payment & Udhaar Ledger Engine

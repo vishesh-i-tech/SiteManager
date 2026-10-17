@@ -14,12 +14,6 @@ import {
   Mic,
   Camera,
   ArrowRight,
-  HardHat,
-  Hammer,
-  Zap,
-  Paintbrush,
-  BrickWall,
-  Flame,
   LayoutGrid,
   CheckCircle2,
   Clock,
@@ -102,16 +96,6 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       )
     : sites.slice(0, 3);
 
-  const tradeQuickLog = [
-    { role: 'Mason', label: 'Mason', icon: BrickWall, bg: 'bg-rose-50 text-rose-600 dark:bg-rose-950/60' },
-    { role: 'Helper', label: 'Helper', icon: Users, bg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60' },
-    { role: 'Carpenter', label: 'Carpenter', icon: Hammer, bg: 'bg-orange-50 text-orange-600 dark:bg-orange-950/60' },
-    { role: 'Electrician', label: 'Electrician', icon: Zap, bg: 'bg-amber-50 text-amber-500 dark:bg-amber-950/60' },
-    { role: 'Plumber', label: 'Plumber', icon: Wrench, bg: 'bg-sky-50 text-sky-600 dark:bg-sky-950/60' },
-    { role: 'Painter', label: 'Painter', icon: Paintbrush, bg: 'bg-purple-50 text-purple-600 dark:bg-purple-950/60' },
-    { role: 'Welder', label: 'Welder', icon: Flame, bg: 'bg-blue-50 text-blue-600 dark:bg-blue-950/60' },
-    { role: 'Supervisor', label: 'Supervisor', icon: HardHat, bg: 'bg-slate-100 text-slate-700 dark:bg-slate-800' },
-  ];
 
   return (
     <div className="space-y-4 animate-fade-in pb-16">
@@ -157,45 +141,6 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </button>
       </div>
 
-      {/* 3. Daily Worker Roles / Quick Trade Register */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white font-heading">
-              {language === 'hi' ? 'ट्रेड अनुसार कारीगर हाजिरी' : 'Daily Labour Muster by Trade'}
-            </h3>
-            <p className="text-[11px] text-slate-400">
-              {language === 'hi' ? 'ट्रेड पर टैप करके तुरंत उपस्थिति दर्ज करें' : 'Tap trade to log daily workers'}
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigateTab('labour')}
-            className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
-          >
-            {language === 'hi' ? 'पूरी हाजिरी देखें' : 'View Muster'}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2">
-          {tradeQuickLog.map((tItem) => {
-            const Icon = tItem.icon;
-            return (
-              <button
-                key={tItem.role}
-                onClick={() => onNavigateTab('labour')}
-                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50/70 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer group"
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1 group-hover:scale-110 transition-transform ${tItem.bg}`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-full">
-                  {tItem.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* 4. Real Site Crew Roster (Today's Workers from Database) */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3">
