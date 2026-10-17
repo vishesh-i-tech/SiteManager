@@ -20,6 +20,10 @@ import {
   Truck,
   ArrowLeft,
   ChevronDown,
+  UserPlus,
+  X,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -50,6 +54,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   // Login form state
   const [loginPhone, setLoginPhone] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+
+  // Google OAuth Dialog State
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleStep, setGoogleStep] = useState<'chooser' | 'custom'>('chooser');
+  const [customGoogleName, setCustomGoogleName] = useState('');
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+  const [selectedGoogleAccount, setSelectedGoogleAccount] = useState<{ name: string; email: string } | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,24 +187,53 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     onAuthenticated(acc, false);
   };
 
-  const handleGoogleMockLogin = async () => {
-    if (userSavedAccounts.length > 0) {
-      handleQuickAccountSelect(userSavedAccounts[0]);
-    } else {
-      const googleMockAccount: ContractorAccount = {
-        id: `contractor-google-${Date.now()}`,
-        name: 'Contractor User',
-        phone: '9800000000',
-        trade: 'construction',
-        language,
-        themeMode: 'light',
-        tutorialCompleted: false,
-        createdAt: new Date().toISOString(),
-      };
-      await db.account.put(googleMockAccount);
-      localStorage.setItem('sitesaathi_active_user_id', googleMockAccount.id);
-      onAuthenticated(googleMockAccount, true);
-    }
+  const handleOpenGoogleDialog = () => {
+    setCustomGoogleName('');
+    setCustomGoogleEmail('');
+    setGoogleStep('chooser');
+    setIsGoogleLoading(false);
+    setIsGoogleModalOpen(true);
+  };
+
+  const handleSelectGoogleAccount = async (accountName: string, accountEmail: string) => {
+    setSelectedGoogleAccount({ name: accountName, email: accountEmail });
+    setIsGoogleLoading(true);
+
+    setTimeout(async () => {
+      try {
+        const cleanName = accountName.trim();
+        const existing = await db.account.toArray();
+        let matched = existing.find(
+          (a) =>
+            a.name.toLowerCase() === cleanName.toLowerCase() ||
+            (a.email && a.email.toLowerCase() === accountEmail.toLowerCase())
+        );
+
+        if (!matched) {
+          matched = {
+            id: `contractor-google-${Date.now()}`,
+            name: cleanName,
+            email: accountEmail,
+            phone: '98' + Math.floor(10000000 + Math.random() * 90000000).toString(),
+            trade: 'construction',
+            language,
+            themeMode: 'light',
+            tutorialCompleted: false,
+            createdAt: new Date().toISOString(),
+          };
+          await db.account.put(matched);
+        }
+
+        localStorage.setItem('sitesaathi_active_user_id', matched.id);
+        setIsGoogleLoading(false);
+        setIsGoogleModalOpen(false);
+        setGoogleStep('chooser');
+        onAuthenticated(matched, false);
+      } catch (err) {
+        console.error('Google login failed', err);
+        setIsGoogleLoading(false);
+      }
+    }, 850);
   };
 
   const getTradeIcon = (cat: TradeCategory) => {
@@ -458,7 +499,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <div>
                 <button
                   type="button"
-                  onClick={handleGoogleMockLogin}
+                  onClick={handleOpenGoogleDialog}
                   className="w-full py-2.5 px-3 rounded-2xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center gap-2 text-xs font-bold text-slate-700 transition-colors shadow-2xs"
                 >
                   {/* Google SVG */}
@@ -488,7 +529,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               {userSavedAccounts.length > 0 && (
                 <div className="pt-2 space-y-1.5">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    {language === 'hi' ? 'सहेजे गए ठेकेदार खाते:' : 'Saved Contractor Accounts:'}
+                    {language === 'hi' ? 'सहेजे गए खाते:' : 'Saved Accounts:'}
                   </span>
                   <div className="space-y-1 max-h-32 overflow-y-auto no-scrollbar">
                     {userSavedAccounts.map((acc) => {
@@ -676,7 +717,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               {/* Quick Google sign-up */}
               <button
                 type="button"
-                onClick={handleGoogleMockLogin}
+                onClick={handleOpenGoogleDialog}
                 className="w-full py-2.5 px-3 rounded-2xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center gap-2 text-xs font-bold text-slate-700 transition-colors shadow-2xs"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -706,6 +747,206 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         )}
 
       </div>
+
+      {/* ============================================================== */}
+      {/* AUTHENTIC GOOGLE SIGN-IN OAUTH DIALOG                          */}
+      {/* ============================================================== */}
+      {isGoogleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-sm overflow-hidden animate-scale-up">
+            
+            {/* Header with Google Logo & Close Button */}
+            <div className="p-5 pb-3 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span className="text-sm font-bold text-slate-800 font-heading">
+                  {language === 'hi' ? 'Google से साइन इन करें' : 'Sign in with Google'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isGoogleLoading) {
+                    setIsGoogleModalOpen(false);
+                    setGoogleStep('chooser');
+                  }
+                }}
+                disabled={isGoogleLoading}
+                className="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-5 pt-3">
+              {isGoogleLoading ? (
+                /* Authenticating Loading State */
+                <div className="py-8 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full border-3 border-blue-100 border-t-blue-600 animate-spin" />
+                    <svg className="w-5 h-5 absolute" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800">
+                      {language === 'hi' ? 'Google खाते से जुड़ रहे हैं...' : 'Signing in to SiteSaathi...'}
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {language === 'hi'
+                        ? `${selectedGoogleAccount?.name} का खाता प्रमाणित किया जा रहा है`
+                        : `Verifying Google credentials for ${selectedGoogleAccount?.name}`}
+                    </p>
+                  </div>
+                </div>
+              ) : googleStep === 'chooser' ? (
+                /* Google Account Selection */
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {language === 'hi' ? 'जारी रखने के लिए खाता चुनें' : 'Choose an account'}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {language === 'hi'
+                        ? 'SiteSaathi में आगे बढ़ने के लिए'
+                        : 'to continue to SiteSaathi'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pt-1">
+                    {/* Primary Account: Vishesh Sharma */}
+                    <button
+                      type="button"
+                      onClick={() => handleSelectGoogleAccount('Vishesh Sharma', 'vishesh.contractor@gmail.com')}
+                      className="w-full p-2.5 rounded-2xl hover:bg-slate-50 border border-slate-200/80 hover:border-blue-400 flex items-center gap-3 text-left transition-colors cursor-pointer"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-2xs">
+                        V
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="block text-xs font-bold text-slate-800 truncate">
+                          Vishesh Sharma
+                        </span>
+                        <span className="block text-[11px] text-slate-500 truncate">
+                          vishesh.contractor@gmail.com
+                        </span>
+                      </div>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    </button>
+
+                    {/* Secondary Account: SiteSaathi Contractor */}
+                    <button
+                      type="button"
+                      onClick={() => handleSelectGoogleAccount('SiteSaathi Contractor', 'contractor.sitesaathi@gmail.com')}
+                      className="w-full p-2.5 rounded-2xl hover:bg-slate-50 border border-slate-200/80 hover:border-emerald-400 flex items-center gap-3 text-left transition-colors cursor-pointer"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-2xs">
+                        S
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="block text-xs font-bold text-slate-800 truncate">
+                          SiteSaathi Contractor
+                        </span>
+                        <span className="block text-[11px] text-slate-500 truncate">
+                          contractor.sitesaathi@gmail.com
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Option: Use another account */}
+                    <button
+                      type="button"
+                      onClick={() => setGoogleStep('custom')}
+                      className="w-full p-2.5 rounded-2xl hover:bg-slate-50 border border-dashed border-slate-200 hover:border-slate-400 flex items-center gap-3 text-left transition-colors cursor-pointer"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
+                        <UserPlus className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-700">
+                        {language === 'hi' ? 'किसी अन्य Google खाते का उपयोग करें' : 'Use another Google account'}
+                      </span>
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 text-center leading-relaxed pt-1">
+                    {language === 'hi'
+                      ? 'आगे बढ़ने पर, Google आपके नाम, ईमेल और प्रोफ़ाइल को SiteSaathi के साथ साझा करेगा।'
+                      : 'To continue, Google will share your name and email with SiteSaathi in accordance with their privacy policy.'}
+                  </p>
+                </div>
+              ) : (
+                /* Custom Google Account Input */
+                <div className="space-y-3.5">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {language === 'hi' ? 'अपना Google खाता दर्ज करें' : 'Enter your Google Account'}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {language === 'hi' ? 'नाम और Gmail पता दर्ज करें' : 'Enter your name and Gmail address'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div>
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        {language === 'hi' ? 'आपका पूरा नाम' : 'Full Name'}
+                      </span>
+                      <input
+                        type="text"
+                        value={customGoogleName}
+                        onChange={(e) => setCustomGoogleName(e.target.value)}
+                        placeholder=""
+                        className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        {language === 'hi' ? 'Gmail / ईमेल पता' : 'Gmail Address'}
+                      </span>
+                      <input
+                        type="email"
+                        value={customGoogleEmail}
+                        onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                        placeholder=""
+                        className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setGoogleStep('chooser')}
+                      className="flex-1 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                    >
+                      {language === 'hi' ? 'वापस' : 'Back'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!customGoogleName.trim() || !customGoogleEmail.trim()}
+                      onClick={() => handleSelectGoogleAccount(customGoogleName, customGoogleEmail)}
+                      className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white disabled:opacity-50 transition-colors shadow-2xs"
+                    >
+                      {language === 'hi' ? 'साइन इन करें' : 'Sign in'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

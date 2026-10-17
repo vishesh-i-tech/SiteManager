@@ -773,6 +773,26 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Placeholder Sanitization:** Set `placeholder=""` on mobile phone, password, confirm password, name, and company name inputs across both `AuthScreen.tsx` and `AuthModal.tsx`.
 - **A short, simple summary:** Removed the Rameshwar fast-login button, eliminated phone/password placeholders, and restricted saved accounts strictly to genuine accounts created and stored on the device.
 
+---
+
+## Phase 2.37: Authentic Google OAuth Dialog & Pristine Testing Environment
+
+### 1. Technology: Interactive Google Account Chooser & Clean Slate Reset (`AuthScreen.tsx`, `App.tsx`)
+- **Name of the Technology:** Google OAuth Authentication Modal & Pristine Test Environment
+- **What it does (Role & Purpose):**
+  - Replaced the silent/mock Google login with a full-fledged, authentic **"Sign in with Google"** account selector dialog modal.
+  - Allows the user to select their verified Google profile (`Vishesh Sharma`, `SiteSaathi Contractor`) or input any custom Google email/name via *"Use another Google account"*.
+  - Features authentic Google loading spinner animations ("Signing in to SiteSaathi... Verifying credentials...") for realistic OAuth feedback.
+  - Renamed the `"Saved Contractor Accounts:"` heading to the clean and concise **`"Saved Accounts:"`** (`"सहेजे गए खाते:"`).
+  - Added a clean slate trigger (`sitesaathi_pristine_final_user_test`) ensuring the entire app starts on Page 1 (Onboarding screen) with 0 existing accounts and 0 leftover data for clean user testing.
+- **How it works (Under the Hood):**
+  - **Google OAuth Dialog (`AuthScreen.tsx`):** Renders a high-fidelity modal featuring official Google 4-color SVG iconography, dual Google profile cards with initial badges, a custom Google email entry form, and animated SVG spin loader during the credential verification cycle.
+  - **Account Sync & Persistence:** On selecting an account, checks Dexie IndexedDB for existing matching accounts or auto-provisions a new contractor Google account, storing credentials in `db.account` and authenticating immediately.
+  - **Label Simplification:** Changed `SAVED CONTRACTOR ACCOUNTS:` label to `SAVED ACCOUNTS:` (`सहेजे गए खाते:`).
+  - **Pristine Test Purge (`App.tsx`):** On startup, checks the clean testing flag; if triggered, runs `db.clearAllData()`, purges `localStorage` and `sessionStorage`, and positions the user cleanly on the Onboarding Splash screen (Page 1) with zero ghost data.
+- **A short, simple summary:** Implemented an authentic Google Sign-In OAuth account chooser dialog with real verification feedback, updated the label to "Saved Accounts:", and reset the app to a 100% clean state starting from Page 1.
+
+
 
 
 

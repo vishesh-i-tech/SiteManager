@@ -141,6 +141,18 @@ export const App: React.FC = () => {
   // Check auth session on startup
   useEffect(() => {
     const checkAuth = async () => {
+      // One-time fresh test reset so the app starts 100% clean with 0 existing data
+      const isCleanTestReady = localStorage.getItem('sitesaathi_pristine_final_user_test');
+      if (!isCleanTestReady) {
+        await db.clearAllData();
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem('sitesaathi_pristine_final_user_test', 'true');
+        setActiveAccountId(null);
+        setInsights([]);
+        return;
+      }
+
       await db.ensureDefaultAccounts();
       const allAccounts = await db.account.toArray();
       const savedId = localStorage.getItem('sitesaathi_active_user_id');
@@ -216,8 +228,12 @@ export const App: React.FC = () => {
 
   const handleClearAllData = async () => {
     await db.clearAllData();
+    localStorage.removeItem('sitesaathi_active_user_id');
+    sessionStorage.removeItem('sitesaathi_unlocked');
+    setActiveAccountId(null);
     refreshInsights();
     if (selectedSite) setSelectedSite(null);
+    setIsSettingsModalOpen(false);
     showToast('All data cleared. Clean start initialized', 'info');
   };
 
