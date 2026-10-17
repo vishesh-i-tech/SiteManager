@@ -312,6 +312,12 @@ This document tracks all technologies, libraries, and architectural modules used
     - **Reduced Bundle & Asset Footprint:** Cleaned up unused Lucide icons (`HardHat`, `Hammer`, `Zap`, `Paintbrush`, `BrickWall`, `Flame`) and the static `tradeQuickLog` data array.
     - **Focused Contractor UX:** The dashboard directly displays active projects and real crew records without confusing intermediate role cards.
 
+- **Phase 2.14 (Interactive 3D Mascot Integration & Hero Banner Simplification):**
+  - Modernized the hero banner with a tactile, interactive 3D character and removed redundant marketing text:
+    - **Banner Simplification:** Removed the red-rectangle boxed headline (*"Daily Labour Muster, Tools & Site Expenses"*), top tag (*"100% Offline Contractor Suite"*), and redundant CTA button (*"+ New Site"*) from [ExploreBanner.tsx](file:///d:/TECH/site%20sathi/src/components/discovery/ExploreBanner.tsx).
+    - **Left Positioned 3D Character:** Relocated the 3D builder mascot to the left side of the banner.
+    - **Touch & Drag 3D Rotation Engine:** Built [Interactive3DCharacter.tsx](file:///d:/TECH/site%20sathi/src/components/common/Interactive3DCharacter.tsx) featuring 360-degree pointer drag/touch rotation, multi-axis tilt, realistic physics inertia coasting, dynamic specular reflection lighting, and ground shadow skewing.
+
 ---
 
 ### 18. Streamlined Contractor Payment & Udhaar Ledger Engine
@@ -358,6 +364,17 @@ This document tracks all technologies, libraries, and architectural modules used
   - Disables pre-seeded mock muster data in storage and clears hardcoded fallback counts on dashboard widgets.
   - Unifies date inputs to direct standard date pickers across both addition and editing modals, giving contractors total control over attendance logging.
 - **Small Summary:** A pure, clutter-free attendance recording engine populated 100% by contractor input.
+
+---
+
+### 23. Interactive 3D Perspective & Inertia Drag Engine
+- **What it does:** Transforms the contractor mascot into a touchable, 3D rotating figurine that users can spin and inspect using touch or mouse gestures.
+- **How it works:**
+  - Tracks pointer coordinates (`PointerEvents`) with pointer capture across mobile touches and desktop mice.
+  - Computes horizontal displacement into 360° `rotateY` angle and vertical displacement into clamped `rotateX` perspective tilt.
+  - Employs `requestAnimationFrame` with friction coefficients (0.92) to deliver realistic momentum coasting upon release.
+  - Dynamically recalculates CSS linear-gradient specular angles and ground shadow skewing based on current rotation angles.
+- **Small Summary:** An interactive, hardware-accelerated 3D touch-rotation component that elevates app engagement.
 
 
 

@@ -100,13 +100,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   return (
     <div className="space-y-4 animate-fade-in pb-16">
       
-      {/* 1. Contractor Hero Banner (Clean, Professional & Mascot-Integrated) */}
-      <ExploreBanner
-        badgeText={language === 'hi' ? '100% ऑफलाइन ठेकेदार सुइट' : '100% Offline Contractor Suite'}
-        title={language === 'hi' ? 'दैनिक लेबर हाजिरी, औजार व खर्चों का पक्का हिसाब' : 'Daily Labour Muster, Tools & Site Expenses'}
-        buttonText={language === 'hi' ? '+ नई साइट जोड़ें' : '+ New Site'}
-        onActionClick={onOpenAddSite}
-      />
+      {/* 1. Interactive 3D Mascot Companion Card */}
+      <ExploreBanner />
 
       {/* 2. Three Primary Site Actions */}
       <div className="grid grid-cols-3 gap-2">
