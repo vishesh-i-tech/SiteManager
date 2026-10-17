@@ -158,6 +158,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     }
   };
 
+  // Filter out any hardcoded/demo contractor IDs so only real accounts saved on this device appear
+  const userSavedAccounts = existingAccounts.filter(
+    (acc) =>
+      !['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(acc.id) &&
+      !acc.name.toLowerCase().includes('rameshwar') &&
+      !acc.name.toLowerCase().includes('vikram') &&
+      !acc.name.toLowerCase().includes('rajesh patel') &&
+      !['9876543210', '9876543211', '9876543212'].includes(acc.phone)
+  );
+
   const handleQuickAccountSelect = (acc: ContractorAccount) => {
     localStorage.setItem('sitesaathi_active_user_id', acc.id);
     setTrade(acc.trade);
@@ -166,15 +176,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   };
 
   const handleGoogleMockLogin = async () => {
-    // If accounts exist, use the first one, otherwise create a mock contractor
-    if (existingAccounts.length > 0) {
-      handleQuickAccountSelect(existingAccounts[0]);
+    if (userSavedAccounts.length > 0) {
+      handleQuickAccountSelect(userSavedAccounts[0]);
     } else {
       const googleMockAccount: ContractorAccount = {
         id: `contractor-google-${Date.now()}`,
-        name: 'VISHESH (Google User)',
-        phone: '9876543210',
-        companyName: 'Vishesh Construction Co.',
+        name: 'Contractor User',
+        phone: '9800000000',
         trade: 'construction',
         language,
         themeMode: 'light',
@@ -393,7 +401,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   maxLength={10}
                   value={loginPhone}
                   onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="9876543210"
+                  placeholder=""
                   className="w-full text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5"
                 />
               </div>
@@ -407,7 +415,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type="password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="••••"
+                  placeholder=""
                   className="w-full text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5"
                 />
               </div>
@@ -427,8 +435,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   onClick={() => {
                     setErrorMsg(
                       language === 'hi'
-                        ? 'सुझाव: नीचे दिए गए डेमो प्रोफाइल पर टैप करके 1 क्लिक में सीधे लॉगिन करें।'
-                        : 'Tip: Tap any profile below under "Or sign in with" to log in instantly.'
+                        ? 'पिन रीसेट के लिए कृपया अपना पंजीकृत 10 अंकों का मोबाइल नंबर दर्ज करें।'
+                        : 'Please enter your registered 10-digit mobile phone number.'
                     );
                   }}
                   className="text-xs font-semibold text-slate-400 hover:text-slate-600"
@@ -446,12 +454,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 <div className="border-t border-slate-200 w-full" />
               </div>
 
-              {/* Social Login Buttons: Google + Fast Profile Switcher */}
-              <div className="grid grid-cols-2 gap-2.5">
+              {/* Social Login Button: Google */}
+              <div>
                 <button
                   type="button"
                   onClick={handleGoogleMockLogin}
-                  className="py-2.5 px-3 rounded-2xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center gap-2 text-xs font-bold text-slate-700 transition-colors shadow-2xs"
+                  className="w-full py-2.5 px-3 rounded-2xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center gap-2 text-xs font-bold text-slate-700 transition-colors shadow-2xs"
                 >
                   {/* Google SVG */}
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -474,31 +482,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   </svg>
                   <span>Google</span>
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (existingAccounts.length > 0) {
-                      handleQuickAccountSelect(existingAccounts[0]);
-                    }
-                  }}
-                  className="py-2.5 px-3 rounded-2xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center gap-1.5 text-xs font-bold text-slate-700 transition-colors shadow-2xs"
-                >
-                  <span className="text-blue-600">⚡</span>
-                  <span className="truncate">
-                    {existingAccounts[0]?.name ? existingAccounts[0].name.split(' ')[0] : 'Demo User'}
-                  </span>
-                </button>
               </div>
 
-              {/* Existing Accounts Pill Cards List */}
-              {existingAccounts.length > 0 && (
+              {/* User-saved Accounts Pill Cards List (Only appears if user previously registered/logged in on this device) */}
+              {userSavedAccounts.length > 0 && (
                 <div className="pt-2 space-y-1.5">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     {language === 'hi' ? 'सहेजे गए ठेकेदार खाते:' : 'Saved Contractor Accounts:'}
                   </span>
                   <div className="space-y-1 max-h-32 overflow-y-auto no-scrollbar">
-                    {existingAccounts.map((acc) => {
+                    {userSavedAccounts.map((acc) => {
                       const tradeConf = TRADE_CONFIGS[acc.trade] || TRADE_CONFIGS.construction;
                       return (
                         <div
@@ -573,7 +566,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Rameshwar Sharma"
+                  placeholder=""
                   className="w-full text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5"
                 />
               </div>
@@ -589,7 +582,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   maxLength={10}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="9876543210"
+                  placeholder=""
                   className="w-full text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5"
                 />
               </div>
@@ -627,7 +620,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder={language === 'hi' ? 'उदा. शर्मा बिल्डर्स' : 'e.g. Apex Builders'}
+                  placeholder=""
                   className="w-full text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5"
                 />
               </div>
@@ -641,7 +634,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••"
+                  placeholder=""
                   className="w-full text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5"
                 />
               </div>
@@ -655,7 +648,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••"
+                  placeholder=""
                   className="w-full text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5"
                 />
               </div>

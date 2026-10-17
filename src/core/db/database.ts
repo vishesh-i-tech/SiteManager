@@ -113,11 +113,31 @@ export class SiteSaathiDatabase extends Dexie {
     }
   }
 
-  async ensureDefaultAccounts() {
-    const count = await this.account.count();
-    if (count === 0) {
-      await this.account.bulkPut(SEED_ACCOUNTS);
+  // Purge pre-seeded demo accounts so only real user-registered accounts exist
+  async purgeDemoAccounts() {
+    try {
+      const all = await this.account.toArray();
+      const demoIds = all
+        .filter(
+          (a) =>
+            ['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(a.id) ||
+            a.name.toLowerCase().includes('rameshwar') ||
+            a.name.toLowerCase().includes('vikram') ||
+            a.name.toLowerCase().includes('rajesh patel') ||
+            ['9876543210', '9876543211', '9876543212'].includes(a.phone)
+        )
+        .map((a) => a.id);
+      if (demoIds.length > 0) {
+        await this.account.bulkDelete(demoIds);
+      }
+    } catch (e) {
+      console.warn('Failed to purge demo accounts', e);
     }
+  }
+
+  async ensureDefaultAccounts() {
+    // Purge any pre-seeded demo accounts from old sessions
+    await this.purgeDemoAccounts();
     // Automatically purge old demo records & orphans so the user starts with 100% clean data
     await this.cleanupOrphanRecords();
   }

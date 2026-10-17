@@ -755,6 +755,25 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Database & State Synchronization:** Fully connected to Dexie IndexedDB (`db.account`), preserving multi-trade switching, password PIN encryption, and bilingual English/Hindi localization.
 - **Small Summary:** Redesigned the authentication experience into a reference-grade 3-screen flow (Onboarding, Sign In, Sign Up) with floating-label pill inputs and custom contractor illustration.
 
+---
+
+## Phase 2.36: Auth De-cluttering & Device-Scoped Saved Accounts
+
+### 1. Technology: Clean Auth Input Fields & Persistent Device-Only Account Storage (`AuthScreen.tsx`, `AuthModal.tsx`, `database.ts`)
+- **Name of the Technology:** Clean Auth Input Architecture & Device-Only Profile Storage
+- **What it does (Role & Purpose):**
+  - Removed the `⚡ Rameshwar` button under the *"OR SIGN IN WITH"* social authentication row, leaving a single, centered Google sign-in button.
+  - Removed example placeholder text (`"9876543210"` and `"••••"`) from both the Phone Number and Password inputs across Sign In and Sign Up forms.
+  - Ensured that the *"Saved Contractor Accounts"* list only appears if the user has genuinely created/logged into an account on this specific device and stored data locally.
+  - Guaranteed that on a fresh install or when reopening the app after clearing data, no mock/pre-seeded demo profiles (such as Rameshwar Sharma or Vikram Singh) are presented.
+- **How it works (Under the Hood):**
+  - **Auto-Purge & Seed Removal (`database.ts`):** Removed default bulk-putting of `SEED_ACCOUNTS` in `ensureDefaultAccounts()`. Updated `purgeDemoAccounts()` to delete any existing hardcoded demo records (`'contractor-1'`, `'contractor-2'`, `'contractor-3'`, `'contractor-demo'`), demo phones (`'9876543210'`, `'9876543211'`, `'9876543212'`), or demo contractor names.
+  - **Reactive User Filter (`AuthScreen.tsx`, `AuthModal.tsx`):** Introduced a strict `userSavedAccounts` filter that screens out demo IDs, names, and phone numbers from the live account query.
+  - **Conditional UI Rendering:** Conditioned the *"SAVED CONTRACTOR ACCOUNTS:"* card container strictly on `userSavedAccounts.length > 0`. If no user accounts have been saved on the device, the entire section remains hidden.
+  - **Placeholder Sanitization:** Set `placeholder=""` on mobile phone, password, confirm password, name, and company name inputs across both `AuthScreen.tsx` and `AuthModal.tsx`.
+- **A short, simple summary:** Removed the Rameshwar fast-login button, eliminated phone/password placeholders, and restricted saved accounts strictly to genuine accounts created and stored on the device.
+
+
 
 
 

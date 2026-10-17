@@ -41,9 +41,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const { trade, setTrade, language, setLanguage, t, tradeConfig } = useTheme();
 
+  const userSavedAccounts = existingAccounts.filter(
+    (acc) =>
+      !['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(acc.id) &&
+      !acc.name.toLowerCase().includes('rameshwar') &&
+      !acc.name.toLowerCase().includes('vikram') &&
+      !acc.name.toLowerCase().includes('rajesh patel') &&
+      !['9876543210', '9876543211', '9876543212'].includes(acc.phone)
+  );
+
   // Mode: 'register' | 'login'
   const [mode, setMode] = useState<'register' | 'login'>(
-    existingAccounts.length > 0 ? 'login' : 'register'
+    userSavedAccounts.length > 0 ? 'login' : 'register'
   );
 
   // Register steps: 'language' | 'trade' | 'profile'
@@ -364,7 +373,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder={language === 'hi' ? 'रमेश शर्मा' : 'Rameshwar Sharma'}
+                        placeholder=""
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>
@@ -380,7 +389,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         maxLength={10}
                         value={phone}
                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        placeholder="9876543210"
+                        placeholder=""
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>
@@ -394,7 +403,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         type="text"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder={language === 'hi' ? 'शर्मा कंस्ट्रक्शन' : 'Sharma Construction Co.'}
+                        placeholder=""
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>
@@ -408,7 +417,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="contractor@gmail.com"
+                        placeholder=""
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>
@@ -440,14 +449,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </p>
               </div>
 
-              {/* Existing accounts list if any */}
-              {existingAccounts.length > 0 && (
+              {/* User-saved accounts list if any */}
+              {userSavedAccounts.length > 0 && (
                 <div className="space-y-2">
                   <span className="text-[11px] font-bold text-slate-400 block">
                     {language === 'hi' ? 'सहेजे गए खाते (Saved Profiles):' : 'Saved Accounts:'}
                   </span>
                   <div className="space-y-1.5">
-                    {existingAccounts.map((acc) => (
+                    {userSavedAccounts.map((acc) => (
                       <button
                         key={acc.id}
                         type="button"
@@ -482,7 +491,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     maxLength={10}
                     value={loginPhone}
                     onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="9876543210"
+                    placeholder=""
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                   />
                 </div>
