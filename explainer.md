@@ -792,6 +792,25 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Pristine Test Purge (`App.tsx`):** On startup, checks the clean testing flag; if triggered, runs `db.clearAllData()`, purges `localStorage` and `sessionStorage`, and positions the user cleanly on the Onboarding Splash screen (Page 1) with zero ghost data.
 - **A short, simple summary:** Implemented an authentic Google Sign-In OAuth account chooser dialog with real verification feedback, updated the label to "Saved Accounts:", and reset the app to a 100% clean state starting from Page 1.
 
+---
+
+## Phase 2.38: Direct Contractor Mobile & PIN Security System
+
+### 1. Technology: Pure Contractor Mobile & PIN Authentication with Eye Toggles & In-App PIN Reset (`AuthScreen.tsx`)
+- **Name of the Technology:** Direct Contractor Mobile & PIN Security System
+- **What it does (Role & Purpose):**
+  - Completely removed the Google sign-in and sign-up options, social buttons, and dividers from both Sign In and Registration screens.
+  - Added password visibility toggle icons (`Eye` / `EyeOff`) to all sensitive credential fields: Login Password, Registration Security PIN, Confirm Security PIN, and the Password Reset PIN inputs.
+  - Added a dedicated, secure **"Reset PIN / Password"** dialog modal accessed via *"पिन भूल गए? (Reset PIN)"* / *"Forgot your password?"*.
+  - Enables contractors to securely reset their 4-digit security PIN by verifying their registered 10-digit mobile phone number, working 100% offline without requiring third-party cloud OAuth servers.
+  - Enforced strict validation: exactly 10-digit Indian mobile numbers, minimum 4-digit security PINs, exact match confirmations, and unique phone number checks in IndexedDB.
+- **How it works (Under the Hood):**
+  - **Credential Masking & Visibility:** Uses reactive React boolean states (`showLoginPassword`, `showRegisterPassword`, `showConfirmPassword`, `showNewPin`) to dynamically toggle input elements between `type="password"` and `type="text"`.
+  - **In-App PIN Reset Flow (`handleResetPassword`):** Validates the phone format, queries `db.account.toArray()`, verifies the phone number exists in local IndexedDB, and safely executes `db.account.update(account.id, { password: newPin.trim() })` with animated loading indicators and real-time success banners.
+  - **Pure Offline Self-Sufficiency:** Eliminates external OAuth latency and dependency on third-party cloud identities, allowing contractors on construction sites to have complete, private, and tamper-resistant local security.
+- **A short, simple summary:** Removed Google sign-in entirely, added eye toggles for all password/PIN inputs, and integrated an in-app PIN reset modal for secure, direct mobile-based authentication.
+
+
 
 
 
