@@ -172,7 +172,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
         {/* Pending Dues */}
         <div
-          onClick={() => onNavigateTab('dues')}
+          onClick={() => onNavigateTab('sites')}
           className="bg-white dark:bg-slate-900 rounded-[20px] p-3.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:shadow-md transition-all cursor-pointer active:scale-97 flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-1.5">

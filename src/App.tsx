@@ -32,7 +32,6 @@ import { EditMaterialModal } from './components/materials/EditMaterialModal';
 import { MachineryLog } from './components/machinery/MachineryLog';
 import { AddMachineryModal } from './components/machinery/AddMachineryModal';
 import { EditMachineryModal } from './components/machinery/EditMachineryModal';
-import { PendingDuesTracker } from './components/dues/PendingDuesTracker';
 import { AddDueModal } from './components/dues/AddDueModal';
 import { EditDueModal } from './components/dues/EditDueModal';
 import { ReportsExporter } from './components/reports/ReportsExporter';
@@ -104,7 +103,7 @@ export const App: React.FC = () => {
   const [siteWorkFilter, setSiteWorkFilter] = useState<'all' | 'ongoing' | 'completed' | 'planning'>('all');
 
   const handleNavigateTab = (tab: ActiveTab, filter?: 'all' | 'ongoing' | 'completed' | 'planning') => {
-    if (tab === 'tools') {
+    if (tab === 'tools' || tab === 'dues') {
       setActiveTab('sites');
       return;
     }
@@ -408,26 +407,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {activeTab === 'dues' && (
-          <PendingDuesTracker
-            dues={dues}
-            sites={sites}
-            vendors={vendors}
-            onOpenAddDue={() => {
-              setTargetSiteIdForModal(undefined);
-              setIsAddDueModalOpen(true);
-            }}
-            onRefresh={refreshInsights}
-            onEditDue={(due) => setEditingDue(due)}
-            onDeleteDue={(due) =>
-              setDeletingItem({
-                type: 'due',
-                id: due.id,
-                name: `${due.title} (₹${due.amountDue.toLocaleString('en-IN')})`,
-              })
-            }
-          />
-        )}
+
 
         {activeTab === 'reports' && (
           <ReportsExporter

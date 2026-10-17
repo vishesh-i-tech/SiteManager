@@ -4,9 +4,6 @@ import {
   LayoutDashboard,
   Building2,
   Users,
-  Wrench,
-  Receipt,
-  Sparkles,
 } from 'lucide-react';
 
 export type ActiveTab = 'dashboard' | 'sites' | 'labour' | 'tools' | 'materials' | 'machinery' | 'dues' | 'reports';
@@ -27,12 +24,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { id: 'dashboard' as ActiveTab, label: 'Home', icon: LayoutDashboard },
     { id: 'sites' as ActiveTab, label: 'Sites', icon: Building2 },
     { id: 'labour' as ActiveTab, label: 'Workers', icon: Users },
-    { id: 'dues' as ActiveTab, label: 'Dues', icon: Receipt },
   ];
 
   return (
     <div className="sticky bottom-2 sm:bottom-3 left-0 right-0 z-40 px-3 pointer-events-none pb-safe">
-      <div className="max-w-[340px] sm:max-w-[360px] mx-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-full py-1.5 px-2 shadow-[0_12px_40px_rgba(0,0,0,0.14)] flex items-center justify-between pointer-events-auto transition-all">
+      <div className="max-w-[260px] sm:max-w-[280px] mx-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-full py-1.5 px-3 shadow-[0_12px_40px_rgba(0,0,0,0.14)] flex items-center justify-between pointer-events-auto transition-all">
         {mainNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;

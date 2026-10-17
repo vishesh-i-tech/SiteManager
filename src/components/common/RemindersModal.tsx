@@ -133,11 +133,11 @@ export const RemindersModal: React.FC<RemindersModalProps> = ({
                     <button
                       onClick={() => {
                         onClose();
-                        onNavigateTab(isOverdue ? 'sites' : 'dues');
+                        onNavigateTab('sites');
                       }}
                       className="font-bold text-xs text-orange-600 dark:text-orange-400 hover:underline"
                     >
-                      {isOverdue ? 'View Site Tools →' : 'View Dues →'}
+                      {isOverdue ? 'View Site Tools →' : 'View Site Dues →'}
                     </button>
                   </div>
                 </div>

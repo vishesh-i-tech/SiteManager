@@ -653,6 +653,23 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Added `scrollbar-gutter: stable`:** Ensured the internal scroll lane remains reserved so scrollbar appearance on tall pages doesn't shift content width by 6px.
 - **Small Summary:** Eliminated page size changes and zooming on tab switch by replacing the scale-down CSS transition with a pure opacity fade, fixing the simulator frame height, and stabilizing the scrollbar gutter.
 
+---
+
+## Phase 2.31: Removal of Standalone Pending Dues Page & Bottom Navigation Streamlining
+
+### 1. Technology: 3-Pill Bottom Navigation & Site-Centric Dues Consolidation (`BottomNav.tsx`, `App.tsx`, `DashboardOverview.tsx`)
+- **Role & Purpose:**
+  - Removed the standalone **Pending Dues** global page from the bottom navigation bar per user request.
+  - Streamlined the bottom navigation to a clean, focused 3-tab layout: **Home (Dashboard)**, **Sites**, and **Workers (Labour)**.
+  - Retained granular dues and payment tracking inside each site's detail workspace (`SiteDetailsModal.tsx` -> `Dues` tab) and PDF export statement.
+- **Under the Hood:**
+  - **Bottom Navigation (`BottomNav.tsx`):** Removed `{ id: 'dues', label: 'Dues', icon: Receipt }` from `mainNavItems`. Adjusted floating pill width to `max-w-[260px] sm:max-w-[280px]` with `px-3` padding for balanced 3-icon symmetry.
+  - **Route Redirection (`App.tsx`):** Updated `handleNavigateTab` so any dues navigation triggers route directly to `'sites'`. Unmounted `PendingDuesTracker` from global tab views.
+  - **Dashboard Overview (`DashboardOverview.tsx`):** Pointed the Pending Dues metric widget directly to the Sites tab (`onNavigateTab('sites')`).
+  - **Reminders Modal (`RemindersModal.tsx`):** Routed dues reminders directly to the Sites tab where individual site records are managed.
+- **Small Summary:** Removed the standalone Pending Dues page from bottom navigation, creating a balanced 3-tab bar (Home, Sites, Workers) while preserving site-level dues tracking.
+
+
 
 
 
