@@ -77,18 +77,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   // Today's total workers & latest labour entries
   const todayDate = new Date().toISOString().split('T')[0];
   const latestLabourRecord = labourRecords[0];
-  const todayWorkerCount = latestLabourRecord?.totalWorkers || 6;
-  const totalLabourWages = labourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 4225);
+  const todayWorkerCount = latestLabourRecord?.totalWorkers || 0;
+  const totalLabourWages = labourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 0);
 
-  // Real crew members from database
+  // Real crew members from database (only real user-logged records)
   const activeCrew = latestLabourRecord?.entries && latestLabourRecord.entries.length > 0
     ? latestLabourRecord.entries.slice(0, 4)
-    : [
-        { id: 'c1', workerName: 'Subhash Mistry', role: 'Mason', dailyWage: 950, attendanceStatus: 'full_day', balanceDue: 0 },
-        { id: 'c2', workerName: 'Kamal Yadav', role: 'Mason', dailyWage: 900, attendanceStatus: 'full_day', balanceDue: 0 },
-        { id: 'c3', workerName: 'Ramu Meena', role: 'Helper', dailyWage: 550, attendanceStatus: 'full_day', balanceDue: 50 },
-        { id: 'c4', workerName: 'Mohan Suthar', role: 'Carpenter', dailyWage: 1000, attendanceStatus: 'full_day', balanceDue: 0 },
-      ];
+    : [];
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const visibleCrew = normalizedQuery
@@ -223,8 +218,18 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
         <div className="space-y-2">
           {visibleCrew.length === 0 ? (
-            <div className="p-3 text-center text-xs text-slate-400">
-              {normalizedQuery ? 'No workers match search' : 'No active workers logged today'}
+            <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-2">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {normalizedQuery ? 'No workers match search' : 'No active workers logged today'}
+              </p>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('labour')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Log Worker Attendance</span>
+              </button>
             </div>
           ) : (
             visibleCrew.map((worker: any) => (

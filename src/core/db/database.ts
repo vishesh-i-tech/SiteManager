@@ -54,11 +54,23 @@ export class SiteSaathiDatabase extends Dexie {
     });
   }
 
+  // Purge pre-seeded sample labour entries so only user's real muster data is shown
+  async cleanupSampleLabourRecords() {
+    try {
+      await this.labourRecords.where('id').equals('lr-1').delete();
+      await this.labourEntries.where('recordId').equals('lr-1').delete();
+    } catch (e) {
+      console.warn('Failed to clean sample labour records', e);
+    }
+  }
+
   async ensureDefaultAccounts() {
     const count = await this.account.count();
     if (count === 0) {
       await this.account.bulkPut(SEED_ACCOUNTS);
     }
+    // Automatically purge old demo records so the user starts with clean manual labour entry
+    await this.cleanupSampleLabourRecords();
   }
 
   // Explicit opt-in sample data seeder for recruiters/reviewers

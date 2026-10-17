@@ -300,6 +300,12 @@ This document tracks all technologies, libraries, and architectural modules used
     - **Clean Standardized Roles:** Options now render clearly as `Mason`, `Helper`, `Carpenter`, `Electrician`, `Plumber`, `Plasterer`, `Painter`, `Welder`, and `Supervisor`.
     - **Syntax & Redundancy Cleanup:** Removed accidental duplicate form controls and ensured smooth, high-speed attendance review.
 
+- **Phase 2.12 (Purge of Pre-seeded Labour Records & Direct Manual Date Entry Standard):**
+  - Completely purged dummy pre-seeded muster records and established real user-entered attendance:
+    - **Removed Mock Labour Records:** Emptied `SEED_LABOUR_RECORDS` and `SEED_LABOUR_ENTRIES` in `seedData.ts`. Added automatic startup database purge `cleanupSampleLabourRecords()` in Dexie to remove legacy `lr-1` dummy records from the user's browser.
+    - **Clean Empty State & Live Crew Count:** Removed hardcoded fallback counts (`6 workers`, `₹4225`, and fake crew cards) in `DashboardOverview.tsx`. The dashboard now reflects real entries with a prominent `+ Log Worker Attendance` prompt when empty.
+    - **Unified Direct Date Input:** Replaced the horizontal date scroller in `AddLabourModal.tsx` with the clean, standard `Date *` input field, matching `EditLabourModal.tsx` for fast, direct manual entry.
+
 ---
 
 ### 18. Streamlined Contractor Payment & Udhaar Ledger Engine
@@ -337,6 +343,15 @@ This document tracks all technologies, libraries, and architectural modules used
   - Standardizes the `LabourEntry['role']` enumeration across UI controls so dropdown selectors display concise English values without cluttered dual-language brackets.
   - Ensures seamless matching between optical character recognition (OCR) parsing, manual entry, and PDF attendance reports.
 - **Small Summary:** A clean, professional English role selection interface for fast, error-free muster roll logging.
+
+---
+
+### 22. Clean Manual Attendance Ledger Engine
+- **What it does:** Guarantees that only real dates, authentic job sites, and genuine worker attendance details logged by the contractor are stored and shown across the app.
+- **How it works:**
+  - Disables pre-seeded mock muster data in storage and clears hardcoded fallback counts on dashboard widgets.
+  - Unifies date inputs to direct standard date pickers across both addition and editing modals, giving contractors total control over attendance logging.
+- **Small Summary:** A pure, clutter-free attendance recording engine populated 100% by contractor input.
 
 
 

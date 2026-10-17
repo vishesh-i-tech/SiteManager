@@ -174,27 +174,9 @@ export const SEED_TOOLS: ToolRecord[] = [
   },
 ];
 
-export const SEED_LABOUR_ENTRIES: LabourEntry[] = [
-  { id: 'le-1', recordId: 'lr-1', workerName: 'Subhash Mistry', role: 'Mason', attendanceStatus: 'full_day', dailyWage: 950, paidAmount: 950, balanceDue: 0 },
-  { id: 'le-2', recordId: 'lr-1', workerName: 'Kamal Yadav', role: 'Mason', attendanceStatus: 'full_day', dailyWage: 900, paidAmount: 900, balanceDue: 0 },
-  { id: 'le-3', recordId: 'lr-1', workerName: 'Ramu Meena', role: 'Helper', attendanceStatus: 'full_day', dailyWage: 550, paidAmount: 500, balanceDue: 50 },
-  { id: 'le-4', recordId: 'lr-1', workerName: 'Sunita Devi', role: 'Helper', attendanceStatus: 'full_day', dailyWage: 550, paidAmount: 550, balanceDue: 0 },
-  { id: 'le-5', recordId: 'lr-1', workerName: 'Bablu Kumar', role: 'Helper', attendanceStatus: 'half_day', dailyWage: 275, paidAmount: 0, balanceDue: 275 },
-  { id: 'le-6', recordId: 'lr-1', workerName: 'Mohan Suthar', role: 'Carpenter', attendanceStatus: 'full_day', dailyWage: 1000, paidAmount: 1000, balanceDue: 0 },
-];
+export const SEED_LABOUR_ENTRIES: LabourEntry[] = [];
 
-export const SEED_LABOUR_RECORDS: LabourRecord[] = [
-  {
-    id: 'lr-1',
-    siteId: 'site-1',
-    date: '2026-09-07',
-    totalWorkers: 6,
-    totalDailyWage: 4225,
-    totalPaid: 3900,
-    notes: 'First floor column shuttering and brickwork. Bablu worked half day.',
-    entries: SEED_LABOUR_ENTRIES,
-  },
-];
+export const SEED_LABOUR_RECORDS: LabourRecord[] = [];
 
 export const SEED_MATERIALS: MaterialRecord[] = [
   {
