@@ -43,7 +43,8 @@ export const PhotoOcrModal: React.FC<PhotoOcrModalProps> = ({
   const [ocrConfidence, setOcrConfidence] = useState<number | null>(null);
   const [entries, setEntries] = useState<LabourEntry[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -76,45 +77,6 @@ export const PhotoOcrModal: React.FC<PhotoOcrModalProps> = ({
     }
   };
 
-  // Sample handwritten muster image generator (for instant offline recruiter preview)
-  const loadSampleMusterPhoto = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 600;
-    canvas.height = 400;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      // Paper background
-      ctx.fillStyle = '#FFFDF5';
-      ctx.fillRect(0, 0, 600, 400);
-
-      // Grid lines
-      ctx.strokeStyle = '#E2E8F0';
-      ctx.lineWidth = 1;
-      for (let y = 50; y < 400; y += 40) {
-        ctx.beginPath();
-        ctx.moveTo(20, y);
-        ctx.lineTo(580, y);
-        ctx.stroke();
-      }
-
-      // Title & Text
-      ctx.fillStyle = '#1E293B';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('दैनिक लेबर हाजिरी रजिस्टर — 08 Sept', 30, 35);
-
-      ctx.font = '15px sans-serif';
-      ctx.fillText('1. Subhash Mistry (Mason) — P — 950', 30, 85);
-      ctx.fillText('2. Kamal Yadav (Mason) — P — 900', 30, 125);
-      ctx.fillText('3. Ramu Meena (Helper) — P — 550', 30, 165);
-      ctx.fillText('4. Sunita Devi (Helper) — P — 550', 30, 205);
-      ctx.fillText('5. Bablu Kumar (Helper) — Half — 275', 30, 245);
-      ctx.fillText('6. Mohan Suthar (Carpenter) — P — 1000', 30, 285);
-
-      const sampleUrl = canvas.toDataURL('image/jpeg', 0.9);
-      setPhotoUrl(sampleUrl);
-      processImage(sampleUrl);
-    }
-  };
 
   const handleUpdateEntry = (index: number, field: keyof LabourEntry, val: any) => {
     const updated = [...entries];
@@ -278,32 +240,54 @@ export const PhotoOcrModal: React.FC<PhotoOcrModalProps> = ({
                 </p>
               </div>
 
+              {/* Camera Input (opens native device camera) */}
               <input
                 type="file"
-                ref={fileInputRef}
+                ref={cameraInputRef}
                 accept="image/*"
                 capture="environment"
                 onChange={handleFileUpload}
                 className="hidden"
               />
 
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              {/* Gallery Input (opens file picker / gallery) */}
+              <input
+                type="file"
+                ref={galleryInputRef}
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+
+              {/* Side-by-Side: Take Photo (Camera) & Upload Photo (Gallery) */}
+              <div className="flex flex-col sm:flex-row items-stretch justify-center gap-3 pt-2 max-w-md mx-auto w-full">
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-5 py-2.5 rounded-xl text-xs font-extrabold text-white shadow-md flex items-center gap-2 btn-tactile glow-theme"
+                  onClick={() => {
+                    if (cameraInputRef.current) {
+                      cameraInputRef.current.value = '';
+                      cameraInputRef.current.click();
+                    }
+                  }}
+                  className="flex-1 py-3 px-4 rounded-2xl text-xs font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
                   style={{ backgroundColor: tradeConfig.primaryColor }}
                 >
-                  <Upload className="w-4 h-4" />
-                  <span>{language === 'hi' ? 'फोटो चुनें / कैमरा खोलें' : 'Choose Photo / Camera'}</span>
+                  <Camera className="w-4 h-4" />
+                  <span>{language === 'hi' ? 'फोटो खींचें (Camera)' : 'Take Photo'}</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={loadSampleMusterPhoto}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+                  onClick={() => {
+                    if (galleryInputRef.current) {
+                      galleryInputRef.current.value = '';
+                      galleryInputRef.current.click();
+                    }
+                  }}
+                  className="flex-1 py-3 px-4 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  ⚡ {language === 'hi' ? 'सैंपल रजिस्टर से टेस्ट करें' : 'Test with Sample Photo'}
+                  <Upload className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>{language === 'hi' ? 'गैलरी से अपलोड करें' : 'Upload Photo'}</span>
                 </button>
               </div>
             </div>

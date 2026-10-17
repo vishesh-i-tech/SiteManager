@@ -810,6 +810,29 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Pure Offline Self-Sufficiency:** Eliminates external OAuth latency and dependency on third-party cloud identities, allowing contractors on construction sites to have complete, private, and tamper-resistant local security.
 - **A short, simple summary:** Removed Google sign-in entirely, added eye toggles for all password/PIN inputs, and integrated an in-app PIN reset modal for secure, direct mobile-based authentication.
 
+---
+
+## Phase 2.39: Clean Site Creation Flow, Form State Isolation, Dual OCR Capture System & Device Contact Picker
+
+### 1. Technology: Clean Site Form Architecture, Fresh Lifecycle Isolation & Web Contact Picker (`AddSiteModal.tsx`, `EditSiteModal.tsx`, `PhotoOcrModal.tsx`)
+- **Name of the Technology:** Site Creation Form Isolation, Native Contact Picker API & Dual OCR Media Capture
+- **What it does (Role & Purpose):**
+  - **Removed Test Sample Photo Button:** Completely removed the *"⚡ Test with Sample Photo"* button from the OCR modal.
+  - **Dual Take Photo vs Upload Photo:** Replaced the single photo button with two prominent, side-by-side action buttons:
+    - **Take Photo (`Camera`):** Direct hardware capture using device camera (`capture="environment"`).
+    - **Upload Photo (`Upload`):** Direct file picker opening the device's photo gallery/storage.
+  - **Clean Budget Field (No Default '0'):** The Contract Budget field now starts completely empty with a clean placeholder instead of displaying a pre-filled `0`, saving contractors from backspacing.
+  - **Blank Target Completion Date:** The Target Completion date field now starts completely empty (`DD-MM-YYYY` placeholder) instead of pre-filling today's date, letting contractors choose when their site is due.
+  - **100% Fresh Form Lifecycle Isolation:** Fixed the previous site data leakage issue where opening "Add New Site" loaded values from the last created project. Added lifecycle reset hooks (`useEffect` on `isOpen` and `resetForm()`) so every new site workspace starts on a clean slate.
+  - **Device Contact Picker Integration:** Added a **"Contacts"** button next to the Client Phone input. Enables contractors to search and select contacts directly from their device's native address book (or search previous client contacts).
+  - **Unobtrusive Optional Rule Compliance:** Client Phone is optional, but strictly adheres to design guidelines by having no `*` required asterisk and omitting all "(Optional)" / "(वैकल्पिक)" wording.
+- **How it works (Under the Hood):**
+  - **Camera vs Gallery File Inputs:** `PhotoOcrModal.tsx` maintains two separate `<input type="file">` references. The camera trigger enforces HTML5 `capture="environment"` for mobile cameras, while the gallery trigger allows standard photo selection without forcing camera capture.
+  - **Form State Lifecycle Management:** `AddSiteModal.tsx` invokes `resetForm()` whenever `isOpen` transitions to `true` as well as upon successful submission (`handleSubmit`) and modal cancellation (`handleClose`). Budget state is managed as a string to allow blank values, safely converted to a number upon persistence.
+  - **Web Contact Picker API:** `handlePickContact()` checks `'contacts' in navigator && 'ContactsManager' in window`. On supporting browsers (Android Chrome/Edge), it opens the system contact sheet to pick name and phone. When unsupported or dismissed, it seamlessly opens an in-app contact search dialog querying previous client records from Dexie IndexedDB (`db.sites`).
+- **A short, simple summary:** Removed sample photo button, added dual Take Photo (camera) / Upload Photo (gallery) options, cleared default '0' and dates from Add Site modal, ensured 100% fresh form resets on every new site, and integrated device contact picker for client phone numbers.
+
+
 
 
 

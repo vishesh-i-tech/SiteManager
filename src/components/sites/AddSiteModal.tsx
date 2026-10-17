@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site } from '../../types';
 import { db } from '../../core/db/database';
@@ -15,6 +15,8 @@ import {
   Mic,
   Phone,
   Clock,
+  BookUser,
+  Search,
 } from 'lucide-react';
 
 interface AddSiteModalProps {
@@ -32,19 +34,100 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
 }) => {
   const { t, language, tradeConfig } = useTheme();
 
+  // Form State
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [siteType, setSiteType] = useState<Site['siteType']>('Residential');
   const [customCategory, setCustomCategory] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
-  const [budget, setBudget] = useState<number>(0);
+  const [budget, setBudget] = useState<string>(''); // Blank by default, no '0'
   const [startDate, setStartDate] = useState(getTodayFormatted());
-  const [expectedEndDate, setExpectedEndDate] = useState(getTodayFormatted());
+  const [expectedEndDate, setExpectedEndDate] = useState(''); // Blank by default as requested
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // In-app Contact Picker Dialog state (for browsers without native Contact Picker API)
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactSearchQuery, setContactSearchQuery] = useState('');
+  const [savedClientContacts, setSavedClientContacts] = useState<{ name: string; phone: string }[]>([]);
+
+  // Function to completely reset all form fields to a fresh state
+  const resetForm = () => {
+    setName('');
+    setLocation('');
+    setSiteType('Residential');
+    setCustomCategory('');
+    setClientName('');
+    setClientPhone('');
+    setBudget('');
+    setStartDate(getTodayFormatted());
+    setExpectedEndDate('');
+    setNotes('');
+    setIsContactModalOpen(false);
+    setContactSearchQuery('');
+  };
+
+  // Whenever modal opens, reset all fields so no previous site's data remains
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   if (!isOpen) return null;
+
+  // Load existing client contacts from indexedDB sites
+  const loadSavedContacts = async () => {
+    try {
+      const allSites = await db.sites.toArray();
+      const map = new Map<string, string>();
+      allSites.forEach((s) => {
+        if (s.clientPhone && s.clientPhone.trim()) {
+          const ph = s.clientPhone.trim();
+          if (!map.has(ph)) {
+            map.set(ph, s.clientName?.trim() || 'Client');
+          }
+        }
+      });
+      setSavedClientContacts(Array.from(map.entries()).map(([phone, name]) => ({ phone, name })));
+    } catch (err) {
+      console.error('Failed to load client contacts:', err);
+    }
+  };
+
+  // Device Contact Picker Integration
+  const handlePickContact = async () => {
+    // 1. First attempt to use native Web Contact Picker API (Chrome / Android)
+    if ('contacts' in navigator && 'ContactsManager' in window) {
+      try {
+        const props = ['name', 'tel'];
+        const opts = { multiple: false };
+        const contacts = await (navigator as any).contacts.select(props, opts);
+        if (contacts && contacts.length > 0) {
+          const c = contacts[0];
+          const rawTel = c.tel?.[0] || '';
+          const cleanTel = rawTel.replace(/[\s-]/g, '');
+          const cName = c.name?.[0] || '';
+          if (cleanTel) setClientPhone(cleanTel);
+          if (cName && !clientName.trim()) setClientName(cName);
+          return;
+        }
+      } catch (err) {
+        console.log('Native contact picker dismissed or unsupported:', err);
+      }
+    }
+
+    // 2. Fallback: Open internal search modal with saved client contacts
+    await loadSavedContacts();
+    setContactSearchQuery('');
+    setIsContactModalOpen(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,9 +137,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     try {
       const finalType = siteType === 'Other' && customCategory.trim() ? (customCategory.trim() as any) : siteType;
       const nowIso = new Date().toISOString();
+      const activeContractorId = localStorage.getItem('sitesaathi_active_user_id') || 'contractor-1';
+
       const newSite: Site = {
         id: `site-${Date.now()}`,
-        contractorId: 'contractor-1',
+        contractorId: activeContractorId,
         name: name.trim(),
         location: location.trim() || 'Main Site Area',
         siteType: finalType,
@@ -66,13 +151,14 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         workStatus: 'ongoing',
         paymentStatus: 'unpaid',
         startDate: toIsoDate(startDate),
-        expectedEndDate: expectedEndDate ? toIsoDate(expectedEndDate) : undefined,
+        expectedEndDate: expectedEndDate.trim() ? toIsoDate(expectedEndDate.trim()) : undefined,
         notes: notes.trim() || undefined,
         createdAt: nowIso,
         updatedAt: nowIso,
       };
 
       await db.sites.put(newSite);
+      resetForm();
       onSiteCreated(newSite.id);
       onClose();
     } catch (err) {
@@ -85,7 +171,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Separate Backdrop Layer */}
-      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={handleClose} />
 
       {/* Interactive Sharp Dialog Container */}
       <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
@@ -113,7 +199,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
             <button
               type="button"
               onClick={() => {
-                onClose();
+                handleClose();
                 onOpenVoiceModal();
               }}
               className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 flex items-center gap-1 hover:bg-orange-100 transition-colors"
@@ -123,7 +209,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               <span>{language === 'hi' ? 'बोलकर भरें' : 'Voice-Fill'}</span>
             </button>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
@@ -180,18 +266,40 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               />
             </div>
 
+            {/* Client Phone with Device Contacts Picker Integration */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-slate-400" />
-                <span>{language === 'hi' ? 'क्लाइंट फ़ोन नंबर' : 'Client Phone'}</span>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{language === 'hi' ? 'क्लाइंट फ़ोन नंबर' : 'Client Phone'}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={handlePickContact}
+                  className="text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1 transition-colors cursor-pointer"
+                  title={language === 'hi' ? 'कॉन्टैक्ट से चुनें' : 'Pick from Contacts'}
+                >
+                  <BookUser className="w-3.5 h-3.5" />
+                  <span>{language === 'hi' ? 'कॉन्टैक्ट से चुनें' : 'Contacts'}</span>
+                </button>
               </label>
-              <input
-                type="tel"
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
-                placeholder={language === 'hi' ? 'फ़ोन नंबर' : 'e.g. 9829012345'}
-                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="tel"
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  placeholder={language === 'hi' ? 'फ़ोन नंबर दर्ज करें' : 'Phone number'}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white pr-9"
+                />
+                <button
+                  type="button"
+                  onClick={handlePickContact}
+                  className="absolute right-2 p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                  title={language === 'hi' ? 'कॉन्टैक्ट से चुनें' : 'Pick from Contacts'}
+                >
+                  <BookUser className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -246,6 +354,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               )}
             </div>
 
+            {/* Budget: Blank by default, no 0 stuck */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                 <IndianRupee className="w-3.5 h-3.5 text-green-500" />
@@ -256,8 +365,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                 required
                 min={0}
                 value={budget}
-                onChange={(e) => setBudget(Number(e.target.value))}
-                placeholder="0"
+                onChange={(e) => setBudget(e.target.value)}
+                placeholder={language === 'hi' ? 'बजट राशि दर्ज करें' : 'Enter budget amount'}
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -283,6 +392,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               />
             </div>
 
+            {/* Target Completion: Blank initially */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
@@ -333,7 +443,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {t('cancel')}
@@ -349,6 +459,114 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
             </button>
           </div>
         </form>
+
+        {/* Contact Picker / Search Dialog */}
+        {isContactModalOpen && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm overflow-hidden flex flex-col max-h-[80vh]">
+              {/* Header */}
+              <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BookUser className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                    {language === 'hi' ? 'क्लाइंट कॉन्टैक्ट चुनें' : 'Select Client Contact'}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsContactModalOpen(false)}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="p-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="relative flex items-center">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3" />
+                  <input
+                    type="text"
+                    value={contactSearchQuery}
+                    onChange={(e) => setContactSearchQuery(e.target.value)}
+                    placeholder={language === 'hi' ? 'नाम या नंबर से खोजें...' : 'Search by name or number...'}
+                    className="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Contacts List */}
+              <div className="p-3 overflow-y-auto flex-1 space-y-2">
+                {savedClientContacts
+                  .filter((c) =>
+                    c.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+                    c.phone.includes(contactSearchQuery)
+                  )
+                  .map((c, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setClientPhone(c.phone);
+                        if (!clientName.trim() && c.name) setClientName(c.name);
+                        setIsContactModalOpen(false);
+                      }}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 flex items-center justify-between text-left transition-colors cursor-pointer"
+                    >
+                      <div>
+                        <div className="text-xs font-bold text-slate-800 dark:text-white">{c.name}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{c.phone}</div>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/50 px-2 py-1 rounded-lg">
+                        {language === 'hi' ? 'चुनें' : 'Select'}
+                      </span>
+                    </button>
+                  ))}
+
+                {savedClientContacts.filter((c) =>
+                  c.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+                  c.phone.includes(contactSearchQuery)
+                ).length === 0 && (
+                  <div className="py-6 text-center text-xs text-slate-400">
+                    {contactSearchQuery ? (
+                      <div className="space-y-2">
+                        <p>{language === 'hi' ? 'कोई कॉन्टैक्ट नहीं मिला' : 'No contacts found'}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (/^\d+$/.test(contactSearchQuery.trim())) {
+                              setClientPhone(contactSearchQuery.trim());
+                            } else {
+                              setClientName(contactSearchQuery.trim());
+                            }
+                            setIsContactModalOpen(false);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[11px] font-bold"
+                        >
+                          {language === 'hi' ? `"${contactSearchQuery}" का उपयोग करें` : `Use "${contactSearchQuery}"`}
+                        </button>
+                      </div>
+                    ) : (
+                      <p>{language === 'hi' ? 'अभी कोई पूर्व संपर्क सेव नहीं है' : 'No previous client contacts saved yet'}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Close Button */}
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsContactModalOpen(false)}
+                  className="w-full py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  {language === 'hi' ? 'बंद करें' : 'Close'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
