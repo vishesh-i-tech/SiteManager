@@ -832,6 +832,22 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Web Contact Picker API:** `handlePickContact()` checks `'contacts' in navigator && 'ContactsManager' in window`. On supporting browsers (Android Chrome/Edge), it opens the system contact sheet to pick name and phone. When unsupported or dismissed, it seamlessly opens an in-app contact search dialog querying previous client records from Dexie IndexedDB (`db.sites`).
 - **A short, simple summary:** Removed sample photo button, added dual Take Photo (camera) / Upload Photo (gallery) options, cleared default '0' and dates from Add Site modal, ensured 100% fresh form resets on every new site, and integrated device contact picker for client phone numbers.
 
+---
+
+## Phase 2.40: Streamlined Site Card Actions & Card Footer De-cluttering
+
+### 1. Technology: Streamlined Site Card Footer & Direct Card Tap Architecture (`SiteCard.tsx`)
+- **Name of the Technology:** Site Card Action Streamlining & De-cluttering
+- **What it does (Role & Purpose):**
+  - Removed the PDF statement export icon from the bottom-right of the site card. This prevents unintended, sudden PDF statement downloads when tapping on or scrolling through site cards. Full financial PDF exports remain readily accessible inside the dedicated Site Details and Reports views.
+  - Removed the redundant *"View Details >"* text and arrow link from the card footer. Because tapping anywhere on the card surface already opens the Site Details modal, the explicit text link was visually redundant and cluttered the card layout.
+  - Preserves essential card management actions: the left side displays creation and last-edited audit timestamps, while the right side provides quick Edit and Delete controls.
+- **How it works (Under the Hood):**
+  - Removed the `FileText` PDF trigger button and the `ArrowUpRight` view details element from `SiteCard.tsx`.
+  - The entire card container preserves its top-level `onClick={() => onSelect(site)}` handler, ensuring seamless, tactile tap-to-open behavior with smooth CSS transition effects.
+- **A short, simple summary:** Removed the PDF download icon and redundant "View Details" text link from the site card footer, resulting in a cleaner card layout where tapping anywhere enters site details.
+
+
 
 
 
