@@ -24,7 +24,9 @@ import {
   Trash2,
   Warehouse,
   ShoppingBag,
+  Eye,
 } from 'lucide-react';
+import { LabourDateDetailModal } from '../labour/LabourDateDetailModal';
 
 interface SiteDetailsModalProps {
   site: Site | null;
@@ -72,6 +74,9 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
   const { t, language, tradeConfig } = useTheme();
 
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'tools' | 'labour' | 'materials' | 'machinery' | 'dues'>('overview');
+  const [selectedRecordForDetail, setSelectedRecordForDetail] = useState<LabourRecord | null>(null);
+
+  const account = useLiveQuery(() => db.account.toCollection().first());
 
   const siteId = site?.id;
 
@@ -551,16 +556,38 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                   {labourRecords.map((rec) => (
                   <div
                     key={rec.id}
-                    className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-xs"
+                    className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                        Date: {rec.date} ({rec.totalWorkers} Workers)
-                      </span>
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          Total: ₹{rec.totalDailyWage.toLocaleString('en-IN')}
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                          Date: {rec.date} ({rec.totalWorkers} Workers)
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRecordForDetail(rec)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+                          title="View Details & Payment Breakdown"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Details</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            Total: ₹{rec.totalDailyWage.toLocaleString('en-IN')}
+                          </span>
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                            Paid: ₹{(rec.totalPaid || 0).toLocaleString('en-IN')}
+                          </span>
+                          {Math.max(0, (rec.totalDailyWage || 0) - (rec.totalPaid || 0)) > 0 && (
+                            <span className="font-semibold text-rose-600 dark:text-rose-400">
+                              Due: ₹{(Math.max(0, (rec.totalDailyWage || 0) - (rec.totalPaid || 0))).toLocaleString('en-IN')}
+                            </span>
+                          )}
+                        </div>
                         {onEditLabour && (
                           <button
                             onClick={() => onEditLabour(rec)}
@@ -583,18 +610,63 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                      {(rec.entries || []).map((e) => (
-                        <div
-                          key={e.id}
-                          className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between"
-                        >
-                          <div>
-                            <span className="font-bold text-slate-800 dark:text-slate-200 block">{e.workerName}</span>
-                            <span className="text-[10px] text-slate-400">{e.role} • {e.attendanceStatus}</span>
+                      {(rec.entries || []).map((e) => {
+                        const earned = e.attendanceStatus === 'half_day'
+                          ? Math.round((e.dailyWage || 0) * 0.5)
+                          : e.attendanceStatus === 'absent'
+                          ? 0
+                          : (e.dailyWage || 0);
+                        const paid = e.paidAmount !== undefined ? e.paidAmount : (e.attendanceStatus === 'absent' ? 0 : earned);
+                        const due = e.balanceDue !== undefined ? e.balanceDue : Math.max(0, earned - paid);
+
+                        return (
+                          <div
+                            key={e.id}
+                            className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2"
+                          >
+                            <div className="min-w-0">
+                              <span className="font-bold text-slate-800 dark:text-slate-200 block truncate text-xs">
+                                {e.workerName}
+                              </span>
+                              <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                <span>{e.role}</span>
+                                <span>•</span>
+                                <span className={`font-semibold ${
+                                  e.attendanceStatus === 'absent'
+                                    ? 'text-red-500'
+                                    : e.attendanceStatus === 'half_day'
+                                    ? 'text-amber-500'
+                                    : 'text-green-500'
+                                }`}>
+                                  {e.attendanceStatus === 'absent'
+                                    ? 'Absent'
+                                    : e.attendanceStatus === 'half_day'
+                                    ? 'Half Day'
+                                    : 'Full Day'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0 space-y-0.5">
+                              <div className="text-xs font-black text-slate-900 dark:text-white">
+                                Total: ₹{earned}
+                              </div>
+                              <div className="flex items-center gap-1 text-[10px]">
+                                <span className="px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                  Paid: ₹{paid}
+                                </span>
+                                <span className={`px-1.5 py-0.5 rounded font-bold ${
+                                  due > 0
+                                    ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                                }`}>
+                                  Due: ₹{due}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <span className="font-bold text-slate-900 dark:text-white">₹{e.dailyWage}</span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
@@ -801,6 +873,17 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
         </div>
 
       </div>
+
+      {/* Labour Date Detail Modal for individual worker payment breakdown */}
+      <LabourDateDetailModal
+        isOpen={!!selectedRecordForDetail}
+        onClose={() => setSelectedRecordForDetail(null)}
+        record={selectedRecordForDetail}
+        siteName={currentSite.name}
+        companyName={account?.companyName}
+        onEditLabour={onEditLabour}
+        onDeleteLabour={onDeleteLabour}
+      />
     </div>
   );
 };

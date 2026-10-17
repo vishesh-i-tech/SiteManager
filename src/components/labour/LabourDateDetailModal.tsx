@@ -214,52 +214,45 @@ export const LabourDateDetailModal: React.FC<LabourDateDetailModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Right: Wages & Paid / Due Status */}
-                    <div className="text-right shrink-0 space-y-0.5">
-                      <span className="font-black text-xs text-slate-900 dark:text-white block">
-                        ₹{worker.dailyWage}
-                      </span>
+                    {/* Right: Explicit Total, Paid, and Due Breakdown */}
+                    <div className="text-right shrink-0 space-y-1">
                       {(() => {
                         const earned = worker.attendanceStatus === 'half_day'
                           ? Math.round((worker.dailyWage || 0) * 0.5)
                           : worker.attendanceStatus === 'absent'
                           ? 0
                           : (worker.dailyWage || 0);
-                        const paid = worker.paidAmount !== undefined ? worker.paidAmount : earned;
+                        const paid = worker.paidAmount !== undefined ? worker.paidAmount : (worker.attendanceStatus === 'absent' ? 0 : earned);
                         const due = worker.balanceDue !== undefined ? worker.balanceDue : Math.max(0, earned - paid);
                         const status = worker.paymentStatus || (paid === 0 ? 'unpaid' : paid >= earned ? 'paid' : 'advance');
 
-                        if (status === 'paid') {
-                          return (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                              <CheckCircle2 className="w-2.5 h-2.5" />
-                              <span>{language === 'hi' ? 'पूरा चुकता' : 'Paid'}</span>
-                            </span>
-                          );
-                        }
-                        if (status === 'advance') {
-                          return (
-                            <div className="space-y-0.5">
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
-                                <span>{language === 'hi' ? 'एडवांस:' : 'Adv:'} ₹{paid}</span>
+                        return (
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <span className="text-slate-400 font-medium">Total:</span>
+                              <span className="font-black text-slate-900 dark:text-white">₹{earned}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px]">
+                              <span className="px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                {language === 'hi' ? 'दिया:' : 'Paid:'} ₹{paid}
                               </span>
-                              <span className="text-[10px] text-rose-600 dark:text-rose-400 block font-bold">
-                                {language === 'hi' ? 'बाकी: ₹' : 'Due: ₹'}{due}
+                              <span
+                                className={`px-1.5 py-0.5 rounded font-bold ${
+                                  due > 0
+                                    ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                                }`}
+                              >
+                                {language === 'hi' ? 'बाकी:' : 'Due:'} ₹{due}
                               </span>
                             </div>
-                          );
-                        }
-                        if (status === 'pending') {
-                          return (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-                              <span>{language === 'hi' ? 'लंबित' : 'Pending'}</span>
-                            </span>
-                          );
-                        }
-                        return (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
-                            <span>{language === 'hi' ? 'बाकी:' : 'Unpaid:'} ₹{due || earned}</span>
-                          </span>
+                            {status === 'paid' && due === 0 && earned > 0 && (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                <span>{language === 'hi' ? 'पूरा चुकता' : 'Paid in Full'}</span>
+                              </span>
+                            )}
+                          </div>
                         );
                       })()}
                     </div>

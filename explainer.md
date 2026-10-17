@@ -382,6 +382,21 @@ This document tracks all technologies, libraries, and architectural modules used
   - Dynamically recalculates CSS linear-gradient specular angles and ground shadow skewing based on current rotation angles.
 - **Small Summary:** An interactive, hardware-accelerated 3D touch-rotation component that elevates app engagement.
 
+---
 
+## Phase 2.16: Labour Attendance View Details & Per-Worker Payment Breakdown
 
-
+### 1. Technology: SiteDetailsModal Labour Breakdown & LabourDateDetailModal Integration
+- **Role & Purpose:**
+  - Provides a direct, prominent "View Details" action on every attendance sheet inside the Site Details dialog right alongside the attendance date and worker count.
+  - Implements a transparent 3-way financial breakdown for every individual worker:
+    1. **Total Daily Wage / Earned** (`Total: ₹{earned}`)
+    2. **Paid Amount / Advance Given** (`Paid: ₹{paid}`)
+    3. **Remaining Balance Due** (`Due: ₹{due}`)
+  - Allows contractors to instantly inspect which worker has been paid in full, who took an advance, and who has pending wages both directly in the site muster view and via the dedicated detailed popup modal.
+- **Under the Hood:**
+  - Evaluates each worker's attendance status (`full_day`, `half_day` -> 50% multiplier, `absent` -> 0).
+  - Calculates net earned wages vs `paidAmount` to derive realtime `balanceDue` without requiring server recalculations.
+  - Renders inline color-coded status badges (`emerald` for Paid, `rose` for Due, `slate` for Settle/Zero) on each worker card in `SiteDetailsModal`.
+  - Links to `LabourDateDetailModal` with single-click PDF export, CSV export, and complete individual muster records.
+- **Small Summary:** Added an intuitive "View Details" button in the Site Details Labour tab and detailed per-worker Total/Paid/Due breakdown across all attendance views.
