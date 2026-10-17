@@ -54,7 +54,7 @@ export const ExploreBanner: React.FC<ExploreBannerProps> = ({
           <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center">
             <Camera className="w-4 h-4" />
           </div>
-          <span className="text-[11px] font-bold truncate max-w-full">{language === 'hi' ? 'डायरी स्कैन' : 'Scan Diary'}</span>
+          <span className="text-[11px] font-bold truncate max-w-full">{language === 'hi' ? 'स्कैन' : 'Scan'}</span>
         </button>
 
         <button

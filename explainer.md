@@ -563,6 +563,20 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Navigation Link:** Features a clean `View Sites` (`साइट विवरण`) action button to jump directly to the Sites management view without exposing destructive or mutating actions.
 - **Small Summary:** Brought the Client Contract & Payments Received financial card onto the Dashboard in a strictly view-only format, providing cumulative collection metrics, progress tracking, and recent receipt history with zero add buttons.
 
+---
+
+## Phase 2.25: Explore Banner Shortcut Label Simplification
+
+### 1. Technology: Concise Micro-Action Button Labeling (`ExploreBanner.tsx`)
+- **Role & Purpose:**
+  - Simplified the OCR camera shortcut button label from `"Scan Diary"` (`"डायरी स्कैन"`) to the clean, modern single-word **`"Scan"`** (`"स्कैन"`).
+  - Eliminates unnecessary multi-word wrapping on smaller screens, keeping the trio of home action buttons (`Voice Log`, `Scan`, `New Site`) balanced, symmetrical, and uncluttered.
+- **Under the Hood:**
+  - Updated the button label typography in `ExploreBanner.tsx`:
+    `{language === 'hi' ? 'स्कैन' : 'Scan'}`
+- **Small Summary:** Shortened the dashboard action shortcut from "Scan Diary" to "Scan" for a cleaner, unified mobile interface.
+
+
 
 
 
