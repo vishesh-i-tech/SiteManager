@@ -95,12 +95,20 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
     }
 
     const base = Number(current.dailyWage) || 0;
+
+    if (field === 'paymentStatus') {
+      if (current.attendanceStatus === 'absent' && val !== 'unpaid') {
+        current.attendanceStatus = 'full_day';
+      }
+    }
+
     let earnedWage = base;
     if (current.attendanceStatus === 'half_day') earnedWage = Math.round(base * 0.5);
     else if (current.attendanceStatus === 'absent') earnedWage = 0;
     else if (current.attendanceStatus === 'overtime') earnedWage = Math.round(base * 1.5);
 
     if (field === 'paymentStatus') {
+      current.paymentStatus = val;
       if (val === 'paid') {
         current.paidAmount = earnedWage;
         current.balanceDue = 0;
@@ -121,7 +129,10 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
       else if (paid >= earnedWage && earnedWage > 0) current.paymentStatus = 'paid';
       else current.paymentStatus = 'advance';
     } else if (field === 'attendanceStatus' || field === 'dailyWage' || field === 'role') {
-      if (current.paymentStatus === 'paid') {
+      if (current.attendanceStatus === 'absent') {
+        current.paidAmount = 0;
+        current.balanceDue = 0;
+      } else if (current.paymentStatus === 'paid') {
         current.paidAmount = earnedWage;
         current.balanceDue = 0;
       } else if (current.paymentStatus === 'unpaid' || current.paymentStatus === 'pending') {
@@ -176,6 +187,18 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
     if (e.attendanceStatus === 'half_day') return acc + Math.round((e.dailyWage || 0) * 0.5);
     if (e.attendanceStatus === 'overtime') return acc + Math.round((e.dailyWage || 0) * 1.5);
     return acc + (e.dailyWage || 0);
+  }, 0);
+
+  const totalPaid = entries.reduce((acc, e) => acc + (Number(e.paidAmount) || 0), 0);
+  const totalPending = entries.reduce((acc, e) => {
+    const base = Number(e.dailyWage) || 0;
+    let earnedWage = base;
+    if (e.attendanceStatus === 'half_day') earnedWage = Math.round(base * 0.5);
+    else if (e.attendanceStatus === 'absent') earnedWage = 0;
+    else if (e.attendanceStatus === 'overtime') earnedWage = Math.round(base * 1.5);
+    const paid = Number(e.paidAmount) || 0;
+    const due = e.balanceDue !== undefined ? e.balanceDue : Math.max(0, earnedWage - paid);
+    return acc + due;
   }, 0);
 
   const activeWorkersCount = entries.filter((e) => e.workerName.trim().length > 0).length || entries.length;
@@ -406,13 +429,13 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
                   <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-[11px]">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold text-slate-500 dark:text-slate-400">
-                        {language === 'hi' ? 'हाजिरी:' : 'Status:'}
+                        Status:
                       </span>
                       {[
-                        { id: 'full_day', label: language === 'hi' ? 'पूरा दिन (Full)' : 'Full Day', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300' },
-                        { id: 'half_day', label: language === 'hi' ? 'आधा दिन (Half)' : 'Half Day', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300' },
-                        { id: 'overtime', label: language === 'hi' ? 'ओवरटाइम (OT)' : 'Overtime', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-300' },
-                        { id: 'absent', label: language === 'hi' ? 'अनुपस्थित (Absent)' : 'Absent', color: 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-300' },
+                        { id: 'full_day', label: 'Full Day', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300' },
+                        { id: 'half_day', label: 'Half Day', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300' },
+                        { id: 'overtime', label: 'Overtime', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-300' },
+                        { id: 'absent', label: 'Absent', color: 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-300' },
                       ].map((statusOption) => (
                         <button
                           key={statusOption.id}
@@ -430,7 +453,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300">
-                      <span>{language === 'hi' ? 'मजदूरी:' : 'Wages:'}</span>
+                      <span>Wages:</span>
                       <span className="font-black text-slate-900 dark:text-white">
                         ₹{entry.attendanceStatus === 'half_day' ? Math.round((entry.dailyWage || 0) * 0.5) : entry.attendanceStatus === 'absent' ? 0 : entry.attendanceStatus === 'overtime' ? Math.round((entry.dailyWage || 0) * 1.5) : (entry.dailyWage || 0)}
                       </span>
@@ -441,19 +464,19 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-[11px]">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold text-slate-500 dark:text-slate-400">
-                        {language === 'hi' ? 'भुगतान स्थिति:' : 'Payment:'}
+                        Payment:
                       </span>
                       {[
-                        { id: 'paid', label: language === 'hi' ? 'चुकता (Paid)' : 'Paid', color: 'bg-emerald-600 text-white' },
-                        { id: 'unpaid', label: language === 'hi' ? 'बाकी (Unpaid)' : 'Unpaid', color: 'bg-rose-600 text-white' },
-                        { id: 'pending', label: language === 'hi' ? 'लंबित (Pending)' : 'Pending', color: 'bg-amber-600 text-white' },
-                        { id: 'advance', label: language === 'hi' ? 'एडवांस (Advance)' : 'Advance', color: 'bg-blue-600 text-white' },
+                        { id: 'paid', label: 'Paid', color: 'bg-emerald-600 text-white' },
+                        { id: 'unpaid', label: 'Unpaid', color: 'bg-rose-600 text-white' },
+                        { id: 'pending', label: 'Pending', color: 'bg-amber-600 text-white' },
+                        { id: 'advance', label: 'Advance', color: 'bg-blue-600 text-white' },
                       ].map((payOption) => (
                         <button
                           key={payOption.id}
                           type="button"
                           onClick={() => handleUpdateEntry(idx, 'paymentStatus', payOption.id)}
-                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                          className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                             (entry.paymentStatus || 'paid') === payOption.id
                               ? `${payOption.color} shadow-xs font-black`
                               : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
@@ -467,22 +490,38 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
                     <div className="flex items-center gap-2">
                       {entry.paymentStatus === 'advance' && (
                         <div className="flex items-center gap-1 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded-md border border-blue-300 dark:border-blue-700">
-                          <span className="text-[10px] font-bold text-slate-400">₹</span>
+                          <span className="text-[10px] font-bold text-slate-400">Adv: ₹</span>
                           <input
                             type="number"
                             value={entry.paidAmount || ''}
                             onChange={(e) => handleUpdateEntry(idx, 'paidAmount', Number(e.target.value))}
-                            placeholder="Adv"
+                            placeholder="0"
                             className="w-12 text-xs font-black text-blue-600 dark:text-blue-400 bg-transparent outline-none text-right"
                           />
                         </div>
                       )}
-                      <div className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300">
-                        <span>{language === 'hi' ? 'बाकी:' : 'Due:'}</span>
-                        <span className={`font-black ${(entry.balanceDue || 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                          ₹{entry.balanceDue !== undefined ? entry.balanceDue : 0}
+
+                      {entry.attendanceStatus === 'absent' ? (
+                        <span className="px-2 py-0.5 rounded-md font-semibold text-[11px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                          Absent: ₹0
                         </span>
-                      </div>
+                      ) : entry.paymentStatus === 'pending' ? (
+                        <span className="px-2 py-0.5 rounded-md font-extrabold text-[11px] bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                          Pending: ₹{entry.balanceDue !== undefined ? entry.balanceDue : (entry.attendanceStatus === 'half_day' ? Math.round((entry.dailyWage || 0) * 0.5) : entry.dailyWage || 0)}
+                        </span>
+                      ) : entry.paymentStatus === 'unpaid' ? (
+                        <span className="px-2 py-0.5 rounded-md font-extrabold text-[11px] bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                          Unpaid: ₹{entry.balanceDue !== undefined ? entry.balanceDue : (entry.attendanceStatus === 'half_day' ? Math.round((entry.dailyWage || 0) * 0.5) : entry.dailyWage || 0)}
+                        </span>
+                      ) : entry.paymentStatus === 'paid' ? (
+                        <span className="px-2 py-0.5 rounded-md font-extrabold text-[11px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                          Paid: ₹{entry.paidAmount !== undefined ? entry.paidAmount : (entry.attendanceStatus === 'half_day' ? Math.round((entry.dailyWage || 0) * 0.5) : entry.dailyWage || 0)}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md font-extrabold text-[11px] bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
+                          Due: ₹{entry.balanceDue !== undefined ? entry.balanceDue : 0}
+                        </span>
+                      )}
                     </div>
                   </div>
 

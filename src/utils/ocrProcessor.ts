@@ -62,9 +62,9 @@ export const parseOcrTextToLabourEntries = (rawText: string, recordId: string): 
 
     // Detect attendance status
     let attendanceStatus: LabourEntry['attendanceStatus'] = 'full_day';
-    if (/(?:half|आधा|0\.5|h)/i.test(cleaned)) {
+    if (/\b(?:half|आधा|0\.5)\b|\bH\b/i.test(cleaned)) {
       attendanceStatus = 'half_day';
-    } else if (/(?:absent|अनुपस्थित|a|0)/i.test(cleaned) && !/mason|helper/i.test(cleaned)) {
+    } else if (/\b(?:absent|अनुपस्थित|abs)\b|\bA\b/i.test(cleaned) && !/mason|helper/i.test(cleaned)) {
       attendanceStatus = 'absent';
     } else {
       attendanceStatus = 'full_day';

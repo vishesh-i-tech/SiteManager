@@ -400,3 +400,20 @@ This document tracks all technologies, libraries, and architectural modules used
   - Renders inline color-coded status badges (`emerald` for Paid, `rose` for Due, `slate` for Settle/Zero) on each worker card in `SiteDetailsModal`.
   - Links to `LabourDateDetailModal` with single-click PDF export, CSV export, and complete individual muster records.
 - **Small Summary:** Added an intuitive "View Details" button in the Site Details Labour tab and detailed per-worker Total/Paid/Due breakdown across all attendance views.
+
+---
+
+## Phase 2.17: Prominent Pending Wage Display & De-congested Muster Layout
+
+### 1. Technology: Realtime Pending Wage State & De-congested Muster UI
+- **Role & Purpose:**
+  - Guarantees that when a worker's payment status is selected as `Pending`, the pending amount is immediately and prominently displayed (`Pending: ₹{amount}`) with a dedicated amber badge and clock icon.
+  - Adds a persistent `Pending: ₹{totalPending}` pill in the modal header stats bar alongside `Workers`, `Wages`, and `Paid`.
+  - Streamlines row layouts with concise, uncluttered text so that dropdown options (`Full Day`, `Half Day`, `Overtime`, `Absent`) and payment status pills (`Paid`, `Unpaid`, `Pending`, `Advance`) do not get truncated or congested.
+  - Automatically transitions an `absent` worker to `full_day` when a contractor actively assigns `Pending`, `Paid`, or `Advance`, ensuring wage calculations correctly reflect intended work earnings.
+  - Refined OCR handwritten register regex boundaries in `ocrProcessor.ts` so normal Hindi or English characters do not inadvertently flag workers as absent.
+- **Under the Hood:**
+  - Replaced ad-hoc string concatenation in modal stats headers with modular flex pill badges.
+  - Updated `handleUpdateEntry` to recalculate `earnedWage` and `totalPending` in real-time on every status or wage change.
+  - Replaced hardcoded `Due: ₹0` labels with contextual, color-coded badges (`Pending: ₹...` in amber, `Unpaid: ₹...` in rose, `Paid: ₹...` in emerald, `Adv/Due` in blue).
+- **Small Summary:** Added prominent amber Pending wage badges across worker rows and summary bars while de-congesting text layouts for seamless mobile/desktop entry.

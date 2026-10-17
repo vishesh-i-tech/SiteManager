@@ -82,14 +82,24 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
     const updated = [...entries];
     const current = { ...updated[index], [field]: val };
 
-    // Calculate shift earnings
     const base = Number(current.dailyWage) || 0;
+
+    if (field === 'paymentStatus') {
+      // If user marks Pending, Paid, or Advance on a worker who was Absent,
+      // switch attendance to Full Day so wages and pending/due calculate accurately
+      if (current.attendanceStatus === 'absent' && val !== 'unpaid') {
+        current.attendanceStatus = 'full_day';
+      }
+    }
+
+    // Calculate shift earnings
     let earnedWage = base;
     if (current.attendanceStatus === 'half_day') earnedWage = Math.round(base * 0.5);
     else if (current.attendanceStatus === 'absent') earnedWage = 0;
     else if (current.attendanceStatus === 'overtime') earnedWage = Math.round(base * 1.5);
 
     if (field === 'paymentStatus') {
+      current.paymentStatus = val;
       if (val === 'paid') {
         current.paidAmount = earnedWage;
         current.balanceDue = 0;
@@ -110,7 +120,10 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
       else if (paid >= earnedWage && earnedWage > 0) current.paymentStatus = 'paid';
       else current.paymentStatus = 'advance';
     } else if (field === 'dailyWage' || field === 'attendanceStatus') {
-      if (current.paymentStatus === 'paid') {
+      if (current.attendanceStatus === 'absent') {
+        current.paidAmount = 0;
+        current.balanceDue = 0;
+      } else if (current.paymentStatus === 'paid') {
         current.paidAmount = earnedWage;
         current.balanceDue = 0;
       } else if (current.paymentStatus === 'unpaid' || current.paymentStatus === 'pending') {
@@ -154,7 +167,16 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
     return acc + base;
   }, 0);
   const totalPaid = entries.reduce((acc, e) => acc + (Number(e.paidAmount) || 0), 0);
-  const totalBalanceDue = Math.max(0, totalWages - totalPaid);
+  const totalPending = entries.reduce((acc, e) => {
+    const base = Number(e.dailyWage) || 0;
+    let earnedWage = base;
+    if (e.attendanceStatus === 'half_day') earnedWage = Math.round(base * 0.5);
+    else if (e.attendanceStatus === 'absent') earnedWage = 0;
+    else if (e.attendanceStatus === 'overtime') earnedWage = Math.round(base * 1.5);
+    const paid = Number(e.paidAmount) || 0;
+    const due = e.balanceDue !== undefined ? e.balanceDue : Math.max(0, earnedWage - paid);
+    return acc + due;
+  }, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,34 +285,28 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
           </div>
 
           {/* Workers List Section */}
-          <div className="space-y-2 pt-1">
+          <div className="space-y-2.5 pt-1">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
-              <div className="flex items-center gap-2.5 flex-wrap text-xs">
-                <span className="font-extrabold text-slate-700 dark:text-slate-300">
+              {/* Compact Stats Badges */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap text-xs">
+                <span className="px-2.5 py-1 rounded-xl font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                   {entries.length} Workers
                 </span>
-                <span className="text-slate-400">•</span>
-                <span className="font-black text-slate-900 dark:text-white">
+                <span className="px-2.5 py-1 rounded-xl font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300">
                   Wages: ₹{totalWages.toLocaleString('en-IN')}
                 </span>
-                <span className="text-slate-400">•</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  Paid/Adv: ₹{totalPaid.toLocaleString('en-IN')}
+                <span className="px-2.5 py-1 rounded-xl font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300">
+                  Paid: ₹{totalPaid.toLocaleString('en-IN')}
                 </span>
-                {totalBalanceDue > 0 && (
-                  <>
-                    <span className="text-slate-400">•</span>
-                    <span className="font-bold text-rose-600 dark:text-rose-400">
-                      Pending: ₹{totalBalanceDue.toLocaleString('en-IN')}
-                    </span>
-                  </>
-                )}
+                <span className="px-2.5 py-1 rounded-xl font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300">
+                  Pending: ₹{totalPending.toLocaleString('en-IN')}
+                </span>
               </div>
 
               <button
                 type="button"
                 onClick={handleAddWorkerRow}
-                className="px-2.5 py-1 rounded-lg text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 flex items-center gap-1 hover:bg-orange-100 self-start sm:self-auto cursor-pointer"
+                className="px-2.5 py-1 rounded-xl text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 flex items-center gap-1 hover:bg-orange-100 self-start sm:self-auto cursor-pointer shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Worker</span>
@@ -346,11 +362,11 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                       </div>
 
                       {/* Attendance Status Dropdown */}
-                      <div className="col-span-4 sm:col-span-2">
+                      <div className="col-span-4 sm:col-span-3">
                         <select
                           value={entry.attendanceStatus}
                           onChange={(e) => handleUpdateEntry(idx, 'attendanceStatus', e.target.value)}
-                          className={`w-full px-1.5 py-1.5 rounded-xl font-bold border text-[11px] ${
+                          className={`w-full px-2 py-1.5 rounded-xl font-bold border text-[11px] ${
                             entry.attendanceStatus === 'absent'
                               ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300'
                               : entry.attendanceStatus === 'half_day'
@@ -360,10 +376,10 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                               : 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700'
                           }`}
                         >
-                          <option value="full_day">Full (P)</option>
-                          <option value="half_day">Half (H)</option>
-                          <option value="overtime">OT (1.5x)</option>
-                          <option value="absent">Absent (A)</option>
+                          <option value="full_day">Full Day</option>
+                          <option value="half_day">Half Day</option>
+                          <option value="overtime">Overtime</option>
+                          <option value="absent">Absent</option>
                         </select>
                       </div>
 
@@ -391,18 +407,15 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Bottom Row: Payment Status Selector (Paid / Unpaid / Pending / Advance) */}
-                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">
-                          Payment:
-                        </span>
-
+                    {/* Bottom Row: Concise Payment Status Pills & Explicit Amount Badge */}
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      {/* Concise Payment Buttons */}
+                      <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
                         {/* Paid Button */}
                         <button
                           type="button"
                           onClick={() => handleUpdateEntry(idx, 'paymentStatus', 'paid')}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                          className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
                             currentStatus === 'paid'
                               ? 'bg-emerald-600 text-white shadow-xs font-black'
                               : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
@@ -416,7 +429,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleUpdateEntry(idx, 'paymentStatus', 'unpaid')}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                          className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
                             currentStatus === 'unpaid'
                               ? 'bg-rose-600 text-white shadow-xs font-black'
                               : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
@@ -430,7 +443,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleUpdateEntry(idx, 'paymentStatus', 'pending')}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                          className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
                             currentStatus === 'pending'
                               ? 'bg-amber-600 text-white shadow-xs font-black'
                               : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
@@ -444,7 +457,7 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleUpdateEntry(idx, 'paymentStatus', 'advance')}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                          className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
                             currentStatus === 'advance'
                               ? 'bg-blue-600 text-white shadow-xs font-black'
                               : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
@@ -455,8 +468,8 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                         </button>
                       </div>
 
-                      {/* Advance Amount Input & Remaining Due Indicator */}
-                      <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                      {/* Status Amount Badge: Concise & Un-congested */}
+                      <div className="flex items-center gap-2">
                         {currentStatus === 'advance' && (
                           <div className="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-blue-300 dark:border-blue-700">
                             <span className="text-[10px] font-bold text-slate-400">
@@ -472,14 +485,28 @@ export const EditLabourModal: React.FC<EditLabourModalProps> = ({
                           </div>
                         )}
 
-                        <div className="flex items-center gap-1 text-[11px]">
-                          <span className="text-slate-400 font-semibold">
-                            Due:
+                        {entry.attendanceStatus === 'absent' ? (
+                          <span className="px-2.5 py-0.5 rounded-md font-semibold text-[11px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                            Absent: ₹0
                           </span>
-                          <span className={`font-black ${remainingDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                            ₹{remainingDue.toLocaleString('en-IN')}
+                        ) : currentStatus === 'pending' ? (
+                          <span className="px-2.5 py-0.5 rounded-md font-extrabold text-[11px] bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center gap-1 shadow-2xs">
+                            <Clock className="w-3 h-3" />
+                            <span>Pending: ₹{remainingDue.toLocaleString('en-IN')}</span>
                           </span>
-                        </div>
+                        ) : currentStatus === 'unpaid' ? (
+                          <span className="px-2.5 py-0.5 rounded-md font-extrabold text-[11px] bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 shadow-2xs">
+                            Unpaid: ₹{remainingDue.toLocaleString('en-IN')}
+                          </span>
+                        ) : currentStatus === 'paid' ? (
+                          <span className="px-2.5 py-0.5 rounded-md font-extrabold text-[11px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-2xs">
+                            Paid: ₹{earnedWage.toLocaleString('en-IN')}
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-md font-extrabold text-[11px] bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 shadow-2xs">
+                            Due: ₹{remainingDue.toLocaleString('en-IN')}
+                          </span>
+                        )}
                       </div>
                     </div>
 
