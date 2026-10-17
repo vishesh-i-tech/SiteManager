@@ -637,6 +637,23 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Translations Dictionary (`translations.ts`):** Cleaned English and Hindi dictionaries for `companyName` to remove trailing `(Optional)` / `(वैकल्पिक)`.
 - **Small Summary:** Purged all occurrences of the keyword "Optional" and "(वैकल्पिक)" across all forms, modals, and translations in the application.
 
+---
+
+## Phase 2.30: Page Size & Layout Shift Stabilization on Tab Switch
+
+### 1. Technology: Scale-Free Animation & Fixed Simulator Shell (`index.css`, `MobileDeviceShell.tsx`)
+- **Role & Purpose:**
+  - Fixed the visual page size jumping and zoom flicker observed when switching between navigation tabs.
+  - Stabilized the mobile device frame height so it remains rock-solid regardless of the varying height of content in different tabs (e.g. long dashboard vs. empty sites/labour list).
+  - Prevented horizontal width layout shifts caused by scrollbars appearing and disappearing between tabs.
+- **Under the Hood:**
+  - **Removed `transform: scale(0.99)` from `animate-fade-in` (`index.css`):** Previously, `fadeIn` scaled down the page to `scale(0.99)` and expanded to `scale(1)` over 150ms on every tab switch. Replaced with pure opacity fade (`from { opacity: 0; } to { opacity: 1; }`) with 0 size scaling.
+  - **Stabilized Device Frame Height (`MobileDeviceShell.tsx`):** Set fixed realistic phone viewport height `h-[844px] max-h-[92vh]` in mobile simulator mode instead of dynamic `min-h-[850px]` which caused height animations.
+  - **Constrained Transitions:** Replaced broad `transition-all duration-300` on the device shell with targeted `transition-[max-width,border-radius,border-width]` so internal page height changes never trigger frame resize animations.
+  - **Added `scrollbar-gutter: stable`:** Ensured the internal scroll lane remains reserved so scrollbar appearance on tall pages doesn't shift content width by 6px.
+- **Small Summary:** Eliminated page size changes and zooming on tab switch by replacing the scale-down CSS transition with a pure opacity fade, fixing the simulator frame height, and stabilizing the scrollbar gutter.
+
+
 
 
 

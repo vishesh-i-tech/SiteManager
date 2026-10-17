@@ -109,12 +109,12 @@ export const MobileDeviceShell: React.FC<MobileDeviceShellProps> = ({ children }
 
       {/* Device Frame */}
       <div
-        className={`w-full transition-all duration-300 relative flex flex-col overflow-hidden ${
+        className={`w-full transition-[max-width,border-radius,border-width] duration-300 relative flex flex-col overflow-hidden ${
           isFull
             ? 'max-w-6xl rounded-2xl border border-slate-800 bg-slate-900 min-h-[85vh]'
             : isTablet
-            ? 'max-w-[540px] rounded-[36px] border-[8px] border-slate-800 bg-slate-900 shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-1 ring-slate-700/50 min-h-[850px] max-h-[92vh]'
-            : 'max-w-[412px] rounded-[44px] border-[10px] border-slate-800 bg-slate-900 shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-1 ring-slate-700/50 min-h-[850px] max-h-[92vh]'
+            ? 'max-w-[540px] rounded-[36px] border-[8px] border-slate-800 bg-slate-900 shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-1 ring-slate-700/50 h-[844px] max-h-[92vh]'
+            : 'max-w-[412px] rounded-[44px] border-[10px] border-slate-800 bg-slate-900 shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-1 ring-slate-700/50 h-[844px] max-h-[92vh]'
         }`}
       >
         {/* Device Status Bar (shown in phone & tablet mode) */}
@@ -135,7 +135,7 @@ export const MobileDeviceShell: React.FC<MobileDeviceShellProps> = ({ children }
         )}
 
         {/* Scrollable Mobile Screen Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full bg-theme-base text-theme-main flex flex-col relative custom-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full bg-theme-base text-theme-main flex flex-col relative custom-scrollbar [scrollbar-gutter:stable]">
           {children}
         </div>
 
