@@ -113,17 +113,17 @@ export const PendingDuesTracker: React.FC<PendingDuesTrackerProps> = ({
       
       {/* 1. Header with Direct Add Due Button */}
       <div className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white font-heading tracking-tight">
-              {language === 'hi' ? 'बकाया बिल व सप्लायर उधारी' : 'Pending Bills & Supplier Udhaar'}
+            <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-heading tracking-tight whitespace-nowrap">
+              {language === 'hi' ? 'बकाया बिल' : 'Pending Dues'}
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-100 text-red-600">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-100 text-red-600 whitespace-nowrap shrink-0">
               {unpaidDues.length} Due
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {language === 'hi' ? 'सीमेंट, सरिया, ईंटें व ठेकेदार बकाया' : 'Material credit, equipment & labour dues'}
+          <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+            {language === 'hi' ? 'सामग्री, उपकरण व लेबर बकाया' : 'Material credit, equipment & labour dues'}
           </p>
         </div>
 

@@ -497,5 +497,20 @@ This document tracks all technologies, libraries, and architectural modules used
   - Maintained accessibility standards with semantic `title` and `aria-label` attributes (`"Add Bill"` / `"नया बिल जोड़ें"`).
 - **Small Summary:** Swapped the text-based "+ Add Bill" button on the Dues page header for a clean, square `+` icon button to match the rest of the mobile interface.
 
+---
+
+## Phase 2.22: Dues Header Text Shortening & Typography Optimization
+
+### 1. Technology: Typography Scaling & Header De-congestion (`PendingDuesTracker.tsx`)
+- **Role & Purpose:**
+  - Shortened the verbose header title from `"Pending Bills & Supplier Udhaar"` (`"बकाया बिल व सप्लायर उधारी"`) to the clean, concise `"Pending Dues"` (`"बकाया बिल"`).
+  - Scaled down the font size from `text-base sm:text-lg font-extrabold` to `text-sm sm:text-base font-bold`, preventing the title from wrapping awkwardly across multiple lines on mobile screens.
+  - Eliminated the badge squishing bug where the `{unpaidDues.length} Due` badge was compressed and forced into two stacked vertical lines (`0 \n Due`).
+- **Under the Hood:**
+  - Added `whitespace-nowrap` to both the title `<h1>` and the counter badge with `shrink-0`.
+  - Added `min-w-0` to the parent text flex column and `truncate` to the subtitle text (`text-[11px]`) for clean, responsive flex containment across mobile and desktop viewports.
+  - Updated Hindi localization strings to match the compact wording (`बकाया बिल` and `सामग्री, उपकरण व लेबर बकाया`).
+- **Small Summary:** Shortened the Dues header title to "Pending Dues", scaled the typography to a balanced size, and ensured the title and counter badge fit cleanly on a single line without wrapping.
+
 
 
