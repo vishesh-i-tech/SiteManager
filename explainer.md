@@ -512,5 +512,37 @@ This document tracks all technologies, libraries, and architectural modules used
   - Updated Hindi localization strings to match the compact wording (`बकाया बिल` and `सामग्री, उपकरण व लेबर बकाया`).
 - **Small Summary:** Shortened the Dues header title to "Pending Dues", scaled the typography to a balanced size, and ensured the title and counter badge fit cleanly on a single line without wrapping.
 
+---
+
+## Phase 2.23: Granular Option PDF Reports & Machinery Self-Owned Default
+
+### 1. Technology: Modular PDF Exporters for Every Site Sub-Option (`reportExporter.ts`, `SiteDetailsModal.tsx`)
+- **Role & Purpose:**
+  - Added dedicated, high-fidelity PDF report generation buttons to every individual tab/option within the Site Details dialog (`Client Receipts`, `Tools`, `Labour Register`, `Materials`, `Machinery & Fuel`, and `Dues`).
+  - Allows contractors to export and share focused, itemized statements with specific stakeholders (e.g., sending a Client Receipts Statement to the property owner, a Tools Dispatch Sheet to the warehouse manager, or a Materials Outflow report to suppliers) without having to export the entire financial audit.
+  - Added individual milestone **Payment Receipt Vouchers** (`exportIndividualReceiptPdf`) directly on each client payment card.
+- **Under the Hood:**
+  - Built 6 dedicated jsPDF + AutoTable generators in `reportExporter.ts`:
+    - `exportClientReceiptsPdf`: Contract budget vs total received, balance receivable, and chronological receipt ledger.
+    - `exportIndividualReceiptPdf`: Formal branded payment voucher with reference number, payer details, amount box, and signature line.
+    - `exportSiteToolsPdf`: Site inventory sheet differentiating self-owned vs purchased equipment, dispatch dates, and return statuses.
+    - `exportSiteMaterialsPdf`: Comprehensive material purchases breakdown with quantities, unit rates, and supplier payment statuses.
+    - `exportSiteMachineryPdf`: Machinery equipment log detailing diesel consumption, rental costs, and total run costs.
+    - `exportSiteDuesPdf`: Outstanding supplier bills, vendor payables, and due dates.
+  - Integrated tactile action buttons in each sub-tab header in `SiteDetailsModal.tsx`.
+
+### 2. Technology: Default Self-Owned Machinery Architecture (`AddMachineryModal.tsx`, `EditMachineryModal.tsx`)
+- **Role & Purpose:**
+  - Repositioned the **Self / Owned** option to the **LEFT** and **Rental** to the **RIGHT**.
+  - Enforced **Self-Owned as the permanent default selection** upon opening the modal (`ownership: 'owned'`, `rentalCost: 0`).
+  - Contractors only switch to "Rental" if the machine was specifically hired from a third-party vendor.
+- **Under the Hood:**
+  - Initialized `ownership` state to `'owned'` and `rentalCost` to `0`.
+  - Added an `isOpen` reset effect to guarantee that reopening the modal always defaults to `Self-Owned`.
+  - Dynamically disabled the Machine Rent input displaying `₹0 (Self-Owned)` when in owned mode, seamlessly enabling input when toggled to Rental.
+  - Mirrored the same layout and logic in `EditMachineryModal.tsx` for consistent data management.
+- **Small Summary:** Added dedicated PDF export buttons for every site sub-view (receipts, tools, labour, materials, machinery, dues), plus single receipt vouchers, and defaulted machinery to Self-Owned on the left with ₹0 rent.
+
+
 
 

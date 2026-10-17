@@ -3,7 +3,16 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site, ToolRecord, MaterialRecord, LabourRecord, MachineryRecord, ExpenseDue, ClientPayment } from '../../types';
 import { db } from '../../core/db/database';
-import { exportSiteReportPdf } from '../../utils/reportExporter';
+import {
+  exportSiteReportPdf,
+  exportClientReceiptsPdf,
+  exportIndividualReceiptPdf,
+  exportSiteToolsPdf,
+  exportSiteTotalAttendancePdf,
+  exportSiteMaterialsPdf,
+  exportSiteMachineryPdf,
+  exportSiteDuesPdf,
+} from '../../utils/reportExporter';
 import {
   Building2,
   MapPin,
@@ -167,6 +176,30 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
 
   const handleDownloadPdf = () => {
     exportSiteReportPdf(currentSite, finance, tools, materials, dues, sortedClientPayments, account?.companyName);
+  };
+
+  const handleDownloadClientReceiptsPdf = () => {
+    exportClientReceiptsPdf(currentSite, sortedClientPayments, finance, account?.companyName);
+  };
+
+  const handleDownloadToolsPdf = () => {
+    exportSiteToolsPdf(currentSite, tools, account?.companyName);
+  };
+
+  const handleDownloadLabourPdf = () => {
+    exportSiteTotalAttendancePdf(currentSite, labourRecords, account?.companyName);
+  };
+
+  const handleDownloadMaterialsPdf = () => {
+    exportSiteMaterialsPdf(currentSite, materials, finance, account?.companyName);
+  };
+
+  const handleDownloadMachineryPdf = () => {
+    exportSiteMachineryPdf(currentSite, machinery, finance, account?.companyName);
+  };
+
+  const handleDownloadDuesPdf = () => {
+    exportSiteDuesPdf(currentSite, dues, finance, account?.companyName);
   };
 
   return (
@@ -520,15 +553,27 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsRecordPaymentOpen(true)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1.5 btn-tactile"
-                  style={{ backgroundColor: tradeConfig.primaryColor }}
-                >
-                  <Plus className="w-4 h-4 stroke-[2.5]" />
-                  <span>{language === 'hi' ? 'पेमेंट दर्ज करें' : 'Record Client Payment'}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadClientReceiptsPdf}
+                    className="px-3 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-50 dark:hover:bg-slate-700/60 shadow-xs flex items-center gap-1.5 btn-tactile"
+                    title={language === 'hi' ? 'क्लाइंट पेमेंट रसीद PDF डाउनलोड करें' : 'Download Client Receipts Statement PDF'}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>{language === 'hi' ? 'रसीद PDF' : 'Receipts PDF'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsRecordPaymentOpen(true)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1.5 btn-tactile"
+                    style={{ backgroundColor: tradeConfig.primaryColor }}
+                  >
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span>{language === 'hi' ? 'पेमेंट दर्ज करें' : 'Record Client Payment'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Progress bar */}
@@ -599,14 +644,25 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                           </span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteClientPayment(payment.id)}
-                          className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                          title="Delete Payment Entry"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => exportIndividualReceiptPdf(currentSite, payment, account?.companyName)}
+                            className="p-2 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                            title={language === 'hi' ? 'रसीद वाउचर PDF डाउनलोड करें' : 'Download Receipt Voucher PDF'}
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClientPayment(payment.id)}
+                            className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            title="Delete Payment Entry"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -655,14 +711,26 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                       : 'Self-owned warehouse equipment and tools purchased for this site'}
                   </p>
                 </div>
-                <button
-                  onClick={() => onOpenAddTool(currentSite.id)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-extrabold text-white shadow-md flex items-center gap-1.5 transition-all btn-tactile glow-theme"
-                  style={{ backgroundColor: tradeConfig.primaryColor }}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>{language === 'hi' ? '+ औजार जोड़ें' : '+ Add Tool'}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadToolsPdf}
+                    className="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-xs flex items-center gap-1.5 btn-tactile"
+                    title={language === 'hi' ? 'औजार लिस्ट PDF डाउनलोड करें' : 'Download Tools Statement PDF'}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>{language === 'hi' ? 'औजार PDF' : 'Tools PDF'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenAddTool(currentSite.id)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-extrabold text-white shadow-md flex items-center gap-1.5 transition-all btn-tactile glow-theme"
+                    style={{ backgroundColor: tradeConfig.primaryColor }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{language === 'hi' ? '+ औजार जोड़ें' : '+ Add Tool'}</span>
+                  </button>
+                </div>
               </div>
 
               {tools.length === 0 ? (
@@ -805,18 +873,30 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
           {/* LABOUR SUB-TAB */}
           {activeSubTab === 'labour' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
                   {labourRecords.length} Attendance Sheets
                 </span>
-                <button
-                  onClick={() => onOpenAddLabour(currentSite.id)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1"
-                  style={{ backgroundColor: tradeConfig.primaryColor }}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Log Attendance</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadLabourPdf}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-xs flex items-center gap-1.5 btn-tactile"
+                    title={language === 'hi' ? 'साइट हाजिरी समरी PDF डाउनलोड करें' : 'Download Site Labour Muster PDF'}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span>{language === 'hi' ? 'हाजिरी PDF' : 'Labour PDF'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenAddLabour(currentSite.id)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1 btn-tactile"
+                    style={{ backgroundColor: tradeConfig.primaryColor }}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Log Attendance</span>
+                  </button>
+                </div>
               </div>
 
               {labourRecords.length === 0 ? (
@@ -953,18 +1033,30 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
           {/* MATERIALS SUB-TAB */}
           {activeSubTab === 'materials' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
                   {materials.length} Material Entries
                 </span>
-                <button
-                  onClick={() => onOpenAddMaterial(currentSite.id)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1"
-                  style={{ backgroundColor: tradeConfig.primaryColor }}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Material</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadMaterialsPdf}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-xs flex items-center gap-1.5 btn-tactile"
+                    title={language === 'hi' ? 'सामग्री खर्च PDF डाउनलोड करें' : 'Download Materials Statement PDF'}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+                    <span>{language === 'hi' ? 'सामग्री PDF' : 'Materials PDF'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenAddMaterial(currentSite.id)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1 btn-tactile"
+                    style={{ backgroundColor: tradeConfig.primaryColor }}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Material</span>
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -1016,18 +1108,30 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
           {/* MACHINERY SUB-TAB */}
           {activeSubTab === 'machinery' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
                   {machinery.length} Machinery Logs
                 </span>
-                <button
-                  onClick={() => onOpenAddMachinery(currentSite.id)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1"
-                  style={{ backgroundColor: tradeConfig.primaryColor }}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Machinery</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadMachineryPdf}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-xs flex items-center gap-1.5 btn-tactile"
+                    title={language === 'hi' ? 'मशीनरी व डीजल PDF डाउनलोड करें' : 'Download Machinery & Fuel PDF'}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>{language === 'hi' ? 'मशीनरी PDF' : 'Machinery PDF'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenAddMachinery(currentSite.id)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1 btn-tactile"
+                    style={{ backgroundColor: tradeConfig.primaryColor }}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Machinery</span>
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -1074,18 +1178,30 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
           {/* DUES SUB-TAB */}
           {activeSubTab === 'dues' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
                   {dues.length} Payables & Dues
                 </span>
-                <button
-                  onClick={() => onOpenAddDue(currentSite.id)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1"
-                  style={{ backgroundColor: tradeConfig.primaryColor }}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Due</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadDuesPdf}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-xs flex items-center gap-1.5 btn-tactile"
+                    title={language === 'hi' ? 'बकाया बिल PDF डाउनलोड करें' : 'Download Pending Dues PDF'}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                    <span>{language === 'hi' ? 'बकाया PDF' : 'Dues PDF'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenAddDue(currentSite.id)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-1 btn-tactile"
+                    style={{ backgroundColor: tradeConfig.primaryColor }}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Due</span>
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">

@@ -30,19 +30,21 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
   const { t, language, tradeConfig } = useTheme();
 
   const [siteId, setSiteId] = useState(defaultSiteId || (sites[sites.length - 1]?.id || sites[0]?.id || ''));
-  const [ownership, setOwnership] = useState<'rental' | 'owned'>('rental');
+  const [ownership, setOwnership] = useState<'rental' | 'owned'>('owned');
   const [machineType, setMachineType] = useState<MachineryRecord['machineType']>('Concrete Mixer');
   const [customMachine, setCustomMachine] = useState('');
   const [fuelLitres, setFuelLitres] = useState<number>(30);
   const [fuelCost, setFuelCost] = useState<number>(2700);
   const [rentalHours, setRentalHours] = useState<number>(1);
-  const [rentalCost, setRentalCost] = useState<number>(1500);
+  const [rentalCost, setRentalCost] = useState<number>(0);
   const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setOwnership('owned');
+      setRentalCost(0);
       if (defaultSiteId) {
         setSiteId(defaultSiteId);
       } else if (sites.length > 0 && !sites.some((s) => s.id === siteId)) {
@@ -151,28 +153,31 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
             <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
               <button
                 type="button"
-                onClick={() => setOwnership('rental')}
-                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                  ownership === 'rental'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
-                }`}
-              >
-                {language === 'hi' ? 'किराया (Rental)' : 'Rental'}
-              </button>
-              <button
-                type="button"
                 onClick={() => {
                   setOwnership('owned');
                   setRentalCost(0);
                 }}
                 className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
                   ownership === 'owned'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm border border-slate-900/10 dark:border-white/10'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
                 }`}
               >
-                {language === 'hi' ? 'अपना निजी (Owned)' : 'Self / Owned'}
+                {language === 'hi' ? 'खुद का (Self-Owned)' : 'Self / Owned'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOwnership('rental');
+                  if (rentalCost === 0) setRentalCost(1500);
+                }}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                  ownership === 'rental'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm border border-slate-900/10 dark:border-white/10'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+                }`}
+              >
+                {language === 'hi' ? 'किराया (Rental)' : 'Rental'}
               </button>
             </div>
           </div>
