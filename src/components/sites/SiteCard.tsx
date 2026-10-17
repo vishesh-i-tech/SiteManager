@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site } from '../../types';
 import { db } from '../../core/db/database';
+import { toDisplayDate, formatAuditTimestamp } from '../../utils/dateUtils';
 import {
   MapPin,
   Calendar,
@@ -228,10 +229,21 @@ export const SiteCard: React.FC<SiteCardProps> = ({
 
       {/* Footer Actions */}
       <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
-        <span className="text-[11px] text-slate-400 flex items-center gap-1">
-          <Calendar className="w-3 h-3" />
-          {new Date(site.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-        </span>
+        <div className="flex flex-col text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+          <span className="flex items-center gap-1 font-medium">
+            <Calendar className="w-3 h-3 text-slate-400" />
+            <span>{toDisplayDate(site.startDate)}</span>
+          </span>
+          {(site.updatedAt || site.createdAt) && (
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+              <Clock className="w-2.5 h-2.5 text-amber-500/80" />
+              <span>
+                {language === 'hi' ? 'बदलाव: ' : 'Edited: '}
+                {formatAuditTimestamp(site.updatedAt || site.createdAt, language)}
+              </span>
+            </span>
+          )}
+        </div>
 
         <div className="flex items-center gap-1.5">
           {onEditSite && (

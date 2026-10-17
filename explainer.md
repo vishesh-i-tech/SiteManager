@@ -684,6 +684,39 @@ This document tracks all technologies, libraries, and architectural modules used
   - `Site Notes / Terms` -> Simplified to **`Site Notes`** (`साइट टिप्पणी`).
 - **Small Summary:** Simplified the Add Site form labels by removing trailing slashed words ("Site Name", "Location", "Client Name", "Site Notes").
 
+---
+
+## Phase 2.33: Manual Date Entry without Calendar Popup & Audit Timestamping ("Last Edited")
+
+### 1. Technology: Manual Date Input & Normalization Engine (`dateUtils.ts`, `AddSiteModal.tsx`, `EditSiteModal.tsx`, `RecordClientPaymentModal.tsx`)
+- **Role & Purpose:**
+  - Replaced browser-native calendar picker controls (`<input type="date">`) with manual text inputs (`<input type="text" placeholder="DD-MM-YYYY">`).
+  - Pre-fills current date (`DD-MM-YYYY`) by default whenever creating a new site or logging client receipts, allowing users to simply click and type to edit without opening disruptive OS calendar dialogs.
+  - Normalizes user-typed dates (`DD-MM-YYYY` or `DD/MM/YYYY`) into standard ISO format (`YYYY-MM-DD`) for stable IndexedDB storage and Dexie queries.
+- **How it Works (Under the Hood):**
+  - **`dateUtils.ts` Helpers:**
+    - `getTodayFormatted()`: Extracts local date parts (`getDate()`, `getMonth() + 1`, `getFullYear()`) and zero-pads to standard `DD-MM-YYYY` format.
+    - `toDisplayDate(iso)`: Safely parses ISO or `YYYY-MM-DD` strings from Dexie database into Indian-standard `DD-MM-YYYY` for text input and display.
+    - `toIsoDate(str)`: Converts `DD-MM-YYYY` or `DD/MM/YYYY` into `YYYY-MM-DD` before storing in Dexie IndexedDB.
+    - `formatAuditTimestamp(ts, lang)`: Formats ISO timestamps into human-readable date and 12-hour AM/PM time (e.g. *"17 Oct 2026, 01:45 PM"*).
+  - **Manual Input:** Text input elements use `inputMode="numeric"`, `placeholder="DD-MM-YYYY"`, and no webkit calendar picker indicator, preventing native OS calendar popups on click.
+- **Small Summary:** Eliminated calendar popups by implementing auto-populated manual text fields formatted as DD-MM-YYYY with ISO database synchronization.
+
+---
+
+### 2. Technology: Audit History & "Last Edited" Timestamp Tracking (`types/index.ts`, `EditSiteModal.tsx`, `SiteCard.tsx`, `SiteDetailsModal.tsx`)
+- **Role & Purpose:**
+  - Tracks creation and modification timestamps on site records so contractors can always see when a project was created and when changes were last saved.
+  - Displays creation dates and last-edited audit timestamps directly on site cards, the site overview dashboard, and edit dialogs.
+- **How it Works (Under the Hood):**
+  - **Schema Extension (`types/index.ts`):** Added optional `updatedAt?: string;` property to the `Site` TypeScript interface.
+  - **Creation Timestamping (`AddSiteModal.tsx`):** Records `createdAt` and initial `updatedAt` with `new Date().toISOString()` on site creation. Displays an auto-timestamp notice in the modal.
+  - **Edit Mutation Timestamping (`EditSiteModal.tsx`):** Updates `updatedAt` to `new Date().toISOString()` whenever a site record is saved. Shows an audit summary card at the bottom of the edit form with Created date and Last Edited date/time.
+  - **Card Footer Audit Display (`SiteCard.tsx`):** Shows the site start date along with an amber clock icon indicating *"Edited: [Date, Time]"* (or *"बदलाव: [तारीख, समय]"*).
+  - **Project Details Audit (`SiteDetailsModal.tsx`):** Renders a 3-badge audit card in the Overview tab displaying Start Date, Created On, and Last Edited timestamps.
+- **Small Summary:** Added comprehensive audit tracking to sites, displaying when records were created and last modified across cards, modals, and overview screens.
+
+
 
 
 

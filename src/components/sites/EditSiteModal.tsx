@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site } from '../../types';
 import { db } from '../../core/db/database';
+import { toDisplayDate, toIsoDate, formatAuditTimestamp } from '../../utils/dateUtils';
 import {
   Building2,
   MapPin,
@@ -12,6 +13,7 @@ import {
   X,
   CheckCircle2,
   Phone,
+  Clock,
 } from 'lucide-react';
 
 interface EditSiteModalProps {
@@ -60,8 +62,8 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
       setBudget(site.estimatedBudget);
       setWorkStatus(site.workStatus);
       setPaymentStatus(site.paymentStatus);
-      setStartDate(site.startDate || '');
-      setExpectedEndDate(site.expectedEndDate || '');
+      setStartDate(toDisplayDate(site.startDate));
+      setExpectedEndDate(site.expectedEndDate ? toDisplayDate(site.expectedEndDate) : '');
       setNotes(site.notes || '');
     }
   }, [site]);
@@ -75,6 +77,7 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
     setIsSubmitting(true);
     try {
       const finalType = siteType === 'Other' && customCategory.trim() ? (customCategory.trim() as any) : siteType;
+      const nowIso = new Date().toISOString();
       await db.sites.update(site.id, {
         name: name.trim(),
         location: location.trim() || 'Site Area',
@@ -84,9 +87,10 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
         estimatedBudget: Number(budget) || 0,
         workStatus,
         paymentStatus,
-        startDate,
-        expectedEndDate: expectedEndDate || undefined,
+        startDate: toIsoDate(startDate),
+        expectedEndDate: expectedEndDate ? toIsoDate(expectedEndDate) : undefined,
         notes: notes.trim() || undefined,
+        updatedAt: nowIso,
       });
 
       onSiteUpdated();
@@ -316,30 +320,40 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
             </div>
           </div>
 
-          {/* Dates */}
+          {/* Dates - Manual Text Input */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>{language === 'hi' ? 'शुरू होने की तारीख' : 'Start Date'}</span>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{language === 'hi' ? 'शुरू होने की तारीख' : 'Start Date'}</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">DD-MM-YYYY</span>
               </label>
               <input
-                type="date"
+                type="text"
+                inputMode="numeric"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                placeholder="DD-MM-YYYY"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>{language === 'hi' ? 'पूर्णता तारीख' : 'Target Completion'}</span>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{language === 'hi' ? 'पूर्णता तारीख' : 'Target Completion'}</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">DD-MM-YYYY</span>
               </label>
               <input
-                type="date"
+                type="text"
+                inputMode="numeric"
                 value={expectedEndDate}
                 onChange={(e) => setExpectedEndDate(e.target.value)}
+                placeholder="DD-MM-YYYY"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -357,6 +371,28 @@ export const EditSiteModal: React.FC<EditSiteModalProps> = ({
               onChange={(e) => setNotes(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             ></textarea>
+          </div>
+
+          {/* Audit History & Last Edited Info */}
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-1.5 text-xs">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px]">
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <span>{language === 'hi' ? 'साइट बनाई गई:' : 'Created on:'}</span>
+                <strong className="text-slate-700 dark:text-slate-200 font-semibold">
+                  {formatAuditTimestamp(site.createdAt, language) || toDisplayDate(site.startDate)}
+                </strong>
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px]">
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                <span>{language === 'hi' ? 'पिछला संपादन (Last Edited):' : 'Last Edited:'}</span>
+                <strong className="text-amber-700 dark:text-amber-400 font-bold">
+                  {formatAuditTimestamp(site.updatedAt || site.createdAt, language) || 'Recently'}
+                </strong>
+              </span>
+            </div>
           </div>
 
           {/* Footer Actions */}

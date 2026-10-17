@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site, ToolRecord, MaterialRecord, LabourRecord, MachineryRecord, ExpenseDue, ClientPayment } from '../../types';
 import { db } from '../../core/db/database';
+import { toDisplayDate, formatAuditTimestamp } from '../../utils/dateUtils';
 import {
   exportSiteReportPdf,
   exportClientReceiptsPdf,
@@ -504,6 +505,45 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                   <p>{currentSite.notes}</p>
                 </div>
               )}
+
+              {/* Audit Timestamps Card */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-blue-500" />
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      {language === 'hi' ? 'शुरू होने की तारीख' : 'Start Date'}
+                    </span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {toDisplayDate(currentSite.startDate)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-purple-500" />
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      {language === 'hi' ? 'साइट बनाई गई' : 'Created On'}
+                    </span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {formatAuditTimestamp(currentSite.createdAt, language) || toDisplayDate(currentSite.startDate)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block">
+                      {language === 'hi' ? 'अंतिम संपादन (Last Edited)' : 'Last Edited'}
+                    </span>
+                    <span className="font-bold text-amber-700 dark:text-amber-300">
+                      {formatAuditTimestamp(currentSite.updatedAt || currentSite.createdAt, language) || 'Recently'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

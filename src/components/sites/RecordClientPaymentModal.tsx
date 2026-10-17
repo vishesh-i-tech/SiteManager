@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site, ClientPayment, PaymentMode } from '../../types';
 import { db } from '../../core/db/database';
+import { getTodayFormatted, toIsoDate } from '../../utils/dateUtils';
 import {
   IndianRupee,
   Calendar,
@@ -32,9 +33,7 @@ export const RecordClientPaymentModal: React.FC<RecordClientPaymentModalProps> =
   const { language, tradeConfig } = useTheme();
 
   const [amount, setAmount] = useState<string>('');
-  const [paymentDate, setPaymentDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [paymentDate, setPaymentDate] = useState<string>(getTodayFormatted());
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('UPI / Online');
   const [payerName, setPayerName] = useState<string>(site.clientName || '');
   const [referenceNo, setReferenceNo] = useState<string>('');
@@ -73,7 +72,7 @@ export const RecordClientPaymentModal: React.FC<RecordClientPaymentModalProps> =
         id: `cp-${Date.now()}`,
         siteId: site.id,
         amount: numAmount,
-        paymentDate,
+        paymentDate: toIsoDate(paymentDate),
         paymentMode,
         payerName: payerName.trim() || undefined,
         referenceNo: referenceNo.trim() || undefined,
@@ -189,17 +188,22 @@ export const RecordClientPaymentModal: React.FC<RecordClientPaymentModalProps> =
             </div>
           </div>
 
-          {/* Payment Date (kab) */}
+          {/* Payment Date */}
           <div className="space-y-1.5">
-            <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              <span>{language === 'hi' ? 'भुगतान की तारीख *' : 'Payment Date *'}</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                <span>{language === 'hi' ? 'भुगतान की तारीख *' : 'Payment Date *'}</span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-normal">DD-MM-YYYY</span>
+            </div>
             <input
-              type="date"
+              type="text"
+              inputMode="numeric"
               required
               value={paymentDate}
               onChange={(e) => setPaymentDate(e.target.value)}
+              placeholder="DD-MM-YYYY"
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

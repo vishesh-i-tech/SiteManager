@@ -66,6 +66,7 @@ export interface Site {
   coverPhoto?: string;
   voiceNoteUrl?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ToolRecord {

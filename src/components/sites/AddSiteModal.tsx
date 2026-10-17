@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site } from '../../types';
 import { db } from '../../core/db/database';
+import { getTodayFormatted, toIsoDate } from '../../utils/dateUtils';
 import {
   Building2,
   MapPin,
@@ -13,6 +14,7 @@ import {
   CheckCircle2,
   Mic,
   Phone,
+  Clock,
 } from 'lucide-react';
 
 interface AddSiteModalProps {
@@ -37,8 +39,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [budget, setBudget] = useState<number>(0);
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [expectedEndDate, setExpectedEndDate] = useState('');
+  const [startDate, setStartDate] = useState(getTodayFormatted());
+  const [expectedEndDate, setExpectedEndDate] = useState(getTodayFormatted());
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,6 +53,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     setIsSubmitting(true);
     try {
       const finalType = siteType === 'Other' && customCategory.trim() ? (customCategory.trim() as any) : siteType;
+      const nowIso = new Date().toISOString();
       const newSite: Site = {
         id: `site-${Date.now()}`,
         contractorId: 'contractor-1',
@@ -62,10 +65,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         estimatedBudget: Number(budget) || 0,
         workStatus: 'ongoing',
         paymentStatus: 'unpaid',
-        startDate,
-        expectedEndDate: expectedEndDate || undefined,
+        startDate: toIsoDate(startDate),
+        expectedEndDate: expectedEndDate ? toIsoDate(expectedEndDate) : undefined,
         notes: notes.trim() || undefined,
-        createdAt: new Date().toISOString(),
+        createdAt: nowIso,
+        updatedAt: nowIso,
       };
 
       await db.sites.put(newSite);
@@ -259,30 +263,40 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
             </div>
           </div>
 
-          {/* Dates */}
+          {/* Dates - Manual Text Input */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>{language === 'hi' ? 'काम शुरू होने की तारीख' : 'Start Date'}</span>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{language === 'hi' ? 'काम शुरू होने की तारीख' : 'Start Date'}</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">DD-MM-YYYY</span>
               </label>
               <input
-                type="date"
+                type="text"
+                inputMode="numeric"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                placeholder="DD-MM-YYYY"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>{language === 'hi' ? 'अपेक्षित पूर्णता तारीख' : 'Target Completion'}</span>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{language === 'hi' ? 'अपेक्षित पूर्णता तारीख' : 'Target Completion'}</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">DD-MM-YYYY</span>
               </label>
               <input
-                type="date"
+                type="text"
+                inputMode="numeric"
                 value={expectedEndDate}
                 onChange={(e) => setExpectedEndDate(e.target.value)}
+                placeholder="DD-MM-YYYY"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -301,6 +315,18 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               placeholder={language === 'hi' ? 'क्लाइंट से तय दर या शर्तें...' : 'Agreement notes or terms...'}
               className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
             ></textarea>
+          </div>
+
+          {/* Audit Timestamp Notice */}
+          <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-blue-500" />
+              <span>{language === 'hi' ? 'प्रविष्टि तारीख:' : 'Entry Date:'}</span>
+              <strong className="text-slate-700 dark:text-slate-200 font-semibold">{getTodayFormatted()}</strong>
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium">
+              {language === 'hi' ? 'समय अपने आप दर्ज होगा' : 'Auto-timestamped'}
+            </span>
           </div>
 
           {/* Footer Actions */}
