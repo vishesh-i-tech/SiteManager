@@ -30,17 +30,29 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 
   const [siteId, setSiteId] = useState(defaultSiteId || (sites[0]?.id || ''));
   const [itemName, setItemName] = useState('');
-  const [quantity, setQuantity] = useState<number>(100);
+  const [quantity, setQuantity] = useState<string>(''); // Blank by default
   const [unit, setUnit] = useState('bags');
-  const [unitPrice, setUnitPrice] = useState<number>(385);
+  const [unitPrice, setUnitPrice] = useState<string>(''); // Blank by default
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentStatus, setPaymentStatus] = useState<MaterialRecord['paymentStatus']>('paid');
-  const [paidAmount, setPaidAmount] = useState<number>(38500);
+  const [paidAmount, setPaidAmount] = useState<string>(''); // Blank by default
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const resetForm = () => {
+    setItemName('');
+    setQuantity('');
+    setUnit('bags');
+    setUnitPrice('');
+    setPaidAmount('');
+    setNotes('');
+    setPaymentStatus('paid');
+    setPurchaseDate(new Date().toISOString().split('T')[0]);
+  };
+
   useEffect(() => {
     if (isOpen) {
+      resetForm();
       if (defaultSiteId) {
         setSiteId(defaultSiteId);
       } else if (sites.length > 0 && !sites.some((s) => s.id === siteId)) {
@@ -48,6 +60,11 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
       }
     }
   }, [isOpen, defaultSiteId, sites]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -57,9 +74,9 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
     setItemName(title);
     if (templateUnit) setUnit(templateUnit);
     if (defaultCost) {
-      setUnitPrice(defaultCost);
-      setQuantity(1);
-      setPaidAmount(defaultCost);
+      setUnitPrice(String(defaultCost));
+      setQuantity('1');
+      setPaidAmount(String(defaultCost));
     }
   };
 
@@ -101,6 +118,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
         });
       }
 
+      resetForm();
       onMaterialAdded();
       onClose();
     } catch (err) {
@@ -113,7 +131,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
       {/* Separate Backdrop Layer */}
-      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={handleClose} />
 
       {/* Interactive Sharp Dialog Container */}
       <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
@@ -137,7 +155,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="w-5 h-5" />
@@ -220,7 +238,8 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                 required
                 min={1}
                 value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="100"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -258,7 +277,8 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                 type="number"
                 required
                 value={unitPrice}
-                onChange={(e) => setUnitPrice(Number(e.target.value))}
+                onChange={(e) => setUnitPrice(e.target.value)}
+                placeholder="385"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -321,7 +341,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {t('cancel')}

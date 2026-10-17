@@ -47,32 +47,47 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Default initial entries for quick start
-  const [entries, setEntries] = useState<LabourEntry[]>([
-    {
+  // Helper to fetch the most recent wage the user configured for a role (or 0 / blank if none)
+  const getRecentWageForRole = (role: string, currentEntries?: LabourEntry[]): number => {
+    if (currentEntries && currentEntries.length > 0) {
+      const found = [...currentEntries].reverse().find((e) => e.role === role && Number(e.dailyWage) > 0);
+      if (found && Number(found.dailyWage) > 0) {
+        return Number(found.dailyWage);
+      }
+    }
+    const saved = localStorage.getItem(`sitesaathi_recent_wage_${role}`);
+    if (saved && Number(saved) > 0) {
+      return Number(saved);
+    }
+    return 0; // Starts blank, no arbitrary 550 or 800
+  };
+
+  const createInitialEntry = (): LabourEntry => {
+    const initialWage = getRecentWageForRole('Mason');
+    return {
       id: `entry-${Date.now()}-1`,
       recordId: '',
       workerName: '',
       role: 'Mason',
       attendanceStatus: 'full_day',
-      dailyWage: 800,
-      paidAmount: 800,
+      dailyWage: initialWage,
+      paidAmount: initialWage,
       balanceDue: 0,
-    },
-    {
-      id: `entry-${Date.now()}-2`,
-      recordId: '',
-      workerName: '',
-      role: 'Helper',
-      attendanceStatus: 'full_day',
-      dailyWage: 550,
-      paidAmount: 550,
-      balanceDue: 0,
-    },
-  ]);
+    };
+  };
+
+  // Form entries
+  const [entries, setEntries] = useState<LabourEntry[]>([createInitialEntry()]);
+
+  const resetForm = () => {
+    setDate(new Date().toISOString().split('T')[0]);
+    setNotes('');
+    setEntries([createInitialEntry()]);
+  };
 
   useEffect(() => {
     if (isOpen) {
+      resetForm();
       if (defaultSiteId) {
         setSiteId(defaultSiteId);
       } else if (sites.length > 0 && !sites.some((s) => s.id === siteId)) {
@@ -81,6 +96,11 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
     }
   }, [isOpen, defaultSiteId, sites]);
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   const handleUpdateEntry = (index: number, field: keyof LabourEntry, val: any) => {
@@ -88,9 +108,17 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
     const current = { ...updated[index], [field]: val };
 
     if (field === 'role') {
-      const matched = ROLES.find((r) => r.id === val);
-      if (matched && !current.dailyWage) {
-        current.dailyWage = matched.defaultWage;
+      const recent = getRecentWageForRole(val, updated);
+      if (!current.dailyWage || current.dailyWage === 0) {
+        current.dailyWage = recent;
+      }
+    }
+
+    if (field === 'dailyWage') {
+      const numVal = Number(val) || 0;
+      current.dailyWage = numVal;
+      if (numVal > 0) {
+        localStorage.setItem(`sitesaathi_recent_wage_${current.role}`, String(numVal));
       }
     }
 
@@ -147,17 +175,19 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
     setEntries(updated);
   };
 
-  const handleAddWorkerRow = (role: LabourEntry['role'] = 'Helper', defaultWage = 550) => {
+  const handleAddWorkerRow = (role?: LabourEntry['role']) => {
+    const targetRole = role || (entries.length > 0 ? entries[entries.length - 1].role : 'Helper');
+    const recentWage = getRecentWageForRole(targetRole, entries);
     setEntries((prev) => [
       ...prev,
       {
         id: `entry-${Date.now()}-${prev.length}`,
         recordId: '',
         workerName: '',
-        role,
+        role: targetRole,
         attendanceStatus: 'full_day',
-        dailyWage: defaultWage,
-        paidAmount: defaultWage,
+        dailyWage: recentWage,
+        paidAmount: recentWage,
         balanceDue: 0,
       },
     ]);
@@ -165,18 +195,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
 
   const handleRemoveRow = (index: number) => {
     if (entries.length <= 1) {
-      setEntries([
-        {
-          id: `entry-${Date.now()}`,
-          recordId: '',
-          workerName: '',
-          role: 'Helper',
-          attendanceStatus: 'full_day',
-          dailyWage: 550,
-          paidAmount: 550,
-          balanceDue: 0,
-        },
-      ]);
+      setEntries([createInitialEntry()]);
       return;
     }
     setEntries(entries.filter((_, i) => i !== index));
@@ -238,6 +257,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
         await db.labourEntries.put(entry);
       }
 
+      resetForm();
       onLabourAdded();
       onClose();
     } catch (err) {
@@ -250,7 +270,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
       {/* Separate Backdrop Layer */}
-      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={handleClose} />
 
       {/* Interactive Sharp Dialog Container */}
       <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
@@ -274,7 +294,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="w-5 h-5" />
@@ -327,24 +347,24 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
             </span>
             <button
               type="button"
-              onClick={() => handleAddWorkerRow('Mason', 800)}
+              onClick={() => handleAddWorkerRow('Mason')}
               className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 btn-tactile"
             >
-              + Mason (₹800)
+              + Mason {getRecentWageForRole('Mason', entries) > 0 ? `(₹${getRecentWageForRole('Mason', entries)})` : ''}
             </button>
             <button
               type="button"
-              onClick={() => handleAddWorkerRow('Helper', 550)}
+              onClick={() => handleAddWorkerRow('Helper')}
               className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 btn-tactile"
             >
-              + Helper (₹550)
+              + Helper {getRecentWageForRole('Helper', entries) > 0 ? `(₹${getRecentWageForRole('Helper', entries)})` : ''}
             </button>
             <button
               type="button"
-              onClick={() => handleAddWorkerRow('Carpenter', 750)}
+              onClick={() => handleAddWorkerRow('Carpenter')}
               className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 btn-tactile"
             >
-              + Skilled (₹750)
+              + Skilled {getRecentWageForRole('Carpenter', entries) > 0 ? `(₹${getRecentWageForRole('Carpenter', entries)})` : ''}
             </button>
           </div>
 
@@ -404,9 +424,9 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
                       <span className="absolute left-2.5 top-2 text-slate-400 text-xs font-bold">₹</span>
                       <input
                         type="number"
-                        placeholder="Wage"
-                        value={entry.dailyWage || ''}
-                        onChange={(e) => handleUpdateEntry(idx, 'dailyWage', Number(e.target.value))}
+                        placeholder={language === 'hi' ? 'दैनिक मजदूरी' : 'Wage'}
+                        value={entry.dailyWage ? entry.dailyWage : ''}
+                        onChange={(e) => handleUpdateEntry(idx, 'dailyWage', e.target.value === '' ? 0 : Number(e.target.value))}
                         className="w-full pl-6 pr-2 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-right"
                       />
                     </div>
@@ -568,7 +588,7 @@ export const AddLabourModal: React.FC<AddLabourModalProps> = ({
           <div className="pt-2 flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {t('cancel')}

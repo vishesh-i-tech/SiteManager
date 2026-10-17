@@ -754,21 +754,13 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={handleDownloadToolsPdf}
-                    className="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-xs flex items-center gap-1.5 btn-tactile"
-                    title={language === 'hi' ? 'औजार लिस्ट PDF डाउनलोड करें' : 'Download Tools Statement PDF'}
-                  >
-                    <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                    <span>{language === 'hi' ? 'औजार PDF' : 'Tools PDF'}</span>
-                  </button>
-
-                  <button
                     onClick={() => onOpenAddTool(currentSite.id)}
-                    className="px-3.5 py-2 rounded-xl text-xs font-extrabold text-white shadow-md flex items-center gap-1.5 transition-all btn-tactile glow-theme"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-white shadow-md flex items-center justify-center transition-all btn-tactile glow-theme hover:scale-105 active:scale-95 cursor-pointer"
                     style={{ backgroundColor: tradeConfig.primaryColor }}
+                    title={language === 'hi' ? 'औजार जोड़ें' : 'Add Tool'}
+                    aria-label={language === 'hi' ? 'औजार जोड़ें' : 'Add Tool'}
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>{language === 'hi' ? '+ औजार जोड़ें' : '+ Add Tool'}</span>
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
                   </button>
                 </div>
               </div>

@@ -34,16 +34,28 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
   const [siteId, setSiteId] = useState(defaultSiteId || (sites[0]?.id || ''));
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<ExpenseDue['category']>('material');
-  const [amountDue, setAmountDue] = useState<number>(25000);
-  const [amountPaid, setAmountPaid] = useState<number>(0);
+  const [amountDue, setAmountDue] = useState<string>('');
+  const [amountPaid, setAmountPaid] = useState<string>('');
   const [dueDate, setDueDate] = useState(
     new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const resetForm = () => {
+    setTitle('');
+    setCategory('material');
+    setAmountDue('');
+    setAmountPaid('');
+    setDueDate(
+      new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    );
+    setNotes('');
+  };
+
   useEffect(() => {
     if (isOpen) {
+      resetForm();
       if (defaultSiteId) {
         setSiteId(defaultSiteId);
       } else if (sites.length > 0 && !sites.some((s) => s.id === siteId)) {
@@ -51,6 +63,11 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
       }
     }
   }, [isOpen, defaultSiteId, sites]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -68,11 +85,12 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
         amountDue: Number(amountDue) || 0,
         amountPaid: Number(amountPaid) || 0,
         dueDate,
-        status: Number(amountPaid) >= Number(amountDue) ? 'paid' : 'pending',
+        status: (Number(amountPaid) || 0) >= (Number(amountDue) || 0) && (Number(amountDue) || 0) > 0 ? 'paid' : 'pending',
         notes: notes.trim() || undefined,
       };
 
       await db.dues.put(newDue);
+      resetForm();
       onDueAdded();
       onClose();
     } catch (err) {
@@ -85,7 +103,7 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
       {/* Separate Backdrop Layer */}
-      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={handleClose} />
 
       {/* Interactive Sharp Dialog Container */}
       <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
@@ -109,7 +127,7 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="w-5 h-5" />
@@ -184,7 +202,8 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
                 type="number"
                 required
                 value={amountDue}
-                onChange={(e) => setAmountDue(Number(e.target.value))}
+                onChange={(e) => setAmountDue(e.target.value)}
+                placeholder="25000"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -197,7 +216,8 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
               <input
                 type="number"
                 value={amountPaid}
-                onChange={(e) => setAmountPaid(Number(e.target.value))}
+                onChange={(e) => setAmountPaid(e.target.value)}
+                placeholder="0"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -236,7 +256,7 @@ export const AddDueModal: React.FC<AddDueModalProps> = ({
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {t('cancel')}

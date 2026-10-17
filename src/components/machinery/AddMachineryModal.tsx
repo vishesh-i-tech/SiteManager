@@ -33,18 +33,29 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
   const [ownership, setOwnership] = useState<'rental' | 'owned'>('owned');
   const [machineType, setMachineType] = useState<MachineryRecord['machineType']>('Concrete Mixer');
   const [customMachine, setCustomMachine] = useState('');
-  const [fuelLitres, setFuelLitres] = useState<number>(30);
-  const [fuelCost, setFuelCost] = useState<number>(2700);
-  const [rentalHours, setRentalHours] = useState<number>(1);
-  const [rentalCost, setRentalCost] = useState<number>(0);
+  const [fuelLitres, setFuelLitres] = useState<string>('');
+  const [fuelCost, setFuelCost] = useState<string>('');
+  const [rentalHours, setRentalHours] = useState<string>('');
+  const [rentalCost, setRentalCost] = useState<string>('');
   const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const resetForm = () => {
+    setOwnership('owned');
+    setMachineType('Concrete Mixer');
+    setCustomMachine('');
+    setFuelLitres('');
+    setFuelCost('');
+    setRentalHours('');
+    setRentalCost('');
+    setLogDate(new Date().toISOString().split('T')[0]);
+    setNotes('');
+  };
+
   useEffect(() => {
     if (isOpen) {
-      setOwnership('owned');
-      setRentalCost(0);
+      resetForm();
       if (defaultSiteId) {
         setSiteId(defaultSiteId);
       } else if (sites.length > 0 && !sites.some((s) => s.id === siteId)) {
@@ -52,6 +63,11 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
       }
     }
   }, [isOpen, defaultSiteId, sites]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -79,6 +95,7 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
       };
 
       await db.machinery.put(newMachinery);
+      resetForm();
       onMachineryAdded();
       onClose();
     } catch (err) {
@@ -91,7 +108,7 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
       {/* Separate Backdrop Layer */}
-      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={handleClose} />
 
       {/* Interactive Sharp Dialog Container */}
       <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
@@ -115,7 +132,7 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="w-5 h-5" />
@@ -155,7 +172,7 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
                 type="button"
                 onClick={() => {
                   setOwnership('owned');
-                  setRentalCost(0);
+                  setRentalCost('');
                 }}
                 className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
                   ownership === 'owned'
@@ -169,7 +186,6 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
                 type="button"
                 onClick={() => {
                   setOwnership('rental');
-                  if (rentalCost === 0) setRentalCost(1500);
                 }}
                 className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
                   ownership === 'rental'
@@ -226,10 +242,16 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
                 type="number"
                 value={fuelLitres}
                 onChange={(e) => {
-                  const litres = Number(e.target.value);
-                  setFuelLitres(litres);
-                  setFuelCost(litres * 90); // Approximate diesel rate ₹90/L
+                  const val = e.target.value;
+                  setFuelLitres(val);
+                  if (val === '') {
+                    setFuelCost('');
+                  } else {
+                    const litres = Number(val) || 0;
+                    setFuelCost(String(litres * 90));
+                  }
                 }}
+                placeholder="0"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -242,7 +264,8 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
               <input
                 type="number"
                 value={fuelCost}
-                onChange={(e) => setFuelCost(Number(e.target.value))}
+                onChange={(e) => setFuelCost(e.target.value)}
+                placeholder="0"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -257,7 +280,8 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
               <input
                 type="number"
                 value={rentalHours}
-                onChange={(e) => setRentalHours(Number(e.target.value))}
+                onChange={(e) => setRentalHours(e.target.value)}
+                placeholder="1"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -271,7 +295,8 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
                 <input
                   type="number"
                   value={rentalCost}
-                  onChange={(e) => setRentalCost(Number(e.target.value))}
+                  onChange={(e) => setRentalCost(e.target.value)}
+                  placeholder="0"
                   className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                 />
               ) : (
@@ -325,7 +350,7 @@ export const AddMachineryModal: React.FC<AddMachineryModalProps> = ({
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {t('cancel')}

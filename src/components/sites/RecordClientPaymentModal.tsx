@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site, ClientPayment, PaymentMode } from '../../types';
 import { db } from '../../core/db/database';
@@ -41,6 +41,27 @@ export const RecordClientPaymentModal: React.FC<RecordClientPaymentModalProps> =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>('');
 
+  const resetForm = () => {
+    setAmount('');
+    setPaymentDate(getTodayFormatted());
+    setPaymentMode('UPI / Online');
+    setPayerName(site.clientName || '');
+    setReferenceNo('');
+    setNotes('');
+    setError('');
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen, site.clientName]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   const milestoneSuggestions = [
@@ -81,6 +102,7 @@ export const RecordClientPaymentModal: React.FC<RecordClientPaymentModalProps> =
       };
 
       await db.recordClientPayment(newPayment);
+      resetForm();
       onPaymentRecorded();
       onClose();
     } catch (err) {
@@ -94,7 +116,7 @@ export const RecordClientPaymentModal: React.FC<RecordClientPaymentModalProps> =
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={handleClose} />
 
       {/* Modal Card */}
       <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
@@ -119,7 +141,7 @@ export const RecordClientPaymentModal: React.FC<RecordClientPaymentModalProps> =
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="w-5 h-5" />
@@ -297,7 +319,7 @@ export const RecordClientPaymentModal: React.FC<RecordClientPaymentModalProps> =
           <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isSubmitting}
               className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >

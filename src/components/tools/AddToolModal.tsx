@@ -48,18 +48,32 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
   const [sourceType, setSourceType] = useState<'self_owned' | 'purchased_for_site'>('self_owned');
   const [siteId, setSiteId] = useState(defaultSiteId || (sites[0]?.id || ''));
   const [name, setName] = useState('');
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState<string>(''); // Blank by default, no 0 stuck
   const [size, setSize] = useState('');
   const [dateSent, setDateSent] = useState(new Date().toISOString().split('T')[0]);
   const [expectedReturnDate, setExpectedReturnDate] = useState(
     new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
-  const [purchasePrice, setPurchasePrice] = useState<number | ''>('');
+  const [purchasePrice, setPurchasePrice] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const resetForm = () => {
+    setName('');
+    setQuantity('');
+    setSize('');
+    setPurchasePrice('');
+    setNotes('');
+    setSourceType('self_owned');
+    setDateSent(new Date().toISOString().split('T')[0]);
+    setExpectedReturnDate(
+      new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    );
+  };
+
   useEffect(() => {
     if (isOpen) {
+      resetForm();
       if (defaultSiteId) {
         setSiteId(defaultSiteId);
       } else if (sites.length > 0 && !sites.some((s) => s.id === siteId)) {
@@ -67,6 +81,11 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
       }
     }
   }, [isOpen, defaultSiteId, sites]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -96,6 +115,7 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
       };
 
       await db.tools.put(newTool);
+      resetForm();
       onToolAdded();
       onClose();
     } catch (err) {
@@ -108,7 +128,7 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={handleClose} />
 
       {/* Modal Container */}
       <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
@@ -134,7 +154,7 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -262,7 +282,8 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
                 required
                 min={1}
                 value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="1"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
               />
             </div>
@@ -293,7 +314,7 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
                 required
                 min={0}
                 value={purchasePrice}
-                onChange={(e) => setPurchasePrice(e.target.value === '' ? '' : Number(e.target.value))}
+                onChange={(e) => setPurchasePrice(e.target.value)}
                 placeholder="उदा. 2400"
                 className="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 text-slate-900 dark:text-white focus:outline-none"
               />
@@ -362,7 +383,7 @@ export const AddToolModal: React.FC<AddToolModalProps> = ({
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               {language === 'hi' ? 'रद्द करें' : 'Cancel'}

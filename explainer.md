@@ -847,6 +847,36 @@ This document tracks all technologies, libraries, and architectural modules used
   - The entire card container preserves its top-level `onClick={() => onSelect(site)}` handler, ensuring seamless, tactile tap-to-open behavior with smooth CSS transition effects.
 - **A short, simple summary:** Removed the PDF download icon and redundant "View Details" text link from the site card footer, resulting in a cleaner card layout where tapping anywhere enters site details.
 
+---
+
+## Phase 2.41: Form State Fresh Lifecycle Isolation, Zero Pre-fill Elimination, Number Spinner Removal & Streamlined Tools Actions
+
+### 1. Technology: Clean Form State Lifecycle Isolation & Zero Pre-fill Architecture (`AddToolModal.tsx`, `AddLabourModal.tsx`, `AddMaterialModal.tsx`, `AddMachineryModal.tsx`, `AddDueModal.tsx`, `RecordClientPaymentModal.tsx`)
+- **Name of the Technology:** Empty Form State Initialization & Modal Lifecycle Isolation Engine
+- **What it does (Role & Purpose):**
+  - **Removed Pre-filled "0" Across All Entry Modals:** Fixed inputs across Add Tool, Add Labour, Add Material, Add Machinery, and Add Due modals where fields previously opened with a pre-filled `0`, `30`, `25000`, or `550`. Fields now initialize as clean empty strings (`''`) with informative placeholders (e.g., `1`, `100`, `25000`, `Wage`), eliminating the tedious need for users to backspace unwanted digits on mobile keyboards.
+  - **Zero Ghost Data Leakage (Fresh Form Lifecycle):** Added reactive `resetForm()` hooks triggered every time an add modal is opened (`useEffect` on `isOpen`), cancelled (`handleClose`), or submitted (`handleSubmit`). This guarantees that reopening any modal presents a 100% clean, blank slate without ghost data from previous entries or other projects.
+  - **Global Number Input Spinner Elimination (`index.css`):** Completely hid the browser default up/down number spinner arrows (`▲▼`) across all browsers (`-webkit-inner-spin-button`, `-moz-appearance: textfield`), giving numeric fields a clean, professional appearance and preventing accidental value changes when scrolling.
+- **How it works (Under the Hood):**
+  - Form state values are maintained as React string states (`''`), bound to inputs with `value={val || ''}` and converted to numbers only upon database transaction dispatch (`Number(val) || 0`).
+  - Cross-browser CSS rules in `src/index.css` target `input[type=number]` with `-webkit-appearance: none` and `appearance: textfield` to strip native spinner controls.
+- **A short, simple summary:** Eliminated pre-filled '0' numbers and ghost data across all modals, added 100% fresh form resets on open, and removed native input spinner arrows for a clean, sleek mobile input experience.
+
+---
+
+### 2. Technology: Streamlined Tools Management & Role-Based Recent Wage Engine (`SiteDetailsModal.tsx`, `AddLabourModal.tsx`)
+- **Name of the Technology:** Site Tools Action Streamlining & Dynamic Worker Wage Memory
+- **What it does (Role & Purpose):**
+  - **Removed Redundant Tools PDF Button:** Completely removed the separate "Tools PDF" button from the Site Details Tools tab. Because the comprehensive Site PDF Report already compiles all tool and equipment records alongside finances, labour muster, and materials, a dedicated tools PDF button was redundant.
+  - **Icon-Only `+` Add Tool Button:** Streamlined the "Add Tool" button in the Tools tab by removing the textual keyword and rendering a sleek, tactile icon-only `+` button matching the application's single accent design language.
+  - **Role-Based Recent Wage Memory:** Removed the arbitrary hardcoded `₹550` / `₹800` daily wage rates when adding workers in the Manual Attendance modal. New workers now start at `0` (rendered completely blank with a `Wage` placeholder) or automatically adopt the most recent rate the user configured for that specific role (from active rows in the current session or local persistence).
+- **How it works (Under the Hood):**
+  - In `SiteDetailsModal.tsx`, removed `handleDownloadToolsPdf` and the Tools PDF action button, retaining a tactile `button` with `<Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />`.
+  - In `AddLabourModal.tsx`, `getRecentWageForRole(role, currentEntries)` searches active rows in reverse order for that role with `Number(dailyWage) > 0`, falling back to `localStorage.getItem('sitesaathi_recent_wage_' + role)` or returning `0` if none exists.
+  - `handleAddWorkerRow()` dynamically inherits the role of the previous row in the muster roll and assigns the recent wage, while `<input value={entry.dailyWage ? entry.dailyWage : ''} ... />` ensures zero default `0` is shown.
+- **A short, simple summary:** Removed the redundant Tools PDF button, streamlined Add Tool into an icon-only '+' button, and implemented dynamic role-based recent wage memory that starts blank instead of forcing arbitrary rates.
+
+
 
 
 
