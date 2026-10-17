@@ -27,6 +27,12 @@ import {
   SEED_REMINDERS,
   SEED_CLIENT_PAYMENTS,
 } from './seedData';
+import {
+  encryptBackupJson,
+  decryptBackupJson,
+  isEncryptedBackup,
+  hashCredential,
+} from '../../utils/cryptoUtils';
 
 export class SiteSaathiDatabase extends Dexie {
   account!: EntityTable<ContractorAccount, 'id'>;
@@ -435,12 +441,24 @@ export class SiteSaathiDatabase extends Dexie {
   }
 
   // Full Database Backup Export (JSON)
-  async exportBackupJson(): Promise<string> {
+  // DATA-DEF-006 FIX: Excludes plaintext credentials in ordinary export, or encrypts with AES-GCM when passphrase provided
+  async exportBackupJson(passphrase?: string): Promise<string> {
+    const rawAccounts = await this.account.toArray();
+    const sanitizedAccounts = rawAccounts.map((acc) => {
+      const copy = { ...acc };
+      // Strip credentials from unencrypted backup
+      if (!passphrase || passphrase.trim().length === 0) {
+        delete copy.password;
+        delete copy.pinLock;
+      }
+      return copy;
+    });
+
     const backup = {
       app: 'SiteSaathi',
       version: 2,
       exportedAt: new Date().toISOString(),
-      account: await this.account.toArray(),
+      account: sanitizedAccounts,
       sites: await this.sites.toArray(),
       tools: await this.tools.toArray(),
       labourRecords: await this.labourRecords.toArray(),
@@ -452,14 +470,49 @@ export class SiteSaathiDatabase extends Dexie {
       reminders: await this.reminders.toArray(),
       clientPayments: await this.clientPayments.toArray(),
     };
-    return JSON.stringify(backup, null, 2);
+
+    const plainJson = JSON.stringify(backup, null, 2);
+    if (passphrase && passphrase.trim().length >= 4) {
+      return await encryptBackupJson(plainJson, passphrase.trim());
+    }
+    return plainJson;
   }
 
   // Full Database Backup Import (JSON)
-  async importBackupJson(jsonString: string): Promise<boolean> {
-    const data = JSON.parse(jsonString);
+  // Supports both standard JSON and AES-GCM encrypted backup files with passphrase validation
+  async importBackupJson(jsonString: string, passphrase?: string): Promise<boolean> {
+    let resolvedJson = jsonString;
+
+    try {
+      const parsed = JSON.parse(jsonString);
+      if (isEncryptedBackup(parsed)) {
+        if (!passphrase || passphrase.trim().length === 0) {
+          throw new Error('ENCRYPTED_BACKUP_NEEDS_PASSPHRASE');
+        }
+        resolvedJson = await decryptBackupJson(jsonString, passphrase.trim());
+      }
+    } catch (err: any) {
+      if (err.message === 'ENCRYPTED_BACKUP_NEEDS_PASSPHRASE' || err.message?.includes('passphrase') || err.message?.includes('corrupted')) {
+        throw err;
+      }
+      // If not JSON or not encrypted, let standard parser handle it
+    }
+
+    const data = JSON.parse(resolvedJson);
     if (!data.sites || !data.account) {
       throw new Error('Invalid backup file format');
+    }
+
+    // SEC-DEF-001: Ensure any legacy plaintext credentials in imported data are hashed before saving
+    if (Array.isArray(data.account)) {
+      for (const acc of data.account) {
+        if (acc.password && !acc.password.startsWith('pbkdf2:v1:')) {
+          acc.password = await hashCredential(acc.password);
+        }
+        if (acc.pinLock && !acc.pinLock.startsWith('pbkdf2:v1:')) {
+          acc.pinLock = await hashCredential(acc.pinLock);
+        }
+      }
     }
 
     await this.transaction(

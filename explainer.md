@@ -961,3 +961,71 @@ This document tracks all technologies, libraries, and architectural modules used
   - Synthesized strictly in read-only audit mode without altering any application code, database records, or UI components.
   - Establishes clear trust boundary distinctions between UI-level guards, client-side cryptographic checks, server-enforced authentication, and device-level OS biometrics.
 - **A short, simple summary:** Created `docs/AUTHENTICATION.md` establishing an exhaustive, evidence-based security audit, threat analysis, and non-breaking P0-P3 hardening roadmap for offline-first contractor authentication.
+
+---
+
+## Phase 3 & 4: Cryptographic Security Remediation, Account Isolation, PIN Recovery & Google Drive Foundation
+
+### 1. Technology: Native Web Crypto API PBKDF2 & AES-GCM 256 Engine (`src/utils/cryptoUtils.ts`)
+- **Name of the Technology:** Web Crypto API (`window.crypto.subtle`) Cryptographic Engine
+- **What it does (Role & Purpose):**
+  - **Zero-Dependency Security:** Provides high-grade password hashing, constant-time verification, and authenticated database backup encryption directly in the browser without third-party npm crypto packages.
+  - **Credential Protection (`SEC-DEF-001`):** Derives salted hashes using PBKDF2 with SHA-256 (100,000 iterations) and cryptographically random 16-byte salts (`window.crypto.getRandomValues`). Prevents rainbow table attacks and protects credentials at rest in IndexedDB.
+  - **Encrypted Cloud/Local Exports (`DATA-DEF-006`):** Encrypts complete database JSON exports using authenticated AES-GCM 256-bit encryption with a 12-byte initialization vector (IV) and 128-bit authentication tag, formatted into versioned envelopes (`sitesaathi-encrypted-v1`).
+- **How it works (Under the Hood):**
+  - Operates completely offline within the host browser's native C++ WebAssembly crypto subsystem.
+  - `verifyCredential()` utilizes bitwise XOR constant-time comparison (`diff |= a.charCodeAt(i) ^ b.charCodeAt(i)`) to prevent timing side-channel attacks during PIN validation.
+  - Backward-compatible auto-migration transparently upgrades legacy plaintext credentials to PBKDF2 hashes upon first successful sign-in.
+- **A short, simple summary:** Implemented zero-dependency, native browser cryptography for salted PBKDF2 PIN hashing and authenticated AES-GCM-256 database backup encryption.
+
+---
+
+### 2. Technology: Reactive Multi-Contractor Account Isolation & Query Scoping (`src/App.tsx`, `src/components/sites/SiteDetailsModal.tsx`)
+- **Name of the Technology:** Multi-Tenant Reactive Data Scoping Architecture (`DATA-DEF-005`)
+- **What it does (Role & Purpose):**
+  - **Data Leakage Prevention:** Ensures that on shared mobile devices, each logged-in contractor sees only their own sites, tools, muster rolls, materials, and pending dues.
+  - **Site Ownership Hardening:** In `SiteDetailsModal`, replaced global first-account lookups (`db.account.toCollection().first()`) with verified owner lookups strictly keyed by `currentSite.contractorId`. Prevents leaking one contractor's company name into another contractor's PDF statements.
+  - **Safe Lifecycle Decoupling:** Decoupled global `cleanupOrphanRecords()` from the account-scoped `sites.length === 0` trigger in `App.tsx`, preventing an empty contractor profile from sweeping global database tables.
+- **How it works (Under the Hood):**
+  - Uses reactive Dexie hooks (`useLiveQuery`) dynamically scoped to `activeAccountId`. Child tables (tools, materials, dues, labour) filter records whose `siteId` belongs to the contractor's verified site set.
+- **A short, simple summary:** Eliminated cross-contractor data leakage by strictly scoping reactive database queries and PDF generator company headers to the verified site owner.
+
+---
+
+### 3. Technology: Safe Backup Restore Confirmation & Integrity Gate (`src/components/settings/SettingsModal.tsx`)
+- **Name of the Technology:** Pre-Restore Schema Validation & Merge Confirmation Modal
+- **What it does (Role & Purpose):**
+  - **Accidental Overwrite Protection:** Requires explicit user confirmation before applying unencrypted backups, displaying live record counts (sites, tools, dues, export date) and warning that matching IDs will merge and overwrite existing records.
+  - **Zero-Write Cancellation:** Cancelling the restore dialog clears in-memory state with zero database transactions.
+  - **Encrypted Backup Challenge:** Preserves the passphrase decryption modal (`isDecryptModalOpen`) for `sitesaathi-encrypted-v1` files, verifying integrity via HMAC/AES-GCM before writing records to IndexedDB.
+- **How it works (Under the Hood):**
+  - Validates the JSON schema structure (`sites` and `account` arrays present) before opening database read-write locks.
+  - Applies updates atomically inside a single Dexie read-write transaction across all 11 tables (`db.importBackupJson`).
+- **A short, simple summary:** Added structural validation and an explicit merge-warning confirmation modal before database restore, guaranteeing zero database writes upon cancellation.
+
+---
+
+### 4. Technology: PIN Lock Recovery & Inactivity Auto-Lock Architecture (`src/components/common/AppLockScreen.tsx`, `src/App.tsx`)
+- **Name of the Technology:** App-Lock Recovery Fallback & Session Lifecycle Management
+- **What it does (Role & Purpose):**
+  - **Inactivity Protection:** Automatically engages the lock screen after 15 minutes of inactivity (`INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000`) or tab backgrounding using `document.visibilitychange`.
+  - **Corrupted PIN Self-Healing:** Provides a narrowly scoped recovery fallback if an account's `pinLock` was desynchronized by historical re-hashing bugs. Validates the candidate PIN against the contractor's master `account.password` and automatically repairs `account.pinLock` with a fresh PBKDF2 hash.
+  - **Responsive Navigation:** Added a top "Back to Login" navigation bar and high-contrast bottom "Switch Account / Sign In" button with `overflow-y-auto`, ensuring contractors are never trapped on the lock screen on small displays.
+- **How it works (Under the Hood):**
+  - Retains strict 5-attempt rate limiting with 30-second cooldowns; failed fallbacks count as a single attempt.
+  - "Back to Login" clears only ephemeral session keys (`sessionStorage.sitesaathi_unlocked` and `localStorage.sitesaathi_active_user_id`), preserving 100% of user data and accounts in IndexedDB.
+- **A short, simple summary:** Added 15-minute auto-locking, self-healing PIN recovery via verified master passwords, and accessible "Back to Login" navigation.
+
+---
+
+### 5. Technology: Google Drive REST Service & In-Memory OAuth2 Token Flow (`src/services/googleDriveService.ts`, `src/utils/googleAuth.ts`)
+- **Name of the Technology:** Client-Side Google Drive API v3 Service & GIS Token Client
+- **What it does (Role & Purpose):**
+  - **Decoupled Cloud Backups:** Enables optional, manual encrypted database backups to a visible `SiteSaathi Backups` folder in the contractor's Google Drive without live sync or background uploads.
+  - **Strict Security Gate:** Enforces `drive.file` least-privilege scope. Rejects plaintext database dumps (`validateEncryptedBackupPayload`), requiring AES-GCM ciphertext before transmission.
+  - **Ephemeral OAuth Architecture:** Uses Google Identity Services (GIS) Token Model. Stores access tokens strictly in memory with zero persistence in `localStorage`, `IndexedDB`, or cookies. Never uses client secrets (RFC 8252).
+  - **100% Offline Preserved:** Dynamically loads the GIS script only on explicit user request; zero external network requests are made during normal offline app operation.
+- **How it works (Under the Hood):**
+  - REST client uses browser native `fetch()` with multipart/related payload boundaries (`boundary_sitesaathi_...`) for atomic metadata and file uploads.
+  - All downloaded file payloads are treated as untrusted and validated against the `sitesaathi-encrypted-v1` schema before decryption.
+- **A short, simple summary:** Built a pure TypeScript, zero-dependency Google Drive API v3 client with in-memory OAuth2 tokens and strict plaintext-rejection security gates for cloud backups.

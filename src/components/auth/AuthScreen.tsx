@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { TradeCategory, ContractorAccount } from '../../types';
 import { TRADE_CONFIGS, ALL_TRADE_KEYS } from '../../core/theme/tradeConfigs';
 import { db } from '../../core/db/database';
+import { hashCredential, verifyCredential } from '../../utils/cryptoUtils';
 import {
   HardHat,
   Wrench,
@@ -26,7 +27,6 @@ import {
   Eye,
   EyeOff,
   KeyRound,
-  Lock,
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -66,12 +66,35 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   // Forgot PIN / Password Reset Modal
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const [resetPhone, setResetPhone] = useState('');
+  const [currentPin, setCurrentPin] = useState('');
+  const [showCurrentPin, setShowCurrentPin] = useState(false);
   const [newPin, setNewPin] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
   const [resetSuccess, setResetSuccess] = useState('');
   const [resetError, setResetError] = useState('');
   const [showNewPin, setShowNewPin] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+
+  // Rate Limiting (Defense in Depth)
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (lockoutTimer > 0) {
+      interval = setInterval(() => {
+        setLockoutTimer((prev) => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [lockoutTimer]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,11 +158,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         return;
       }
 
+      // SEC-DEF-001: Hash credentials using PBKDF2 with unique salt
+      const hashedPin = await hashCredential(password.trim());
+
       const newAccount: ContractorAccount = {
         id: `contractor-${Date.now()}`,
         name: name.trim(),
         phone: cleanPhone,
-        password: password.trim(),
+        password: hashedPin,
+        pinLock: hashedPin,
+        isPinLockEnabled: true,
         companyName: companyName.trim() || undefined,
         trade: selectedTrade,
         language,
@@ -166,6 +194,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (lockoutTimer > 0) return;
+
     if (!loginPhone.trim()) {
       setErrorMsg(
         language === 'hi' ? 'कृपया अपना मोबाइल नंबर दर्ज करें' : 'Please enter your phone number'
@@ -179,16 +209,45 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     const matched = allAccounts.find((a) => a.phone.replace(/\D/g, '') === cleanPhone);
 
     if (matched) {
-      if (matched.password) {
-        if (!loginPassword || matched.password !== loginPassword.trim()) {
-          setErrorMsg(
-            language === 'hi'
-              ? 'गलत पिन / पासवर्ड दर्ज किया गया।'
-              : 'Incorrect PIN / password. Please try again.'
-          );
+      if (matched.password || matched.pinLock) {
+        const targetCred = matched.password || matched.pinLock || '';
+        const verifyRes = await verifyCredential(loginPassword.trim(), targetCred);
+
+        if (!verifyRes.isValid) {
+          const nextFailed = failedAttempts + 1;
+          setFailedAttempts(nextFailed);
+          if (nextFailed >= 5) {
+            setLockoutTimer(30);
+            setErrorMsg(
+              language === 'hi'
+                ? '5 बार गलत पिन! सुरक्षा कारणों से 30 सेकंड के लिए प्रतीक्षा करें।'
+                : '5 incorrect attempts! Please wait 30 seconds before retrying.'
+            );
+          } else {
+            setErrorMsg(
+              language === 'hi'
+                ? `गलत पिन / पासवर्ड दर्ज किया गया। (${5 - nextFailed} प्रयास शेष)`
+                : `Incorrect PIN / password. (${5 - nextFailed} attempts remaining)`
+            );
+          }
           return;
         }
+
+        // Successful verification! Reset failed counter
+        setFailedAttempts(0);
+
+        // SEC-DEF-001: Seamless backward-compatible migration for legacy plaintext accounts
+        if (verifyRes.isLegacy) {
+          const upgradedHash = await hashCredential(loginPassword.trim());
+          await db.account.update(matched.id, {
+            password: upgradedHash,
+            pinLock: matched.pinLock ? upgradedHash : upgradedHash,
+          });
+          matched.password = upgradedHash;
+          matched.pinLock = upgradedHash;
+        }
       }
+
       localStorage.setItem('sitesaathi_active_user_id', matched.id);
       setTrade(matched.trade);
       setLanguage(matched.language);
@@ -212,13 +271,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       !['9876543210', '9876543211', '9876543212'].includes(acc.phone)
   );
 
+  // SEC-DEF-002 FIX: Selecting account pre-fills phone and transitions to secure PIN challenge view
   const handleQuickAccountSelect = (acc: ContractorAccount) => {
-    localStorage.setItem('sitesaathi_active_user_id', acc.id);
-    setTrade(acc.trade);
-    setLanguage(acc.language);
-    onAuthenticated(acc, false);
+    setLoginPhone(acc.phone.replace(/\D/g, ''));
+    setLoginPassword('');
+    setErrorMsg('');
+    setView('login');
   };
 
+  // SEC-DEF-003 FIX: Requires verifying current PIN before allowing credentials to change
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetError('');
@@ -230,6 +291,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         language === 'hi'
           ? 'कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें'
           : 'Please enter a valid 10-digit mobile phone number'
+      );
+      return;
+    }
+
+    if (!currentPin.trim()) {
+      setResetError(
+        language === 'hi'
+          ? 'सुरक्षा कारणों से वर्तमान सुरक्षा पिन दर्ज करना अनिवार्य है'
+          : 'Current Security PIN is required to authorize credential update'
       );
       return;
     }
@@ -266,17 +336,37 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         return;
       }
 
-      await db.account.update(account.id, { password: newPin.trim() });
+      // Verify current PIN against account
+      const targetCred = account.password || account.pinLock || '';
+      const verifyRes = await verifyCredential(currentPin.trim(), targetCred);
+      if (!verifyRes.isValid) {
+        setResetError(
+          language === 'hi'
+            ? 'वर्तमान सुरक्षा पिन अमान्य है। ऑफ़लाइन सुरक्षा नीति के अनुसार अनधिकृत रीसेट वर्जित है।'
+            : 'Current PIN is invalid. Offline security policy strictly prohibits unauthorized PIN overwrite.'
+        );
+        setIsResetting(false);
+        return;
+      }
+
+      // Hash new PIN with PBKDF2
+      const hashedNewPin = await hashCredential(newPin.trim());
+      await db.account.update(account.id, {
+        password: hashedNewPin,
+        pinLock: hashedNewPin,
+      });
+
       setResetSuccess(
         language === 'hi'
           ? 'पिन सफलतापूर्वक बदल दिया गया है! अब आप साइन इन कर सकते हैं।'
-          : 'PIN reset successfully! You can now sign in.'
+          : 'PIN updated successfully! You can now sign in.'
       );
       setTimeout(() => {
         setIsForgotModalOpen(false);
         setLoginPhone(clean);
         setLoginPassword(newPin.trim());
         setResetPhone('');
+        setCurrentPin('');
         setNewPin('');
         setConfirmNewPin('');
         setResetSuccess('');
@@ -531,9 +621,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               {/* Sign in Button */}
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-full text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25 active:scale-[0.99] transition-all mt-1"
+                disabled={lockoutTimer > 0}
+                className={`w-full py-3.5 rounded-full text-sm font-bold text-white transition-all mt-1 ${
+                  lockoutTimer > 0
+                    ? 'bg-slate-400 cursor-not-allowed opacity-80'
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25 active:scale-[0.99]'
+                }`}
               >
-                {language === 'hi' ? 'साइन इन करें' : 'Sign in'}
+                {lockoutTimer > 0
+                  ? language === 'hi'
+                    ? `कृपया प्रतीक्षा करें (${lockoutTimer}s)`
+                    : `Please wait (${lockoutTimer}s)`
+                  : language === 'hi'
+                  ? 'साइन इन करें'
+                  : 'Sign in'}
               </button>
 
               {/* Forgot password link */}
@@ -800,8 +901,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             <div className="p-5 pt-4">
               <p className="text-xs text-slate-500 mb-4 leading-relaxed">
                 {language === 'hi'
-                  ? 'अपना पंजीकृत 10 अंकों का मोबाइल नंबर दर्ज करें और नया 4 अंकों का सुरक्षा पिन सेट करें।'
-                  : 'Enter your registered 10-digit mobile number and set a new 4-digit security PIN.'}
+                  ? 'ऑफ़लाइन सुरक्षा नीति: अनधिकृत बदलाव रोकने के लिए अपने मोबाइल नंबर के साथ वर्तमान सुरक्षा पिन दर्ज करें।'
+                  : 'Offline Security Policy: To prevent unauthorized credential changes, enter your mobile number and verify your current PIN.'}
               </p>
 
               {resetError && (
@@ -833,6 +934,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     placeholder=""
                     className="w-full text-xs font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5"
                   />
+                </div>
+
+                {/* Current PIN Field */}
+                <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {language === 'hi' ? 'वर्तमान सुरक्षा पिन (सत्यापन)' : 'Current Security PIN (Required)'}
+                  </span>
+                  <div className="relative flex items-center">
+                    <input
+                      type={showCurrentPin ? 'text' : 'password'}
+                      required
+                      value={currentPin}
+                      onChange={(e) => setCurrentPin(e.target.value)}
+                      placeholder=""
+                      className="w-full text-xs font-semibold text-slate-800 placeholder-slate-300 focus:outline-none bg-transparent pt-0.5 pr-8"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPin((prev) => !prev)}
+                      className="absolute right-0 text-slate-400 hover:text-slate-600 p-1"
+                      aria-label="Toggle current PIN visibility"
+                    >
+                      {showCurrentPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* New PIN */}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useTheme } from '../../core/theme/ThemeContext';
-import { Site, ToolRecord, MaterialRecord, LabourRecord, MachineryRecord, ExpenseDue, ClientPayment } from '../../types';
+import { Site, ToolRecord, MaterialRecord, LabourRecord, MachineryRecord, ExpenseDue, ClientPayment, ContractorAccount } from '../../types';
 import { db } from '../../core/db/database';
 import { toDisplayDate, formatAuditTimestamp } from '../../utils/dateUtils';
 import {
@@ -45,6 +45,7 @@ import { RecordClientPaymentModal } from './RecordClientPaymentModal';
 
 interface SiteDetailsModalProps {
   site: Site | null;
+  account?: ContractorAccount | null;
   onClose: () => void;
   onOpenAddTool: (siteId: string) => void;
   onOpenAddMaterial: (siteId: string) => void;
@@ -67,6 +68,7 @@ interface SiteDetailsModalProps {
 
 export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
   site,
+  account: accountProp,
   onClose,
   onOpenAddTool,
   onOpenAddMaterial,
@@ -92,8 +94,6 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
   const [selectedRecordForDetail, setSelectedRecordForDetail] = useState<LabourRecord | null>(null);
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
 
-  const account = useLiveQuery(() => db.account.toCollection().first());
-
   const siteId = site?.id;
 
   // Single shared source of truth via reactive Dexie live queries
@@ -102,6 +102,19 @@ export const SiteDetailsModal: React.FC<SiteDetailsModalProps> = ({
     [siteId]
   );
   const currentSite = liveSite ?? site;
+  const currentContractorId = currentSite?.contractorId;
+
+  // Task 2: Verified site-owner account lookup by contractorId
+  const siteOwnerAccount = useLiveQuery(
+    () => (currentContractorId ? db.account.get(currentContractorId) : undefined),
+    [currentContractorId]
+  );
+
+  // Prefer already-authenticated account passed via props if it owns the site; otherwise use the verified owner
+  const account =
+    accountProp && accountProp.id === currentContractorId
+      ? accountProp
+      : siteOwnerAccount;
 
   const finance = useLiveQuery(
     () => (siteId ? db.getSiteFinanceSummary(siteId) : null),

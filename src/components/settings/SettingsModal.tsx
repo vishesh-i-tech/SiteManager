@@ -4,6 +4,7 @@ import { ContractorAccount, TradeCategory, ThemeMode, Language } from '../../typ
 import { TRADE_CONFIGS, ALL_TRADE_KEYS } from '../../core/theme/tradeConfigs';
 import { db } from '../../core/db/database';
 import { ConfirmDeleteModal } from '../common/ConfirmDeleteModal';
+import { hashCredential, verifyCredential, isEncryptedBackup } from '../../utils/cryptoUtils';
 import {
   Settings,
   User,
@@ -71,13 +72,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   // Security & App Lock State
   const [isPinLockEnabled, setIsPinLockEnabled] = useState(account?.isPinLockEnabled || false);
-  const [pinCode, setPinCode] = useState(account?.pinLock || '');
+  const [pinCode, setPinCode] = useState('');
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(account?.isBiometricEnabled || false);
   const [isAntiDeleteEnabled, setIsAntiDeleteEnabled] = useState(account?.isAntiDeleteEnabled || false);
   const [securityNotice, setSecurityNotice] = useState('');
 
   // Backup & Restore State
   const [backupStatus, setBackupStatus] = useState<string>('');
+  const [isEncryptExportModalOpen, setIsEncryptExportModalOpen] = useState(false);
+  const [exportPassphrase, setExportPassphrase] = useState('');
+  const [confirmExportPassphrase, setConfirmExportPassphrase] = useState('');
+  const [exportError, setExportError] = useState('');
+  const [pendingEncryptedContent, setPendingEncryptedContent] = useState<string | null>(null);
+  const [restorePassphrase, setRestorePassphrase] = useState('');
+  const [isDecryptModalOpen, setIsDecryptModalOpen] = useState(false);
+  const [decryptError, setDecryptError] = useState('');
+  const [isConfirmRestoreOpen, setIsConfirmRestoreOpen] = useState(false);
+  const [pendingCleanContent, setPendingCleanContent] = useState<string | null>(null);
+  const [pendingRestoreMeta, setPendingRestoreMeta] = useState<{
+    sitesCount: number;
+    toolsCount: number;
+    duesCount: number;
+    exportedAt?: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clear Confirmation
@@ -145,15 +162,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleTogglePinLock = async () => {
     if (!account?.id) return;
     const nextState = !isPinLockEnabled;
-    if (nextState && !pinCode) {
+    if (nextState && !pinCode && !account.pinLock) {
       setSecurityNotice(language === 'hi' ? 'कृपया पहले 4 अंकों का पिन दर्ज करें' : 'Please set a 4-digit PIN first');
       return;
     }
     setIsPinLockEnabled(nextState);
+    const pinToSave = pinCode && pinCode.length >= 4 ? await hashCredential(pinCode) : account.pinLock;
     await db.account.update(account.id, {
       isPinLockEnabled: nextState,
-      pinLock: pinCode,
+      pinLock: pinToSave,
     });
+    if (pinCode) {
+      setPinCode('');
+    }
     setSecurityNotice(
       nextState
         ? language === 'hi' ? 'पिन लॉक सक्रिय हो गया' : 'PIN Lock enabled'
@@ -164,15 +185,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleSavePin = async () => {
     if (!account?.id) return;
-    if (pinCode.length < 4) {
-      setSecurityNotice(language === 'hi' ? 'पिन कम से कम 4 अंकों का होना चाहिए' : 'PIN must be at least 4 digits');
+    const cleanPin = pinCode.trim().replace(/\D/g, '');
+    if (cleanPin.length < 4 || cleanPin.length > 6) {
+      setSecurityNotice(language === 'hi' ? 'पिन 4 से 6 अंकों का होना चाहिए' : 'PIN must be between 4 and 6 digits');
       return;
     }
+    const hashedPin = await hashCredential(cleanPin);
     await db.account.update(account.id, {
-      pinLock: pinCode,
+      pinLock: hashedPin,
       isPinLockEnabled: true,
     });
     setIsPinLockEnabled(true);
+    setPinCode('');
     setSecurityNotice(language === 'hi' ? 'सुरक्षा पिन सुरक्षित रूप से सेव हुआ' : 'Security PIN saved successfully');
     setTimeout(() => setSecurityNotice(''), 2500);
   };
@@ -195,8 +219,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
     setSecurityNotice(
       nextState
-        ? language === 'hi' ? 'फिंगरप्रिंट / फेस लॉक सक्रिय किया गया' : 'Biometric fingerprint lock activated'
-        : language === 'hi' ? 'बायोमेट्रिक लॉक बंद किया गया' : 'Biometric lock deactivated'
+        ? language === 'hi' ? 'बायोमेट्रिक स्विच सक्रिय (पिन बैकअप सुरक्षित)' : 'Biometric toggle activated (PIN fallback active)'
+        : language === 'hi' ? 'बायोमेट्रिक लॉक बंद किया गया' : 'Biometric toggle deactivated'
     );
     setTimeout(() => setSecurityNotice(''), 2500);
   };
@@ -220,29 +244,81 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setTimeout(() => setSecurityNotice(''), 3000);
   };
 
-  const handleExportBackup = async () => {
+  const executeBackupDownload = async (passphrase?: string) => {
     try {
       setBackupStatus(language === 'hi' ? 'बैकअप तैयार हो रहा है...' : 'Generating backup file...');
-      const json = await db.exportBackupJson();
+      const json = await db.exportBackupJson(passphrase);
+      const isEnc = !!passphrase;
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       const dateStr = new Date().toISOString().split('T')[0];
       a.href = url;
-      a.download = `SiteSaathi_Backup_${dateStr}.json`;
+      a.download = isEnc ? `SiteSaathi_EncryptedBackup_${dateStr}.json` : `SiteSaathi_Backup_${dateStr}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       setBackupStatus(
-        language === 'hi'
-          ? '✓ बैकअप डाउनलोड हो गया! फोन बदलते समय यह फाइल काम आएगी।'
-          : '✓ Backup downloaded! Keep this file to restore on any new phone.'
+        isEnc
+          ? (language === 'hi' ? '✓ एन्क्रिप्टेड बैकअप डाउनलोड हो गया!' : '✓ Encrypted backup downloaded securely!')
+          : (language === 'hi' ? '✓ सुरक्षित बैकअप डाउनलोड हो गया (क्रेडेंशियल सुरक्षित)!' : '✓ Clean backup downloaded (credentials stripped)!')
       );
+      setIsEncryptExportModalOpen(false);
+      setExportPassphrase('');
+      setConfirmExportPassphrase('');
+      setExportError('');
       setTimeout(() => setBackupStatus(''), 4500);
     } catch (err) {
       console.error('Backup export failed:', err);
       setBackupStatus(language === 'hi' ? 'बैकअप डाउनलोड करने में त्रुटि' : 'Failed to export backup');
+    }
+  };
+
+  const handleExportBackup = () => {
+    setExportPassphrase('');
+    setConfirmExportPassphrase('');
+    setExportError('');
+    setIsEncryptExportModalOpen(true);
+  };
+
+  const handleDownloadCleanBackup = async () => {
+    setIsEncryptExportModalOpen(false);
+    await executeBackupDownload();
+  };
+
+  const handleDownloadEncryptedBackup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!exportPassphrase || exportPassphrase.length < 4) {
+      setExportError(
+        language === 'hi'
+          ? 'पासवर्ड कम से कम 4 अक्षरों का होना चाहिए'
+          : 'Passphrase must be at least 4 characters'
+      );
+      return;
+    }
+    if (exportPassphrase !== confirmExportPassphrase) {
+      setExportError(
+        language === 'hi'
+          ? 'दोनों पासवर्ड मेल नहीं खा रहे हैं'
+          : 'Passphrases do not match. Please re-enter.'
+      );
+      return;
+    }
+    setExportError('');
+    try {
+      const pass = exportPassphrase.trim();
+      setExportPassphrase('');
+      setConfirmExportPassphrase('');
+      setIsEncryptExportModalOpen(false);
+      await executeBackupDownload(pass);
+    } catch (err) {
+      console.error('Encrypted backup export failed:', err);
+      setExportError(
+        language === 'hi'
+          ? 'एन्क्रिप्टेड बैकअप बनाने में त्रुटि हुई'
+          : 'Failed to generate encrypted backup'
+      );
     }
   };
 
@@ -254,22 +330,107 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     reader.onload = async (event) => {
       try {
         const content = event.target?.result as string;
-        setBackupStatus(language === 'hi' ? 'डेटा रीस्टोर किया जा रहा है...' : 'Restoring database...');
-        await db.importBackupJson(content);
-        setBackupStatus(language === 'hi' ? '✓ डेटा सफलतापूर्वक रीस्टोर हो गया!' : '✓ Database restored successfully!');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1200);
+        let parsed: any;
+        try {
+          parsed = JSON.parse(content);
+        } catch {
+          setBackupStatus(language === 'hi' ? 'अमान्य JSON फाइल प्रारूप' : 'Invalid JSON file format');
+          return;
+        }
+
+        // 1. Detect AES-GCM Encrypted Backup format
+        if (isEncryptedBackup(parsed)) {
+          setPendingEncryptedContent(content);
+          setRestorePassphrase('');
+          setDecryptError('');
+          setIsDecryptModalOpen(true);
+          return;
+        }
+
+        // 2. Validate unencrypted backup schema before applying
+        if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.sites) || !Array.isArray(parsed.account)) {
+          setBackupStatus(
+            language === 'hi'
+              ? 'अमान्य बैकअप फाइल संरचना (साइट्स या खाता डेटा अनुपलब्ध)'
+              : 'Invalid backup format (sites or accounts array missing)'
+          );
+          return;
+        }
+
+        // 3. Stash pending content and require explicit user confirmation before applying
+        setPendingCleanContent(content);
+        setPendingRestoreMeta({
+          sitesCount: parsed.sites.length,
+          toolsCount: Array.isArray(parsed.tools) ? parsed.tools.length : 0,
+          duesCount: Array.isArray(parsed.dues) ? parsed.dues.length : 0,
+          exportedAt: parsed.exportedAt || undefined,
+        });
+        setIsConfirmRestoreOpen(true);
       } catch (err) {
         console.error('Backup import error:', err);
-        setBackupStatus(language === 'hi' ? 'अमान्य बैकअप फाइल' : 'Invalid backup JSON file');
+        setBackupStatus(language === 'hi' ? 'बैकअप फाइल पढ़ने में त्रुटि' : 'Failed to read backup JSON file');
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
     };
     reader.readAsText(file);
   };
 
+  const handleCancelRestore = () => {
+    setIsConfirmRestoreOpen(false);
+    setPendingCleanContent(null);
+    setPendingRestoreMeta(null);
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!pendingCleanContent) return;
+    setIsConfirmRestoreOpen(false);
+    try {
+      setBackupStatus(language === 'hi' ? 'डेटा रीस्टोर किया जा रहा है...' : 'Restoring database...');
+      await db.importBackupJson(pendingCleanContent);
+      setPendingCleanContent(null);
+      setPendingRestoreMeta(null);
+      setBackupStatus(language === 'hi' ? '✓ डेटा सफलतापूर्वक रीस्टोर हो गया!' : '✓ Database restored successfully!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+    } catch (err) {
+      console.error('Restore error:', err);
+      setBackupStatus(language === 'hi' ? 'डेटा रीस्टोर करने में त्रुटि' : 'Failed to restore database');
+      setPendingCleanContent(null);
+      setPendingRestoreMeta(null);
+    }
+  };
+
+  const handleConfirmDecryptAndRestore = async () => {
+    if (!pendingEncryptedContent || !restorePassphrase.trim()) {
+      setDecryptError(language === 'hi' ? 'कृपया पासवर्ड दर्ज करें' : 'Please enter the decryption password');
+      return;
+    }
+    setDecryptError('');
+    try {
+      setBackupStatus(language === 'hi' ? 'डेटा डिक्रिप्ट व रीस्टोर हो रहा है...' : 'Decrypting and restoring backup...');
+      await db.importBackupJson(pendingEncryptedContent, restorePassphrase.trim());
+      setIsDecryptModalOpen(false);
+      setPendingEncryptedContent(null);
+      setRestorePassphrase('');
+      setBackupStatus(language === 'hi' ? '✓ एन्क्रिप्टेड डेटा सफलतापूर्वक रीस्टोर हो गया!' : '✓ Encrypted database restored successfully!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+    } catch (err: any) {
+      console.error('Decryption failed:', err);
+      setDecryptError(
+        language === 'hi'
+          ? 'गलत पासवर्ड या दूषित बैकअप फाइल।'
+          : 'Incorrect password or corrupted backup file.'
+      );
+      setBackupStatus('');
+    }
+  };
+
   const handleRequestClearData = () => {
-    if (isAntiDeleteEnabled || (isPinLockEnabled && pinCode)) {
+    if (isAntiDeleteEnabled || (isPinLockEnabled && account?.pinLock)) {
       setPinPromptOpen(true);
       setEnteredPin('');
       setPinError('');
@@ -278,8 +439,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
-  const handleVerifyPinForClear = () => {
-    if (enteredPin === pinCode) {
+  // SEC-DEF-001 FIX: Constant-time PBKDF2 PIN verification for anti-delete gate
+  const handleVerifyPinForClear = async () => {
+    const targetCred = account?.pinLock || account?.password || '';
+    const verifyRes = await verifyCredential(enteredPin, targetCred);
+    if (verifyRes.isValid) {
       setPinPromptOpen(false);
       setIsConfirmClearOpen(true);
     } else {
@@ -607,7 +771,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       maxLength={6}
                       value={pinCode}
                       onChange={(e) => setPinCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="4-digit PIN (e.g. 1234)"
+                      placeholder={
+                        account?.pinLock
+                          ? (language === 'hi' ? 'नया पिन बदलें (4-6 अंक)' : 'Change PIN (4-6 digits)')
+                          : (language === 'hi' ? '4 अंकों का पिन (उदा. 1234)' : '4-digit PIN (e.g. 1234)')
+                      }
                       className="flex-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600"
                     />
                     <button
@@ -851,6 +1019,226 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={() => setPinPromptOpen(false)}
+                className="py-2 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+              >
+                {language === 'hi' ? 'रद्द' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Passphrase / Option Modal for Encrypted vs. Clean Backup */}
+      {isEncryptExportModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+            onClick={() => {
+              setIsEncryptExportModalOpen(false);
+              setExportPassphrase('');
+              setConfirmExportPassphrase('');
+              setExportError('');
+            }}
+          />
+          <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                <Download className="w-5 h-5" />
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                  {language === 'hi' ? 'डेटा बैकअप विकल्प' : 'Backup Export Options'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEncryptExportModalOpen(false);
+                  setExportPassphrase('');
+                  setConfirmExportPassphrase('');
+                  setExportError('');
+                }}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {exportError && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-semibold">{exportError}</p>
+            )}
+
+            {/* Option 1: Encrypted Backup */}
+            <form onSubmit={handleDownloadEncryptedBackup} className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  {language === 'hi' ? 'एन्क्रिप्टेड बैकअप (क्रेडेंशियल सहित)' : 'Encrypted Backup (Full Restore)'}
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
+                  AES-256
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                {language === 'hi'
+                  ? 'नए फोन में पासवर्ड व पिन सहित पूरा डेटा रीस्टोर करने हेतु। पासवर्ड दर्ज करें:'
+                  : 'Preserves account credentials and PIN for full restore on a new device. Enter passphrase:'}
+              </p>
+              <input
+                type="password"
+                value={exportPassphrase}
+                onChange={(e) => setExportPassphrase(e.target.value)}
+                placeholder={language === 'hi' ? 'पासवर्ड (कम से कम 4 अक्षर)' : 'Passphrase (min 4 chars)'}
+                className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-600"
+              />
+              <input
+                type="password"
+                value={confirmExportPassphrase}
+                onChange={(e) => setConfirmExportPassphrase(e.target.value)}
+                placeholder={language === 'hi' ? 'पासवर्ड पुनः दर्ज करें' : 'Confirm passphrase'}
+                className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-600"
+              />
+              <button
+                type="submit"
+                className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>{language === 'hi' ? 'एन्क्रिप्टेड बैकअप डाउनलोड करें' : 'Export Encrypted Backup'}</span>
+              </button>
+            </form>
+
+            {/* Option 2: Clean Backup */}
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <Download className="w-4 h-4 text-slate-500" />
+                  {language === 'hi' ? 'स्वच्छ बैकअप (बिना क्रेडेंशियल)' : 'Clean Backup (Credentials Stripped)'}
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                  Sharing
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                {language === 'hi'
+                  ? 'सुरक्षा कारणों से इस बैकअप से पासवर्ड व पिन हटा दिए जाते हैं। नए फोन में रीस्टोर करने पर क्रेडेंशियल उपलब्ध नहीं होंगे।'
+                  : 'Strips passwords and PINs for safe sharing. Note: Does not preserve credentials needed for direct account transfer.'}
+              </p>
+              <button
+                type="button"
+                onClick={handleDownloadCleanBackup}
+                className="w-full py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500" />
+                <span>{language === 'hi' ? 'स्वच्छ बैकअप डाउनलोड करें' : 'Export Clean Backup'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Decrypt Passphrase Modal for Encrypted Backup Restore */}
+      {isDecryptModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsDecryptModalOpen(false)} />
+          <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+              <Lock className="w-5 h-5" />
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                {language === 'hi' ? 'एन्क्रिप्टेड बैकअप पासवर्ड' : 'Encrypted Backup Password'}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              {language === 'hi'
+                ? 'यह बैकअप सुरक्षित रूप से एन्क्रिप्टेड है। कृपया रीस्टोर करने के लिए पासवर्ड दर्ज करें:'
+                : 'This backup is password-protected. Enter the passphrase used during export to restore:'}
+            </p>
+            {decryptError && (
+              <p className="text-xs text-red-600 font-semibold">{decryptError}</p>
+            )}
+            <input
+              type="password"
+              autoFocus
+              value={restorePassphrase}
+              onChange={(e) => setRestorePassphrase(e.target.value)}
+              placeholder="••••••••"
+              className="w-full px-3 py-2 text-center font-mono font-bold text-base rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleConfirmDecryptAndRestore}
+                className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+              >
+                {language === 'hi' ? 'डिक्रिप्ट और रीस्टोर' : 'Decrypt & Restore'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDecryptModalOpen(false);
+                  setPendingEncryptedContent(null);
+                  setRestorePassphrase('');
+                }}
+                className="py-2 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+              >
+                {language === 'hi' ? 'रद्द' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for Unencrypted Backup Restore */}
+      {isConfirmRestoreOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={handleCancelRestore} />
+          <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <Upload className="w-5 h-5" />
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                {language === 'hi' ? 'डेटा रीस्टोर की पुष्टि करें' : 'Confirm Database Restore'}
+              </h3>
+            </div>
+            
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              {language === 'hi'
+                ? 'यह बैकअप आपके वर्तमान डेटाबेस में मर्ज होगा। समान आईडी वाले रिकॉर्ड ओवरराइट हो जाएंगे, जबकि अन्य रिकॉर्ड सुरक्षित रहेंगे।'
+                : 'This backup will merge into your database. Existing records with identical IDs will be overwritten, while unaffected records remain preserved.'}
+            </p>
+
+            {pendingRestoreMeta && (
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1 text-xs">
+                <div className="flex justify-between text-slate-500">
+                  <span>{language === 'hi' ? 'साइट्स संख्या:' : 'Sites in Backup:'}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{pendingRestoreMeta.sitesCount}</span>
+                </div>
+                <div className="flex justify-between text-slate-500">
+                  <span>{language === 'hi' ? 'टूल्स रिकॉर्ड्स:' : 'Tools in Backup:'}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{pendingRestoreMeta.toolsCount}</span>
+                </div>
+                <div className="flex justify-between text-slate-500">
+                  <span>{language === 'hi' ? 'बकाया (Dues):' : 'Dues in Backup:'}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{pendingRestoreMeta.duesCount}</span>
+                </div>
+                {pendingRestoreMeta.exportedAt && (
+                  <div className="flex justify-between text-slate-500 pt-1 border-t border-slate-200 dark:border-slate-700 text-[10px]">
+                    <span>{language === 'hi' ? 'एक्सपोर्ट दिनांक:' : 'Exported Date:'}</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300">
+                      {new Date(pendingRestoreMeta.exportedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleConfirmRestore}
+                className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors"
+              >
+                {language === 'hi' ? 'हाँ, रीस्टोर करें' : 'Confirm & Restore'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelRestore}
                 className="py-2 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
               >
                 {language === 'hi' ? 'रद्द' : 'Cancel'}

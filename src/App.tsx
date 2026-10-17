@@ -40,7 +40,6 @@ import { QuickAddModal } from './components/common/QuickAddModal';
 import { RemindersModal } from './components/common/RemindersModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { AppLockScreen } from './components/common/AppLockScreen';
-import { AuthModal } from './components/auth/AuthModal';
 import { AuthScreen } from './components/auth/AuthScreen';
 import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { ConfirmDeleteModal } from './components/common/ConfirmDeleteModal';
@@ -66,7 +65,6 @@ export const App: React.FC = () => {
   const [isAppLocked, setIsAppLocked] = useState(false);
 
   // Modal open states
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isOcrModalOpen, setIsOcrModalOpen] = useState(false);
@@ -114,16 +112,122 @@ export const App: React.FC = () => {
   };
 
   // Reactive IndexedDB queries via Dexie hooks
-  const sites = useLiveQuery(() => db.sites.toArray(), []) || [];
-  const tools = useLiveQuery(() => db.tools.toArray(), []) || [];
-  const labourRecords = useLiveQuery(() => db.labourRecords.toArray(), []) || [];
-  const materials = useLiveQuery(() => db.materials.toArray(), []) || [];
-  const machinery = useLiveQuery(() => db.machinery.toArray(), []) || [];
-  const dues = useLiveQuery(() => db.dues.toArray(), []) || [];
-  const vendors = useLiveQuery(() => db.vendors.toArray(), []) || [];
-  const reminders = useLiveQuery(() => db.reminders.toArray(), []) || [];
   const accounts = useLiveQuery(() => db.account.toArray(), []) || [];
   const currentAccount = accounts.find((a) => a.id === activeAccountId) || null;
+
+  // DATA-DEF-005 FIX: Scope reactive queries to the active contractor account
+  const sites = useLiveQuery(
+    async () => {
+      if (!activeAccountId) return [];
+      const allSites = await db.sites.toArray();
+      // Supports both active contractor ID and legacy sites if single account exists
+      return allSites.filter(
+        (s) => s.contractorId === activeAccountId || (!s.contractorId && accounts.length <= 1)
+      );
+    },
+    [activeAccountId, accounts.length]
+  ) || [];
+
+  const tools = useLiveQuery(
+    async () => {
+      if (!activeAccountId) return [];
+      const allSites = await db.sites.toArray();
+      const userSiteIds = new Set(
+        allSites
+          .filter((s) => s.contractorId === activeAccountId || (!s.contractorId && accounts.length <= 1))
+          .map((s) => s.id)
+      );
+      const allTools = await db.tools.toArray();
+      return allTools.filter((t) => userSiteIds.has(t.siteId));
+    },
+    [activeAccountId, accounts.length]
+  ) || [];
+
+  const labourRecords = useLiveQuery(
+    async () => {
+      if (!activeAccountId) return [];
+      const allSites = await db.sites.toArray();
+      const userSiteIds = new Set(
+        allSites
+          .filter((s) => s.contractorId === activeAccountId || (!s.contractorId && accounts.length <= 1))
+          .map((s) => s.id)
+      );
+      const allLabour = await db.labourRecords.toArray();
+      return allLabour.filter((lr) => userSiteIds.has(lr.siteId));
+    },
+    [activeAccountId, accounts.length]
+  ) || [];
+
+  const materials = useLiveQuery(
+    async () => {
+      if (!activeAccountId) return [];
+      const allSites = await db.sites.toArray();
+      const userSiteIds = new Set(
+        allSites
+          .filter((s) => s.contractorId === activeAccountId || (!s.contractorId && accounts.length <= 1))
+          .map((s) => s.id)
+      );
+      const allMats = await db.materials.toArray();
+      return allMats.filter((m) => userSiteIds.has(m.siteId));
+    },
+    [activeAccountId, accounts.length]
+  ) || [];
+
+  const machinery = useLiveQuery(
+    async () => {
+      if (!activeAccountId) return [];
+      const allSites = await db.sites.toArray();
+      const userSiteIds = new Set(
+        allSites
+          .filter((s) => s.contractorId === activeAccountId || (!s.contractorId && accounts.length <= 1))
+          .map((s) => s.id)
+      );
+      const allMach = await db.machinery.toArray();
+      return allMach.filter((m) => userSiteIds.has(m.siteId));
+    },
+    [activeAccountId, accounts.length]
+  ) || [];
+
+  const dues = useLiveQuery(
+    async () => {
+      if (!activeAccountId) return [];
+      const allSites = await db.sites.toArray();
+      const userSiteIds = new Set(
+        allSites
+          .filter((s) => s.contractorId === activeAccountId || (!s.contractorId && accounts.length <= 1))
+          .map((s) => s.id)
+      );
+      const allDues = await db.dues.toArray();
+      return allDues.filter((d) => userSiteIds.has(d.siteId));
+    },
+    [activeAccountId, accounts.length]
+  ) || [];
+
+  const vendors = useLiveQuery(
+    async () => {
+      if (!activeAccountId) return [];
+      const allVendors = await db.vendors.toArray();
+      return allVendors.filter(
+        (v) => v.contractorId === activeAccountId || (!v.contractorId && accounts.length <= 1)
+      );
+    },
+    [activeAccountId, accounts.length]
+  ) || [];
+
+  const reminders = useLiveQuery(
+    async () => {
+      if (!activeAccountId) return [];
+      const allSites = await db.sites.toArray();
+      const userSiteIds = new Set(
+        allSites
+          .filter((s) => s.contractorId === activeAccountId || (!s.contractorId && accounts.length <= 1))
+          .map((s) => s.id)
+      );
+      const allReminders = await db.reminders.toArray();
+      return allReminders.filter((r) => userSiteIds.has(r.siteId));
+    },
+    [activeAccountId, accounts.length]
+  ) || [];
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const newToast: ToastMessage = {
@@ -163,14 +267,13 @@ export const App: React.FC = () => {
           setActiveAccountId(acc.id);
           setTrade(acc.trade);
           setLanguage(acc.language);
+          const smartIns = await db.generateSmartInsights(acc.id);
+          setInsights(smartIns);
         }
       } else {
         setActiveAccountId(null);
         localStorage.removeItem('sitesaathi_active_user_id');
       }
-
-      const smartIns = await db.generateSmartInsights();
-      setInsights(smartIns);
     };
 
     checkAuth();
@@ -183,15 +286,53 @@ export const App: React.FC = () => {
     }
   }, [currentAccount?.id, currentAccount?.isPinLockEnabled, currentAccount?.pinLock]);
 
-  // Clean orphan/ghost data when no sites exist
+  // Defense in Depth: 15-minute Inactivity Auto-Lock
   useEffect(() => {
-    if (sites.length === 0) {
-      db.cleanupOrphanRecords();
+    if (!currentAccount?.isPinLockEnabled || !currentAccount?.pinLock || isAppLocked) {
+      return;
     }
-  }, [sites.length]);
+
+    const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+    let inactivityTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastActiveTime = Date.now();
+
+    const triggerInactivityLock = () => {
+      sessionStorage.removeItem('sitesaathi_unlocked');
+      setIsAppLocked(true);
+    };
+
+    const resetInactivityTimer = () => {
+      lastActiveTime = Date.now();
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(triggerInactivityLock, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const elapsed = Date.now() - lastActiveTime;
+        if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+          triggerInactivityLock();
+        } else {
+          resetInactivityTimer();
+        }
+      }
+    };
+
+    const activityEvents = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
+    activityEvents.forEach((evt) => window.addEventListener(evt, resetInactivityTimer, { passive: true }));
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    resetInactivityTimer();
+
+    return () => {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      activityEvents.forEach((evt) => window.removeEventListener(evt, resetInactivityTimer));
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentAccount?.id, currentAccount?.isPinLockEnabled, currentAccount?.pinLock, isAppLocked]);
 
   const refreshInsights = async () => {
-    const smartIns = await db.generateSmartInsights();
+    const smartIns = await db.generateSmartInsights(activeAccountId || undefined);
     setInsights(smartIns);
   };
 
@@ -202,7 +343,6 @@ export const App: React.FC = () => {
     setIsAppLocked(false);
     setTrade(account.trade);
     setLanguage(account.language);
-    setIsAuthModalOpen(false);
 
     showToast(`Welcome ${account.name}!`);
     if (isNewAccount) {
@@ -217,6 +357,10 @@ export const App: React.FC = () => {
     setActiveAccountId(null);
     setIsAppLocked(false);
     setIsSettingsModalOpen(false);
+    setSelectedSite(null);
+    setTargetSiteIdForModal(undefined);
+    setGlobalSearchQuery('');
+    setInsights([]);
     showToast('Logged out successfully', 'info');
   };
 
@@ -450,13 +594,6 @@ export const App: React.FC = () => {
         onOpenQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
 
-      {/* Authentication Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onAuthenticated={handleAuthenticated}
-        existingAccounts={accounts}
-      />
-
       {/* Interactive 5-Step Tutorial */}
       <OnboardingModal
         isOpen={isOnboardingModalOpen}
@@ -667,6 +804,7 @@ export const App: React.FC = () => {
       {/* Site Drilldown Modal */}
       <SiteDetailsModal
         site={selectedSite}
+        account={currentAccount}
         onClose={() => setSelectedSite(null)}
         onOpenAddTool={(sId) => {
           setTargetSiteIdForModal(sId);
