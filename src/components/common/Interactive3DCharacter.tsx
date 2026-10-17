@@ -193,37 +193,17 @@ export const Interactive3DCharacter: React.FC<Interactive3DCharacterProps> = ({
             }}
           />
 
-          {/* 360° watermark badge in card corner */}
-          <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-slate-900/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 tracking-wider shadow-xs pointer-events-none">
-            <Move3d className="w-2.5 h-2.5 text-orange-400" />
-            <span>3D</span>
-          </div>
         </div>
 
         {/* Dynamic 3D Ground Shadow beneath character */}
         <div
-          className="absolute -bottom-2.5 w-3/4 h-3 rounded-full bg-slate-900/20 dark:bg-black/40 blur-md pointer-events-none"
+          className="absolute -bottom-2 w-3/4 h-2.5 rounded-full bg-slate-900/20 dark:bg-black/40 blur-md pointer-events-none"
           style={{
             transform: `translateX(${(-rotY * 0.3).toFixed(1)}px) scaleX(${Math.max(0.5, Math.abs(Math.cos((rotY * Math.PI) / 180)))})`,
             transition: isDragging ? 'none' : 'transform 0.2s ease-out',
           }}
         />
       </div>
-
-      {/* Floating Touch / Spin Prompt */}
-      {showHint && (
-        <div className="flex items-center gap-1.5 mt-2">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/80 dark:bg-slate-800/80 hover:bg-white text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs backdrop-blur-xs transition-all cursor-pointer active:scale-95"
-            title="Reset character rotation to front"
-          >
-            <RotateCw className="w-2.5 h-2.5 text-orange-500" />
-            <span>{Math.round(((rotY % 360) + 360) % 360)}° • Spin 3D</span>
-          </button>
-        </div>
-      )}
 
     </div>
   );

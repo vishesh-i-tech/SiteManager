@@ -318,6 +318,12 @@ This document tracks all technologies, libraries, and architectural modules used
     - **Left Positioned 3D Character:** Relocated the 3D builder mascot to the left side of the banner.
     - **Touch & Drag 3D Rotation Engine:** Built [Interactive3DCharacter.tsx](file:///d:/TECH/site%20sathi/src/components/common/Interactive3DCharacter.tsx) featuring 360-degree pointer drag/touch rotation, multi-axis tilt, realistic physics inertia coasting, dynamic specular reflection lighting, and ground shadow skewing.
 
+- **Phase 2.15 (Purge of Fluff Text & Unified Hero Action Bar):**
+  - Completely purged all unusual/promotional text from the hero banner:
+    - **Zero Unusual Text:** Removed the *"100% Offline Active"* badge, *"SiteSaathi 3D Companion"* title, and *"Touch or drag the character to spin in 3D"* hint from [ExploreBanner.tsx](file:///d:/TECH/site%20sathi/src/components/discovery/ExploreBanner.tsx) and [Interactive3DCharacter.tsx](file:///d:/TECH/site%20sathi/src/components/common/Interactive3DCharacter.tsx).
+    - **Integrated Action Controls:** Integrated the 3 primary contractor shortcut buttons (*"Voice Log"*, *"Scan Diary"*, *"New Site"*) directly beside the 3D rotating character.
+    - **Eliminated Duplicate Stacking:** Removed the redundant secondary 3-button row in [DashboardOverview.tsx](file:///d:/TECH/site%20sathi/src/components/dashboard/DashboardOverview.tsx), producing a compact, highly functional header.
+
 ---
 
 ### 18. Streamlined Contractor Payment & Udhaar Ledger Engine

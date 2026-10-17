@@ -100,41 +100,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   return (
     <div className="space-y-4 animate-fade-in pb-16">
       
-      {/* 1. Interactive 3D Mascot Companion Card */}
-      <ExploreBanner />
-
-      {/* 2. Three Primary Site Actions */}
-      <div className="grid grid-cols-3 gap-2">
-        <button
-          onClick={onOpenVoiceModal}
-          className="py-2.5 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.03)] text-slate-800 dark:text-slate-200 hover:bg-slate-50 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
-            <Mic className="w-4 h-4" />
-          </div>
-          <span className="text-xs font-bold">{language === 'hi' ? 'बोलकर भरें' : 'Voice Log'}</span>
-        </button>
-
-        <button
-          onClick={onOpenOcrModal}
-          className="py-2.5 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.03)] text-slate-800 dark:text-slate-200 hover:bg-slate-50 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center">
-            <Camera className="w-4 h-4" />
-          </div>
-          <span className="text-xs font-bold">{language === 'hi' ? 'डायरी स्कैन' : 'Scan Diary'}</span>
-        </button>
-
-        <button
-          onClick={onOpenAddSite}
-          className="py-2.5 px-1 rounded-2xl bg-gradient-to-r from-[#1877F2] to-[#0084FF] text-white shadow-[0_4px_14px_rgba(24,119,242,0.35)] flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center">
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-          </div>
-          <span className="text-xs font-bold">{language === 'hi' ? 'नई साइट' : 'New Site'}</span>
-        </button>
-      </div>
+      {/* 1. Interactive 3D Mascot & Primary Site Actions */}
+      <ExploreBanner
+        onOpenVoiceModal={onOpenVoiceModal}
+        onOpenOcrModal={onOpenOcrModal}
+        onOpenAddSite={onOpenAddSite}
+      />
 
 
       {/* 4. Real Site Crew Roster (Today's Workers from Database) */}
