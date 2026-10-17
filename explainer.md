@@ -737,6 +737,25 @@ This document tracks all technologies, libraries, and architectural modules used
     - When `sites.length === 0`, `activeTools.length === 0` and `overdueTools.length === 0`, reliably displaying **"0 On Track / 0 Total Tools"**.
 - **Small Summary:** Eliminated leftover ghost demo tools and ensured all dashboard KPI widgets calculate strictly from existing sites, showing 0 across all cards on a fresh slate.
 
+---
+
+## Phase 2.35: Reference-Grade Onboarding & Auth Flow Redesign
+
+### 1. Technology: Minimalist 3-Step Onboarding, Sign In & Sign Up System (`AuthScreen.tsx`, `auth_hero.jpg`)
+- **Role & Purpose:**
+  - Redesigned the entire landing, login, and registration experience to match the modern, minimalist mobile reference aesthetic provided by the user.
+  - Implemented a cohesive 3-view journey:
+    1. **Onboarding Splash:** Custom 2D contractor hero illustration, bold headline, and interactive split-pill *"Get Started →"* action button.
+    2. **Sign In ("Welcome Back"):** Minimalist character thumbnail, floating-label pill inputs, password recovery, vivid blue rounded button, and 1-tap contractor profile login.
+    3. **Sign Up ("Register"):** Clean pill inputs for contractor profile (Name, Phone, Trade Category dropdown, Firm Name, PIN), Google authentication, and instant account creation.
+- **How it Works (Under the Hood):**
+  - **Floating-Label Pill Containers:** Uses rounded-2xl inputs with uppercase tracking labels and subtle borders (`border-slate-200 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100`).
+  - **Decorative Micro-Doodles:** Subtle background vector doodles (stars, compass markers, geometric drafting accents) matching the reference design.
+  - **Asset Integration:** High-resolution 2D vector hero illustration (`/images/auth_hero.jpg`) depicting a civil engineer with blueprints, laptop, and drafting tools.
+  - **Database & State Synchronization:** Fully connected to Dexie IndexedDB (`db.account`), preserving multi-trade switching, password PIN encryption, and bilingual English/Hindi localization.
+- **Small Summary:** Redesigned the authentication experience into a reference-grade 3-screen flow (Onboarding, Sign In, Sign Up) with floating-label pill inputs and custom contractor illustration.
+
+
 
 
 
