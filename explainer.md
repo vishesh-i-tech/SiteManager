@@ -543,6 +543,27 @@ This document tracks all technologies, libraries, and architectural modules used
   - Mirrored the same layout and logic in `EditMachineryModal.tsx` for consistent data management.
 - **Small Summary:** Added dedicated PDF export buttons for every site sub-view (receipts, tools, labour, materials, machinery, dues), plus single receipt vouchers, and defaulted machinery to Self-Owned on the left with ₹0 rent.
 
+---
+
+## Phase 2.24: Dashboard Client Contract & Payments Received (View-Only)
+
+### 1. Technology: Reactive Cross-Site Payment Ledger Widget (`DashboardOverview.tsx`)
+- **Role & Purpose:**
+  - Added a dedicated, glanceable **Client Contract & Payments Received** (`क्लाइंट अनुबंध व प्राप्त भुगतान`) summary card directly to the main Dashboard overview.
+  - Enforced a strict **View-Only** policy: absolutely NO `+ Record Payment` or `+ Add` button exists on the dashboard to prevent unintended data entry from the high-level home view.
+  - Gives contractors immediate visibility into cumulative contract volume, total money collected into bank/cash accounts, and overall outstanding client receivables across all sites.
+- **Under the Hood:**
+  - **Dexie Reactive Integration:** Utilizes `useLiveQuery` from `dexie-react-hooks` to observe `db.clientPayments.toArray()` in real-time. Any payment recorded, updated, or removed inside a site immediately triggers an instant recalculation of dashboard totals.
+  - **Aggregate Financial Metrics:**
+    - `totalContract`: Sum of estimated contract budgets across all active sites.
+    - `totalReceived`: Sum of all milestone payments collected to date across all sites.
+    - `totalClientDue`: Remaining receivable balance across all contracts.
+    - `collectionProgress`: Real-time percentage meter with a smooth emerald progress bar and status indicator (`Fully Settled`, `Partially Paid`, or `Awaiting Payment`).
+  - **Recent Receipts Stream (View-Only):** Displays the latest 3 client receipts sorted descending by date with payer names, payment mode badges (UPI, Cash, Cheque, Bank Transfer), and received amounts.
+  - **Navigation Link:** Features a clean `View Sites` (`साइट विवरण`) action button to jump directly to the Sites management view without exposing destructive or mutating actions.
+- **Small Summary:** Brought the Client Contract & Payments Received financial card onto the Dashboard in a strictly view-only format, providing cumulative collection metrics, progress tracking, and recent receipt history with zero add buttons.
+
+
 
 
 

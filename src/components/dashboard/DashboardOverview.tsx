@@ -1,6 +1,8 @@
 import React from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site, ToolRecord, LabourRecord, MaterialRecord, MachineryRecord, ExpenseDue, SmartInsight } from '../../types';
+import { db } from '../../core/db/database';
 import { ActiveTab } from '../common/BottomNav';
 import { CountUpNumber } from '../common/CountUpNumber';
 import { ExploreBanner } from '../discovery/ExploreBanner';
@@ -9,6 +11,9 @@ import {
   Users,
   Wrench,
   Receipt,
+  HandCoins,
+  ArrowRight,
+  Calendar,
 } from 'lucide-react';
 
 interface DashboardOverviewProps {
@@ -64,6 +69,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const latestLabourRecord = labourRecords[0];
   const todayWorkerCount = latestLabourRecord?.totalWorkers || 0;
   const totalLabourWages = labourRecords.reduce((acc, l) => acc + (l.totalDailyWage || 0), 0);
+
+  // Real-time client payments query across all sites
+  const allClientPayments = useLiveQuery(() => db.clientPayments.toArray()) || [];
+
+  const totalContract = sites.reduce((acc, s) => acc + (s.estimatedBudget || 0), 0);
+  const totalReceived = allClientPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const totalClientDue = Math.max(0, totalContract - totalReceived);
+  const collectionProgress = totalContract > 0 ? Math.min(100, Math.round((totalReceived / totalContract) * 100)) : 0;
+
+  // Latest 3 client payments sorted descending (view only)
+  const recentPayments = [...allClientPayments]
+    .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
+    .slice(0, 3);
 
   return (
     <div className="space-y-4 animate-fade-in pb-16">
@@ -179,6 +197,136 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
 
+      </div>
+ 
+      {/* 3. Client Contract & Payments Received (Strictly View-Only) */}
+      <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 space-y-3 shadow-[0_4px_20px_rgba(16,185,129,0.04)]">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+              <HandCoins className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>
+                {language === 'hi'
+                  ? 'क्लाइंट अनुबंध व प्राप्त भुगतान'
+                  : 'Client Contract & Payments Received'}
+              </span>
+            </span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              {language === 'hi'
+                ? `सभी ${sites.length} साइट्स • ${allClientPayments.length} कुल रसीदें`
+                : `Across ${sites.length} sites • ${allClientPayments.length} total receipts`}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigateTab('sites')}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-1 shadow-2xs btn-tactile"
+            title={language === 'hi' ? 'साइट विवरण देखें' : 'View in Sites'}
+          >
+            <span>{language === 'hi' ? 'साइट विवरण' : 'View Sites'}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Contract Financial Breakdown */}
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span className="text-slate-500 text-[10px] block font-medium">
+              {language === 'hi' ? 'कुल अनुबंध' : 'Total Contract'}
+            </span>
+            <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm mt-0.5 block truncate">
+              ₹<CountUpNumber value={totalContract} />
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span className="text-slate-500 text-[10px] block font-medium">
+              {language === 'hi' ? 'प्राप्त राशि' : 'Received So Far'}
+            </span>
+            <span className="font-black text-emerald-700 dark:text-emerald-400 text-xs sm:text-sm mt-0.5 block truncate">
+              ₹<CountUpNumber value={totalReceived} />
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span className="text-slate-500 text-[10px] block font-medium">
+              {language === 'hi' ? 'बाकी लेना' : 'Client Due'}
+            </span>
+            <span className={`font-black text-xs sm:text-sm mt-0.5 block truncate ${totalClientDue > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-600'}`}>
+              ₹<CountUpNumber value={totalClientDue} />
+            </span>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="space-y-1 pt-0.5">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+            <span>
+              {collectionProgress}% {language === 'hi' ? 'भुगतान प्राप्त' : 'collected'}
+            </span>
+            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+              {collectionProgress >= 100
+                ? (language === 'hi' ? 'पूर्ण चुकता' : 'Fully Settled')
+                : collectionProgress > 0
+                ? (language === 'hi' ? 'आंशिक प्राप्त' : 'Partially Paid')
+                : (language === 'hi' ? 'भुगतान प्रतीक्षित' : 'Awaiting Payment')}
+            </span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all bg-emerald-500"
+              style={{ width: `${collectionProgress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Recent receipts preview list (Read Only, up to 3 latest receipts) */}
+        {recentPayments.length > 0 && (
+          <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40 space-y-1.5">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">
+              {language === 'hi' ? 'हालिया प्राप्त पेमेंट (केवल देखें)' : 'Recent Client Receipts (View Only)'}
+            </span>
+            <div className="space-y-1">
+              {recentPayments.map((p) => {
+                const siteObj = sites.find((s) => s.id === p.siteId);
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => siteObj && onSelectSite(siteObj)}
+                    className="p-2 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-emerald-100 dark:border-emerald-950/60 flex items-center justify-between gap-2 text-xs hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors cursor-pointer"
+                    title={language === 'hi' ? 'साइट का विवरण देखें' : 'View Site Details'}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                          {p.notes || siteObj?.name || 'Milestone Receipt'}
+                        </span>
+                        {siteObj && (
+                          <span className="text-[10px] text-slate-400 shrink-0">
+                            • {siteObj.name}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-2.5 h-2.5" />
+                          {p.paymentDate}
+                        </span>
+                        <span>•</span>
+                        <span>{p.paymentMode}</span>
+                        {p.payerName && <span>• By {p.payerName}</span>}
+                      </div>
+                    </div>
+                    <span className="font-black text-xs text-emerald-600 dark:text-emerald-400 shrink-0">
+                      + ₹{p.amount.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
     </div>
