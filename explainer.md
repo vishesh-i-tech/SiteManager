@@ -876,6 +876,41 @@ This document tracks all technologies, libraries, and architectural modules used
   - `handleAddWorkerRow()` dynamically inherits the role of the previous row in the muster roll and assigns the recent wage, while `<input value={entry.dailyWage ? entry.dailyWage : ''} ... />` ensures zero default `0` is shown.
 - **A short, simple summary:** Removed the redundant Tools PDF button, streamlined Add Tool into an icon-only '+' button, and implemented dynamic role-based recent wage memory that starts blank instead of forcing arbitrary rates.
 
+---
+
+## Phase 2.42: Mode Simplification (Dark & Auto Mode Removal) & 5-Step Interactive Contractor Flow Tutorial Engine
+
+### 1. Technology: Theme Mode Simplification & Pure Light Theme Enforcement (`SettingsModal.tsx`, `ThemeContext.tsx`)
+- **Name of the Technology:** Single High-Contrast Light Theme Architecture
+- **What it does (Role & Purpose):**
+  - **Removed Dark Mode & Auto Mode:** In the Settings modal, completely removed the `Dark` and `Auto` mode buttons that were marked by the user.
+  - **Locked to Clean Light Mode:** The application now strictly enforces a high-contrast, daytime-optimized light theme, eliminating accidental dark theme glitches, low-contrast text on bright construction sites, or system-level theme mismatches.
+  - **Automatic DOM Purge:** Removed the `.dark` class from `document.documentElement` and cleared legacy `dark` or `system` values in `localStorage`, guaranteeing an immediate, crisp light theme.
+- **How it works (Under the Hood):**
+  - `ThemeContext.tsx` initializes `themeMode` to `'light'` and purges `sitesaathi_theme` in `localStorage`. The `updateDarkMode` effect is streamlined to always ensure `root.classList.remove('dark')` and `isDarkMode: false`.
+  - In `SettingsModal.tsx`, the 3-button selector was replaced by a clean, locked indicator badge showing `Light Mode (Active)`.
+- **A short, simple summary:** Completely removed Dark and Auto mode options from Settings, locking the app into a clean, crisp, high-contrast Light mode tailored for outdoor site readability.
+
+---
+
+### 2. Technology: 5-Step Interactive Contractor Flow Tutorial Engine (`OnboardingModal.tsx`)
+- **Name of the Technology:** Interactive Step-by-Step Contractor Onboarding & Visual Flow Engine
+- **What it does (Role & Purpose):**
+  - **Interactive 5-Step Roadmap Stepper:** Added an interactive, numbered visual stepper at the top of the tutorial dialog (`1. Create Site` ➔ `2. 4 Core Tabs` ➔ `3. Voice & OCR` ➔ `4. Dues & Receipts` ➔ `5. Complete PDF`). Users can click any step or navigate sequentially.
+  - **Structured Real-World Flow:**
+    - **Step 1: Project Creation & Budgeting:** Explains the flow from `+ New Site`, contact picker integration, budget estimation, and live P&L calculation.
+    - **Step 2: 4 Daily Site Sections:** Visual interactive breakdown of Labour (muster roll), Materials (supplies & bills), Machinery (rent & fuel), and Tools (warehouse equipment).
+    - **Step 3: Fast 1-Tap Entry:** Dual-column showcase of Voice AI Assistant (speak in Hindi or English) and Diary Photo OCR (camera scan of handwritten register).
+    - **Step 4: Cash Flow & Pending Dues:** Explains recording client installments (slab advances), tracking shopkeeper udhaar, 1-tap WhatsApp reminders, and bell alert notifications.
+    - **Step 5: Complete PDF Report & Offline Peace of Mind:** Guides contractors on generating the complete 1-click site PDF report for client billing, device PIN & fingerprint security, and 100% offline functionality.
+  - **Real-World Examples & Checklists:** Each step includes green checkmarked feature benefits, an actionable pro-tip / example box, and confetti celebrations upon completion.
+- **How it works (Under the Hood):**
+  - `OnboardingModal.tsx` maintains active step state (`tutIndex`) with bidirectional navigation (`Back` and `Next Step` / `Finish`).
+  - Interactive stepper buttons display check icons for completed steps and highlight the active phase.
+  - All content is fully bilingual in natural, conversational Hindi and clear English.
+- **A short, simple summary:** Completely redesigned the onboarding tutorial into a structured, highly visual 5-step flow roadmap that clearly guides contractors from site creation to daily logging, voice/OCR shortcuts, cash flow, and final PDF billing.
+
+
 
 
 

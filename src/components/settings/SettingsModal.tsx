@@ -18,8 +18,6 @@ import {
   Download,
   Upload,
   Sun,
-  Moon,
-  Monitor,
   HelpCircle,
   RotateCcw,
   Sparkles,
@@ -542,35 +540,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Mode - Strictly "Mode" as requested */}
+              {/* Mode - Strictly Light Mode (Dark and Auto removed as requested) */}
               <div className="space-y-2">
                 <label className="block font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   {t('themePreference')}
                 </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[
-                    { id: 'light', label: 'Light', icon: Sun },
-                    { id: 'dark', label: 'Dark', icon: Moon },
-                    { id: 'system', label: 'Auto', icon: Monitor },
-                  ].map((m) => {
-                    const Icon = m.icon;
-                    const isSelected = themeMode === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setThemeMode(m.id as ThemeMode)}
-                        className={`py-2 rounded-xl border font-bold flex flex-col items-center gap-1 transition-all ${
-                          isSelected
-                            ? 'border-slate-900 dark:border-white bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                            : 'border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                        <span className="text-[10px]">{m.label}</span>
-                      </button>
-                    );
-                  })}
+                <div className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold flex items-center justify-center gap-2 shadow-2xs">
+                  <Sun className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs">{language === 'hi' ? 'लाइट मोड (सक्रिय)' : 'Light Mode (Active)'}</span>
                 </div>
               </div>
             </div>

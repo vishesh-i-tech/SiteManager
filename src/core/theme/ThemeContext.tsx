@@ -23,7 +23,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
-    return (localStorage.getItem('sitesaathi_theme') as ThemeMode) || 'light';
+    localStorage.setItem('sitesaathi_theme', 'light');
+    return 'light';
   });
 
   const [language, setLanguageState] = useState<Language>(() => {
@@ -38,8 +39,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const setThemeMode = (mode: ThemeMode) => {
-    setThemeModeState(mode);
-    localStorage.setItem('sitesaathi_theme', mode);
+    setThemeModeState('light');
+    localStorage.setItem('sitesaathi_theme', 'light');
   };
 
   const setLanguage = (lang: Language) => {
@@ -47,35 +48,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('sitesaathi_lang', lang);
   };
 
-  // Sync DOM with trade and dark mode
+  // Sync DOM with trade and enforce light mode
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-trade', trade);
-
-    const updateDarkMode = () => {
-      let isDark = false;
-      if (themeMode === 'dark') {
-        isDark = true;
-      } else if (themeMode === 'system') {
-        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      }
-      setIsDarkMode(isDark);
-      if (isDark) {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
-    };
-
-    updateDarkMode();
-
-    if (themeMode === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const listener = () => updateDarkMode();
-      mediaQuery.addEventListener('change', listener);
-      return () => mediaQuery.removeEventListener('change', listener);
-    }
-  }, [trade, themeMode]);
+    root.classList.remove('dark');
+    setIsDarkMode(false);
+    localStorage.setItem('sitesaathi_theme', 'light');
+  }, [trade]);
 
   const t = (key: TranslationKey): string => {
     const langDict = translations[language] || translations.en;
