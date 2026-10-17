@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { Site, ToolRecord, LabourRecord, MaterialRecord, MachineryRecord, ExpenseDue, SmartInsight } from '../../types';
-import { SiteCard } from '../sites/SiteCard';
 import { ActiveTab } from '../common/BottomNav';
 import { CountUpNumber } from '../common/CountUpNumber';
 import { ExploreBanner } from '../discovery/ExploreBanner';
@@ -13,7 +12,6 @@ import {
   Plus,
   Mic,
   Camera,
-  ArrowRight,
   LayoutGrid,
   CheckCircle2,
   Clock,
@@ -87,14 +85,6 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           w.role.toLowerCase().includes(normalizedQuery)
       )
     : activeCrew;
-
-  const visibleSites = normalizedQuery
-    ? sites.filter(
-        (s) =>
-          s.name.toLowerCase().includes(normalizedQuery) ||
-          s.location.toLowerCase().includes(normalizedQuery)
-      )
-    : sites.slice(0, 3);
 
 
   return (
@@ -283,58 +273,6 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
 
-      </div>
-
-      {/* 6. Project Sites Feed (Sharma Villa, Royal Greens Commercial Plaza, etc.) */}
-      <div className="space-y-3 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-heading tracking-tight">
-              Project Sites
-            </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              {sites.length} active construction locations
-            </p>
-          </div>
-
-          <button
-            onClick={() => onNavigateTab('sites')}
-            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <span>View All</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        </div>
-
-        <div className="flex flex-col space-y-3">
-          {visibleSites.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-[22px] p-6 border border-slate-100 dark:border-slate-800 text-center space-y-2">
-              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
-                <Building2 className="w-5 h-5" />
-              </div>
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                {normalizedQuery ? `No sites matching "${searchQuery}"` : 'No Sites Added Yet'}
-              </p>
-              {!normalizedQuery && (
-                <button
-                  onClick={onOpenAddSite}
-                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white cursor-pointer"
-                >
-                  + Add First Site
-                </button>
-              )}
-            </div>
-          ) : (
-            visibleSites.map((site) => (
-              <SiteCard
-                key={site.id}
-                site={site}
-                onSelect={onSelectSite}
-                onOpenReport={onOpenReport}
-              />
-            ))
-          )}
-        </div>
       </div>
 
     </div>

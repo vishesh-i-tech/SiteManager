@@ -417,3 +417,17 @@ This document tracks all technologies, libraries, and architectural modules used
   - Updated `handleUpdateEntry` to recalculate `earnedWage` and `totalPending` in real-time on every status or wage change.
   - Replaced hardcoded `Due: ₹0` labels with contextual, color-coded badges (`Pending: ₹...` in amber, `Unpaid: ₹...` in rose, `Paid: ₹...` in emerald, `Adv/Due` in blue).
 - **Small Summary:** Added prominent amber Pending wage badges across worker rows and summary bars while de-congesting text layouts for seamless mobile/desktop entry.
+
+---
+
+## Phase 2.18: Dashboard Streamlining & Redundant Site Feed Removal
+
+### 1. Technology: Dashboard Overview Clean-up
+- **Role & Purpose:**
+  - Removed the duplicate "Project Sites" feed and site card list from the main Home dashboard overview.
+  - Eliminates information duplication since all site management, work statuses, financial meters, and details are comprehensively handled in the dedicated **Sites** tab (`SitesView.tsx`).
+  - Keeps the contractor dashboard clean, lightweight, and focused on essential daily operations: the 3D character action hub, active crew attendance muster, and 2x2 KPI metrics (Active Sites, Workers Today, Tool Inventory, Pending Dues).
+- **Under the Hood:**
+  - Unmounted `SiteCard` component and removed unused `visibleSites` query state from `DashboardOverview.tsx`.
+  - Retained the `Active Sites` KPI widget as a smart, direct navigation shortcut (`onNavigateTab('sites')`) into the full Sites page.
+- **Small Summary:** Streamlined the home dashboard by removing the redundant Project Sites card feed, maintaining clean separation with the dedicated Sites tab.
