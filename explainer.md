@@ -1029,3 +1029,34 @@ This document tracks all technologies, libraries, and architectural modules used
   - REST client uses browser native `fetch()` with multipart/related payload boundaries (`boundary_sitesaathi_...`) for atomic metadata and file uploads.
   - All downloaded file payloads are treated as untrusted and validated against the `sitesaathi-encrypted-v1` schema before decryption.
 - **A short, simple summary:** Built a pure TypeScript, zero-dependency Google Drive API v3 client with in-memory OAuth2 tokens and strict plaintext-rejection security gates for cloud backups.
+
+---
+
+### 6. Technology: Modal Stacking Context & Safe-Area Inset Architecture (`src/components/settings/SettingsModal.tsx`, `src/components/common/MobileDeviceShell.tsx`, `src/components/settings/GoogleDriveBackupSection.tsx`)
+- **Name of the Technology:** Safe-Area Responsive Modal Containment & Hierarchical Stacking Architecture
+- **What it does (Role & Purpose):**
+  - **Eliminated Gesture Bar Overlap:** Fixed an issue where the simulated Android gesture navigation bar / home indicator in `MobileDeviceShell` sliced across the bottom edge of `SettingsModal` and obscured the "Log Out Account" action button.
+  - **Native Safe-Area Alignment:** Implemented dynamic bottom safe-area insets (`env(safe-area-inset-bottom)`) and generous scroll clearance (`pb-10 sm:pb-8`), guaranteeing that all action controls remain fully visible and comfortable to tap above physical device navigation chins on Android and iOS.
+  - **Unified Modal Stacking Contexts:** Standardized primary modal overlays across SiteSaathi (`SettingsModal`, `PhotoOcrModal`, `AddSiteModal`) at `z-[60]`, submodals/prompts at `z-[70]`, and secondary alert dialogs at `z-[80]`. Lowered device simulator bezel elements to `z-20` so hardware preview chins never slice into floating app dialogs.
+- **How it works (Under the Hood):**
+  - Uses CSS `pb-[max(1.25rem,env(safe-area-inset-bottom))]` on outer modal flex containers and `max-h-[88vh] sm:max-h-[90vh]` on modal cards to maintain clean margin above the bottom viewport edge.
+  - Adds dedicated bottom padding inside the scrollable modal body so final action buttons are never flush with the card's rounded bottom border (`rounded-3xl`).
+- **A short, simple summary:** Resolved modal bottom bar clipping and layout intersection by standardizing z-index stacking layers, capping card heights cleanly above the bottom edge, and providing native safe-area insets.
+
+---
+
+### 7. Technology: Handwritten Register OCR Safety Validation & Draft Review Architecture (`src/utils/ocrProcessor.ts`, `src/components/labour/PhotoOcrModal.tsx`)
+- **Name of the Technology:** Conservative Muster Roll Validation & Anti-Hallucination OCR Pipeline
+- **What it does (Role & Purpose):**
+  - **Zero Fabricated Workers:** Completely removed synthetic fallback workers (`Subhash Mistry`, `Ramu Helper`, `Kamal Yadav`). Non-register images or blank OCR outputs now return clean empty drafts (`[]`) with an explicit status message instead of fake data.
+  - **Zero Silent Wage Guessing:** Eradicated silent default wages (previously ₹550 for Helpers, ₹900 for Masons). Missing wages explicitly default to ₹0 (unverified) and are prominently flagged in the review UI ("Wage required"). Displayed total wages strictly calculate from verified, non-zero entries.
+  - **Multi-Signal Register Validation:** Inspects raw OCR text across multiple orthogonal signals: attendance tokens (`P`, `A`, `H`, `हाजिरी`, `उपस्थित`), contractor trade keywords (`Mason`, `Helper`, `मिस्त्री`, `राजमिस्त्री`), realistic wage figures (₹200–₹3,000), and numbered list structures (`1.`, `2)`). Returns a structured `RegisterValidationStatus` with actionable warning guidance.
+  - **Contractor-in-the-Loop Review UI:** Alerts the contractor with high-visibility warning banners when an image does not resemble an attendance register or has low OCR confidence. Displays an intuitive empty state with manual `+ Add Worker` option when 0 rows are extracted. Highlighting alerts missing names or wages.
+  - **Pre-Save Data Protection:** Blocks database saves if target site is unselected, if entries are empty, if names are blank or placeholders (e.g. `Worker 1`, `New Worker`), or if daily wage is ₹0/negative for present workers. Zero auto-saving; all writes require explicit confirmation. Closing or cancelling discards drafts without modifying IndexedDB.
+- **How it works (Under the Hood):**
+  - `validateRegisterContent(rawText, confidence, extractedCount)` evaluates orthogonal signal counts. Low-confidence but plausible handwritten registers remain fully reviewable with an advisory disclaimer.
+  - `parseOcrTextToLabourEntries(rawText, recordId)` filters out non-muster text lines, strips noise with strict word-boundary token matching (`\b[pah]\b`) to avoid clipping letters from real worker names (such as "Rameshwar"), and leaves missing wages as `0`.
+  - Heuristic validation acts strictly as an assistive drafting tool; the contractor remains responsible for reviewing and confirming attendance before saving to Dexie IndexedDB.
+- **A short, simple summary:** Replaced synthetic worker fallbacks and silent wage guessing with multi-signal register validation, transparent review indicators, and pre-save database write gates.
+
+
