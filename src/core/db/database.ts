@@ -119,19 +119,13 @@ export class SiteSaathiDatabase extends Dexie {
     }
   }
 
-  // Purge pre-seeded demo accounts so only real user-registered accounts exist
+  // Purge pre-seeded demo accounts by explicit demo IDs so legitimate user-registered accounts are never deleted
   async purgeDemoAccounts() {
     try {
       const all = await this.account.toArray();
+      const demoAccountIds = new Set(['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo']);
       const demoIds = all
-        .filter(
-          (a) =>
-            ['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(a.id) ||
-            a.name.toLowerCase().includes('rameshwar') ||
-            a.name.toLowerCase().includes('vikram') ||
-            a.name.toLowerCase().includes('rajesh patel') ||
-            ['9876543210', '9876543211', '9876543212'].includes(a.phone)
-        )
+        .filter((a) => demoAccountIds.has(a.id))
         .map((a) => a.id);
       if (demoIds.length > 0) {
         await this.account.bulkDelete(demoIds);

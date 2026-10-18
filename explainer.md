@@ -1059,4 +1059,22 @@ This document tracks all technologies, libraries, and architectural modules used
   - Heuristic validation acts strictly as an assistive drafting tool; the contractor remains responsible for reviewing and confirming attendance before saving to Dexie IndexedDB.
 - **A short, simple summary:** Replaced synthetic worker fallbacks and silent wage guessing with multi-signal register validation, transparent review indicators, and pre-save database write gates.
 
+---
+
+### 8. Technology: Phase 1 Critical Data-Safety Architecture & Uncredentialed Account Security Review (`src/App.tsx`, `src/core/db/database.ts`, `src/components/auth/AuthScreen.tsx`, `src/components/auth/AuthModal.tsx`)
+- **Name of the Technology:** Production Startup Data-Shield, Fixed Demo ID Scoping & Non-Claimable Uncredentialed Account Security Gate
+- **What it does (Role & Purpose):**
+  - **Eliminated Startup Data-Wipe Hazard:** Eradicated the dangerous development condition where the absence of `localStorage.getItem('sitesaathi_pristine_final_user_test')` triggered `await db.clearAllData()`, `localStorage.clear()`, and `sessionStorage.clear()`. App startup now initializes Dexie tables and default demo seeds safely and idempotently without wiping existing contractor data.
+  - **Fixed-ID Demo Account Purging:** Removed hazardous substring matching against human names (`rameshwar`, `vikram`, `rajesh patel`). Demo-account purging (`purgeDemoAccounts`) and demo-filtering in the saved account selector are now strictly bound to fixed, deterministic demo IDs (`contractor-1`, `contractor-2`, `contractor-3`, `contractor-demo`). Legitimate contractors named Rameshwar, Vikram, or Rajesh Patel can never be deleted or excluded.
+  - **Security Review & Removal of Name-Based Account Claiming:** Evaluated the threat model of restoring unencrypted backups (which strip passwords). Identified that prompting for the registered contractor name does **not** prove account ownership because contractor names and phone numbers are public/guessable information (present on business cards, invoices, site boards, and the login screen itself). Removed the vulnerable credential-creation flow that allowed setting a PIN via name matching.
+  - **Strict Security Gate & Clear Recovery Guidance:** When an uncredentialed account is selected or entered, the app strictly blocks session generation and displays a dedicated Security Limitation Notice. It clearly explains that public details cannot verify ownership offline and directs the user to the only secure recovery path: restoring from a passphrase-protected Encrypted Backup (`sitesaathi-encrypted-v1`) or registering a new secure account.
+  - **Multi-Entry Protection:** Hardened all entry points (manual login, quick account switching in `AuthScreen` and `AuthModal`, and startup session restoration in `App.tsx`) so that uncredentialed accounts cannot authenticate or be claimed without genuine cryptographic credentials.
+- **How it works (Under the Hood):**
+  - Uses `Set(['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'])` in `db.purgeDemoAccounts()` and account selectors.
+  - `handleLogin` and `handleQuickAccountSelect` evaluate `if (!matched.password && !matched.pinLock)` and route to `setUncredentialedAccount(matched)` and `setIsUncredentialedModalOpen(true)`.
+  - The insecure `handleSetupCredentials` handler and PIN-creation inputs were completely removed.
+  - `App.tsx` skips automatic session restoration if `!acc.password && !acc.pinLock`, clearing `sitesaathi_active_user_id` so uncredentialed sessions are never created.
+- **A short, simple summary:** Removed catastrophic startup database wipes, eliminated name-based demo purging, and closed account-takeover risks on uncredentialed restored accounts by prohibiting claiming via public metadata and requiring passphrase-protected encrypted backup recovery.
+
+
 

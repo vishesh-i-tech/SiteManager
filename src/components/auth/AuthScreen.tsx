@@ -14,6 +14,7 @@ import {
   Paintbrush,
   Hammer,
   Shield,
+  ShieldAlert,
   Layers,
   Grid,
   Wind,
@@ -74,6 +75,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [resetError, setResetError] = useState('');
   const [showNewPin, setShowNewPin] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+
+  // Security Limitation Notice Modal for Restored / Uncredentialed Accounts
+  const [isUncredentialedModalOpen, setIsUncredentialedModalOpen] = useState(false);
+  const [uncredentialedAccount, setUncredentialedAccount] = useState<ContractorAccount | null>(null);
 
   // Rate Limiting (Defense in Depth)
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -246,6 +251,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           matched.password = upgradedHash;
           matched.pinLock = upgradedHash;
         }
+      } else {
+        // Uncredentialed restored account: NEVER auto-authenticate and NEVER allow claiming with public metadata!
+        // Display security notice detailing the limitation and secure recovery options
+        setUncredentialedAccount(matched);
+        setIsUncredentialedModalOpen(true);
+        return;
       }
 
       localStorage.setItem('sitesaathi_active_user_id', matched.id);
@@ -261,14 +272,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     }
   };
 
-  // Filter out any hardcoded/demo contractor IDs so only real accounts saved on this device appear
+  // Filter out explicit demo contractor IDs so only real accounts saved on this device appear
   const userSavedAccounts = existingAccounts.filter(
-    (acc) =>
-      !['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(acc.id) &&
-      !acc.name.toLowerCase().includes('rameshwar') &&
-      !acc.name.toLowerCase().includes('vikram') &&
-      !acc.name.toLowerCase().includes('rajesh patel') &&
-      !['9876543210', '9876543211', '9876543212'].includes(acc.phone)
+    (acc) => !['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(acc.id)
   );
 
   // SEC-DEF-002 FIX: Selecting account pre-fills phone and transitions to secure PIN challenge view
@@ -276,6 +282,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     setLoginPhone(acc.phone.replace(/\D/g, ''));
     setLoginPassword('');
     setErrorMsg('');
+    if (!acc.password && !acc.pinLock) {
+      // Uncredentialed restored account: NEVER auto-authenticate and NEVER allow claiming with public metadata!
+      setUncredentialedAccount(acc);
+      setIsUncredentialedModalOpen(true);
+      return;
+    }
     setView('login');
   };
 
@@ -373,7 +385,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         setResetError('');
         setIsResetting(false);
       }, 1000);
-    } catch (err) {
+    } catch {
       setResetError(
         language === 'hi'
           ? 'पिन रीसेट करने में त्रुटि हुई।'
@@ -1027,6 +1039,125 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   </button>
                 </div>
               </form>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* UNCREDENTIALED ACCOUNT RECOVERY LIMITATION NOTICE DIALOG         */}
+      {/* ============================================================== */}
+      {isUncredentialedModalOpen && uncredentialedAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-amber-200/80 w-full max-w-sm overflow-hidden animate-scale-up">
+            
+            {/* Header */}
+            <div className="p-5 pb-3 border-b border-amber-100 bg-amber-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
+                  <ShieldAlert className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800 font-heading">
+                    {language === 'hi' ? 'खाता पुनर्प्राप्ति आवश्यक' : 'Account Recovery Required'}
+                  </h3>
+                  <span className="text-[10px] font-semibold text-amber-700 block">
+                    {language === 'hi' ? 'सुरक्षा सीमा सूचना' : 'Security Limitation Notice'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsUncredentialedModalOpen(false);
+                  setUncredentialedAccount(null);
+                }}
+                className="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 pt-4 space-y-3.5">
+              {/* Account Identifier Card */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {language === 'hi' ? 'पुनर्स्थापित खाता' : 'Restored Account'}
+                </span>
+                <span className="block text-xs font-bold text-slate-800 pt-0.5">
+                  {uncredentialedAccount.name}
+                </span>
+                <span className="block text-[11px] font-mono text-slate-500">
+                  +91 {uncredentialedAccount.phone}
+                </span>
+              </div>
+
+              {/* Security Risk Limitation Banner */}
+              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                <div className="font-bold flex items-center gap-1.5 text-amber-800 mb-1">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{language === 'hi' ? 'क्रेडेंशियल अनुपलब्ध' : 'No Security Credentials'}</span>
+                </div>
+                <p className="text-[11px] text-amber-800/90 leading-normal">
+                  {language === 'hi'
+                    ? 'यह खाता एक गैर-एन्क्रिप्टेड बैकअप फ़ाइल से पुनर्स्थापित किया गया है जिसमें कोई पासवर्ड या पिन नहीं है। चूंकि ठेकेदार का नाम और फोन नंबर सार्वजनिक जानकारी हैं, इसलिए उन्हें दर्ज करने से वास्तविक स्वामित्व साबित नहीं होता। सुरक्षा कारणों से, अनधिकृत पहुंच रोकने के लिए यह खाता केवल नाम या फोन से अनलॉक नहीं किया जा सकता।'
+                    : 'This account was restored from an unencrypted data file lacking cryptographic credentials. Because contractor names and phone numbers are public knowledge, entering them does not prove account ownership. For data safety, this account cannot be claimed using public details.'}
+                </p>
+              </div>
+
+              {/* Secure Recovery Guidance */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-3 space-y-2">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {language === 'hi' ? 'सुरक्षित पुनर्प्राप्ति के विकल्प:' : 'Secure Recovery Options:'}
+                </span>
+                <div className="text-[11px] text-slate-600 space-y-1.5 leading-normal">
+                  <div className="flex items-start gap-1.5">
+                    <span className="font-bold text-blue-600">1.</span>
+                    <span>
+                      {language === 'hi'
+                        ? 'एन्क्रिप्टेड बैकअप: यदि आपके पास गुप्त पासफ़्रेज़ वाला एन्क्रिप्टेड बैकअप (.json) है, तो उसे पुनर्स्थापित करें। इसमें आपके मूल क्रेडेंशियल सुरक्षित रहते हैं।'
+                        : 'Encrypted Backup: If you have a passphrase-protected encrypted backup (.json), restore it using your secret passphrase to preserve credentials.'}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="font-bold text-blue-600">2.</span>
+                    <span>
+                      {language === 'hi'
+                        ? 'नया खाता: यदि आप इस डिवाइस पर नया काम शुरू कर रहे हैं, तो एक निजी पिन के साथ नया खाता पंजीकृत करें।'
+                        : 'New Account: If you do not have an encrypted backup, create a new verified account with a private PIN on this device.'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUncredentialedModalOpen(false);
+                    setUncredentialedAccount(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  {language === 'hi' ? 'बंद करें' : 'Close'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUncredentialedModalOpen(false);
+                    setUncredentialedAccount(null);
+                    setView('register');
+                  }}
+                  className="flex-1 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>{language === 'hi' ? 'नया खाता बनाएं' : 'Register New'}</span>
+                </button>
+              </div>
+
             </div>
 
           </div>

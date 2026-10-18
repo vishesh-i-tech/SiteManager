@@ -42,12 +42,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { trade, setTrade, language, setLanguage, t, tradeConfig } = useTheme();
 
   const userSavedAccounts = existingAccounts.filter(
-    (acc) =>
-      !['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(acc.id) &&
-      !acc.name.toLowerCase().includes('rameshwar') &&
-      !acc.name.toLowerCase().includes('vikram') &&
-      !acc.name.toLowerCase().includes('rajesh patel') &&
-      !['9876543210', '9876543211', '9876543212'].includes(acc.phone)
+    (acc) => !['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(acc.id)
   );
 
   // Mode: 'register' | 'login'
@@ -128,6 +123,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     );
 
     if (matched) {
+      if (!matched.password && !matched.pinLock) {
+        setErrorMsg(
+          language === 'hi'
+            ? 'यह खाता गैर-एन्क्रिप्टेड बैकअप से पुनर्स्थापित है और इसमें सुरक्षा क्रेडेंशियल नहीं हैं। कृपया एन्क्रिप्टेड बैकअप का उपयोग करें।'
+            : 'This account lacks security credentials. Please restore from a passphrase-protected encrypted backup.'
+        );
+        return;
+      }
       setTrade(matched.trade);
       setLanguage(matched.language);
       localStorage.setItem('sitesaathi_active_user_id', matched.id);
@@ -142,6 +145,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const handleSelectExisting = (acc: ContractorAccount) => {
+    if (!acc.password && !acc.pinLock) {
+      setErrorMsg(
+        language === 'hi'
+          ? 'यह खाता गैर-एन्क्रिप्टेड बैकअप से पुनर्स्थापित है और इसमें सुरक्षा क्रेडेंशियल नहीं हैं।'
+          : 'This account lacks credentials and cannot authenticate.'
+      );
+      return;
+    }
     setTrade(acc.trade);
     setLanguage(acc.language);
     localStorage.setItem('sitesaathi_active_user_id', acc.id);
