@@ -149,6 +149,18 @@ export const translations = {
     backupData: 'Export Local Backup (JSON)',
     restoreData: 'Restore Backup',
 
+    // Google Drive Cloud Backup
+    googleDriveTitle: 'Google Drive Cloud Backup',
+    googleDriveSubtitle: 'Encrypted cloud backups in your private Google Drive',
+    googleDriveConnected: 'Connected',
+    googleDriveNotConnected: 'Not Connected',
+    connectGoogleDrive: 'Connect Google Drive',
+    disconnectGoogleDrive: 'Disconnect',
+    uploadToDrive: 'Backup to Google Drive',
+    viewDriveBackups: 'Cloud Backups',
+    lastCloudBackup: 'Last cloud backup',
+    noCloudBackupYet: 'No cloud backup performed yet on this device',
+
     // Smart Insights
     smartInsightsTitle: 'AI & Rule-Based Smart Insights',
     smartInsightsSubtitle: 'Automatic analysis generated from your daily site logs.',
@@ -301,6 +313,18 @@ export const translations = {
     resetDemoData: 'डेमो डेटा रीसेट करें',
     backupData: 'बैकअप डाउनलोड करें (JSON)',
     restoreData: 'बैकअप रीस्टोर करें',
+
+    // Google Drive Cloud Backup
+    googleDriveTitle: 'गूगल ड्राइव क्लाउड बैकअप',
+    googleDriveSubtitle: 'अपने निजी गूगल ड्राइव में एन्क्रिप्टेड क्लाउड बैकअप रखें',
+    googleDriveConnected: 'जुड़ा हुआ',
+    googleDriveNotConnected: 'जुड़ा नहीं है',
+    connectGoogleDrive: 'गूगल ड्राइव कनेक्ट करें',
+    disconnectGoogleDrive: 'डिस्कनेक्ट करें',
+    uploadToDrive: 'ड्राइव पर बैकअप लें',
+    viewDriveBackups: 'क्लाउड बैकअप देखें',
+    lastCloudBackup: 'अंतिम क्लाउड बैकअप',
+    noCloudBackupYet: 'इस डिवाइस पर अभी तक कोई क्लाउड बैकअप नहीं हुआ है',
 
     // Smart Insights
     smartInsightsTitle: 'स्मार्ट साइट रिपोर्ट व चेतावनियां',

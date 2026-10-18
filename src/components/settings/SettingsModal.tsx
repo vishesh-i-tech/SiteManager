@@ -5,6 +5,7 @@ import { TRADE_CONFIGS, ALL_TRADE_KEYS } from '../../core/theme/tradeConfigs';
 import { db } from '../../core/db/database';
 import { ConfirmDeleteModal } from '../common/ConfirmDeleteModal';
 import { hashCredential, verifyCredential, isEncryptedBackup } from '../../utils/cryptoUtils';
+import { GoogleDriveBackupSection } from './GoogleDriveBackupSection';
 import {
   Settings,
   User,
@@ -903,7 +904,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
 
-            {/* 6. Interactive Tutorial Action */}
+            {/* 6. Google Drive Cloud Backup (AES-GCM Encrypted) */}
+            <GoogleDriveBackupSection account={account} />
+
+            {/* 7. Interactive Tutorial Action */}
             <div>
               <button
                 type="button"

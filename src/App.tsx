@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './core/db/database';
 import { useTheme } from './core/theme/ThemeContext';
+import { clearGoogleAuthSession } from './utils/googleAuth';
 import {
   Site,
   ToolRecord,
@@ -352,6 +353,7 @@ export const App: React.FC = () => {
   };
 
   const handleLogOut = () => {
+    clearGoogleAuthSession();
     localStorage.removeItem('sitesaathi_active_user_id');
     sessionStorage.removeItem('sitesaathi_unlocked');
     setActiveAccountId(null);
@@ -371,6 +373,7 @@ export const App: React.FC = () => {
   };
 
   const handleClearAllData = async () => {
+    clearGoogleAuthSession();
     await db.clearAllData();
     localStorage.removeItem('sitesaathi_active_user_id');
     sessionStorage.removeItem('sitesaathi_unlocked');
