@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import {
+import type {
   ContractorAccount,
   Site,
   ToolRecord,
@@ -12,7 +12,7 @@ import {
   Reminder,
   SmartInsight,
   ClientPayment,
-} from '../../types';
+} from '../../types/index.ts';
 import {
   SEED_ACCOUNT,
   SEED_ACCOUNTS,
@@ -26,13 +26,23 @@ import {
   SEED_VENDORS,
   SEED_REMINDERS,
   SEED_CLIENT_PAYMENTS,
-} from './seedData';
+} from './seedData.ts';
 import {
   encryptBackupJson,
   decryptBackupJson,
   isEncryptedBackup,
   hashCredential,
-} from '../../utils/cryptoUtils';
+} from '../../utils/cryptoUtils.ts';
+
+export interface BackupExportOptions {
+  passphrase?: string;
+  contractorId: string;
+}
+
+export interface BackupImportOptions {
+  passphrase?: string;
+  activeContractorId: string;
+}
 
 export class SiteSaathiDatabase extends Dexie {
   account!: EntityTable<ContractorAccount, 'id'>;
@@ -435,34 +445,103 @@ export class SiteSaathiDatabase extends Dexie {
   }
 
   // Full Database Backup Export (JSON)
-  // DATA-DEF-006 FIX: Excludes plaintext credentials in ordinary export, or encrypts with AES-GCM when passphrase provided
-  async exportBackupJson(passphrase?: string): Promise<string> {
-    const rawAccounts = await this.account.toArray();
-    const sanitizedAccounts = rawAccounts.map((acc) => {
-      const copy = { ...acc };
-      // Strip credentials from unencrypted backup
-      if (!passphrase || passphrase.trim().length === 0) {
-        delete copy.password;
-        delete copy.pinLock;
-      }
-      return copy;
-    });
+  // Scoped strictly to the specified contractorId to guarantee multi-tenant data isolation.
+  // Includes only the target contractor's account, sites, and genuine site/contractor-related records.
+  async exportBackupJson(
+    passphraseOrOptions?: string | BackupExportOptions,
+    explicitContractorId?: string
+  ): Promise<string> {
+    let passphrase: string | undefined;
+    let contractorId: string | undefined;
+
+    if (typeof passphraseOrOptions === 'object' && passphraseOrOptions !== null) {
+      passphrase = passphraseOrOptions.passphrase;
+      contractorId = passphraseOrOptions.contractorId;
+    } else {
+      passphrase = passphraseOrOptions;
+      contractorId = explicitContractorId;
+    }
+
+    if (!contractorId || typeof contractorId !== 'string' || contractorId.trim().length === 0) {
+      throw new Error(
+        'CONTRACTOR_ID_REQUIRED: An explicit, validated contractorId is required to export contractor-scoped backup data.'
+      );
+    }
+
+    const validContractorId = contractorId.trim();
+    const rawAccount = await this.account.get(validContractorId);
+    if (!rawAccount) {
+      throw new Error(`CONTRACTOR_NOT_FOUND: No contractor account found with ID "${validContractorId}".`);
+    }
+
+    const sanitizedAccount = { ...rawAccount };
+    // Strip credentials from unencrypted backup
+    if (!passphrase || passphrase.trim().length === 0) {
+      delete sanitizedAccount.password;
+      delete sanitizedAccount.pinLock;
+    }
+
+    const allAccounts = await this.account.toArray();
+    const isSingleAccountMode = allAccounts.length <= 1;
+
+    // Scoped sites: must match contractorId (or legacy site with no contractorId in single-account mode)
+    const allSites = await this.sites.toArray();
+    const contractorSites = allSites.filter(
+      (s) => s.contractorId === validContractorId || (!s.contractorId && isSingleAccountMode)
+    );
+    const contractorSiteIds = new Set(contractorSites.map((s) => s.id));
+
+    // Scoped vendors: must match contractorId (or legacy vendor with no contractorId in single-account mode)
+    const allVendors = await this.vendors.toArray();
+    const contractorVendors = allVendors.filter(
+      (v) => v.contractorId === validContractorId || (!v.contractorId && isSingleAccountMode)
+    );
+
+    // Site-scoped related entities: strictly linked to contractor's sites
+    const allTools = await this.tools.toArray();
+    const contractorTools = allTools.filter((t) => t.siteId && contractorSiteIds.has(t.siteId));
+
+    const allLabourRecords = await this.labourRecords.toArray();
+    const contractorLabourRecords = allLabourRecords.filter((lr) => lr.siteId && contractorSiteIds.has(lr.siteId));
+    const contractorLabourRecordIds = new Set(contractorLabourRecords.map((lr) => lr.id));
+
+    // Labour entries: 2-hop linkage through contractor's labour records
+    const allLabourEntries = await this.labourEntries.toArray();
+    const contractorLabourEntries = allLabourEntries.filter(
+      (le) => le.recordId && contractorLabourRecordIds.has(le.recordId)
+    );
+
+    const allMaterials = await this.materials.toArray();
+    const contractorMaterials = allMaterials.filter((m) => m.siteId && contractorSiteIds.has(m.siteId));
+
+    const allMachinery = await this.machinery.toArray();
+    const contractorMachinery = allMachinery.filter((m) => m.siteId && contractorSiteIds.has(m.siteId));
+
+    const allDues = await this.dues.toArray();
+    const contractorDues = allDues.filter((d) => d.siteId && contractorSiteIds.has(d.siteId));
+
+    const allReminders = await this.reminders.toArray();
+    const contractorReminders = allReminders.filter((r) => r.siteId && contractorSiteIds.has(r.siteId));
+
+    const allClientPayments = await this.clientPayments.toArray();
+    const contractorClientPayments = allClientPayments.filter((p) => p.siteId && contractorSiteIds.has(p.siteId));
 
     const backup = {
       app: 'SiteSaathi',
       version: 2,
       exportedAt: new Date().toISOString(),
-      account: sanitizedAccounts,
-      sites: await this.sites.toArray(),
-      tools: await this.tools.toArray(),
-      labourRecords: await this.labourRecords.toArray(),
-      labourEntries: await this.labourEntries.toArray(),
-      materials: await this.materials.toArray(),
-      machinery: await this.machinery.toArray(),
-      dues: await this.dues.toArray(),
-      vendors: await this.vendors.toArray(),
-      reminders: await this.reminders.toArray(),
-      clientPayments: await this.clientPayments.toArray(),
+      contractorId: validContractorId,
+      account: [sanitizedAccount],
+      sites: contractorSites.map((s) => ({ ...s, contractorId: validContractorId })),
+      tools: contractorTools,
+      labourRecords: contractorLabourRecords,
+      labourEntries: contractorLabourEntries,
+      materials: contractorMaterials,
+      machinery: contractorMachinery,
+      dues: contractorDues,
+      vendors: contractorVendors.map((v) => ({ ...v, contractorId: validContractorId })),
+      reminders: contractorReminders,
+      clientPayments: contractorClientPayments,
     };
 
     const plainJson = JSON.stringify(backup, null, 2);
@@ -473,8 +552,46 @@ export class SiteSaathiDatabase extends Dexie {
   }
 
   // Full Database Backup Import (JSON)
-  // Supports both standard JSON and AES-GCM encrypted backup files with passphrase validation
-  async importBackupJson(jsonString: string, passphrase?: string): Promise<boolean> {
+  // Supports both standard JSON and AES-GCM encrypted backup files with passphrase validation.
+  // Strictly enforces active contractor ownership, validates legacy payloads, detects cross-contractor collisions,
+  // and sanitizes vendor references before any database write transaction.
+  async importBackupJson(
+    jsonString: string,
+    passphraseOrOptions?: string | BackupImportOptions,
+    explicitActiveContractorId?: string
+  ): Promise<boolean> {
+    let passphrase: string | undefined;
+    let activeContractorId: string | undefined;
+
+    if (typeof passphraseOrOptions === 'object' && passphraseOrOptions !== null) {
+      passphrase = passphraseOrOptions.passphrase;
+      activeContractorId = passphraseOrOptions.activeContractorId;
+    } else if (typeof explicitActiveContractorId === 'string') {
+      passphrase = passphraseOrOptions;
+      activeContractorId = explicitActiveContractorId;
+    } else if (typeof passphraseOrOptions === 'string') {
+      let isEnc = false;
+      try {
+        const p = JSON.parse(jsonString);
+        isEnc = isEncryptedBackup(p);
+      } catch {
+        // Not valid JSON yet, might be raw ciphertext string
+      }
+      if (isEnc) {
+        passphrase = passphraseOrOptions;
+        activeContractorId = undefined;
+      } else {
+        activeContractorId = passphraseOrOptions;
+      }
+    }
+
+    if (!activeContractorId || typeof activeContractorId !== 'string' || activeContractorId.trim().length === 0) {
+      throw new Error(
+        'CONTRACTOR_ID_REQUIRED: An explicit, active authenticated contractorId is required to validate and restore backup data.'
+      );
+    }
+
+    const targetContractorId = activeContractorId.trim();
     let resolvedJson = jsonString;
 
     try {
@@ -486,29 +603,366 @@ export class SiteSaathiDatabase extends Dexie {
         resolvedJson = await decryptBackupJson(jsonString, passphrase.trim());
       }
     } catch (err: any) {
-      if (err.message === 'ENCRYPTED_BACKUP_NEEDS_PASSPHRASE' || err.message?.includes('passphrase') || err.message?.includes('corrupted')) {
+      if (
+        err.message === 'ENCRYPTED_BACKUP_NEEDS_PASSPHRASE' ||
+        err.message?.includes('passphrase') ||
+        err.message?.includes('corrupted') ||
+        err.message?.includes('MAC')
+      ) {
         throw err;
       }
-      // If not JSON or not encrypted, let standard parser handle it
+      // If not JSON or not encrypted, let standard parser handle it below
     }
 
-    const data = JSON.parse(resolvedJson);
-    if (!data.sites || !data.account) {
-      throw new Error('Invalid backup file format');
+    let data: any;
+    try {
+      data = JSON.parse(resolvedJson);
+    } catch {
+      throw new Error('INVALID_BACKUP_JSON: Decrypted backup payload is not valid JSON.');
     }
 
-    // SEC-DEF-001: Ensure any legacy plaintext credentials in imported data are hashed before saving
-    if (Array.isArray(data.account)) {
-      for (const acc of data.account) {
-        if (acc.password && !acc.password.startsWith('pbkdf2:v1:')) {
-          acc.password = await hashCredential(acc.password);
+    if (!data || typeof data !== 'object') {
+      throw new Error('INVALID_BACKUP_FORMAT: Backup payload must be a JSON object.');
+    }
+
+    if (!Array.isArray(data.account) || !Array.isArray(data.sites)) {
+      throw new Error('INVALID_BACKUP_SCHEMA: Backup file format is invalid (missing account or sites array).');
+    }
+
+    // Step 1: Account Ownership Verification (ZERO writes if mismatch)
+    const matchingAccount = data.account.find((acc: any) => acc && acc.id === targetContractorId);
+    if (!matchingAccount) {
+      const backupOwnerDetails = data.account
+        .map((a: any) => (a?.name ? `${a.name} (${a.id})` : a?.id || 'unknown'))
+        .filter(Boolean)
+        .join(', ');
+      throw new Error(
+        `RESTORE_ACCOUNT_MISMATCH: Backup belongs to contractor "${backupOwnerDetails || 'unknown'}". ` +
+        `It cannot be restored into the active session of contractor ID "${targetContractorId}".`
+      );
+    }
+
+    if (data.contractorId && data.contractorId !== targetContractorId) {
+      throw new Error(
+        `RESTORE_ACCOUNT_MISMATCH: Top-level backup contractorId "${data.contractorId}" ` +
+        `does not match active contractor ID "${targetContractorId}".`
+      );
+    }
+
+    // Step 2: Backup Format & Ownership Verification (SEC-2B-002)
+    const isVersion2 = data.version === 2 || Boolean(data.contractorId);
+
+    if (isVersion2) {
+      // Version 2 strictly requires explicit, matching contractor ownership on every site and vendor
+      for (const s of data.sites) {
+        if (!s || typeof s !== 'object') continue;
+        if (!s.contractorId || typeof s.contractorId !== 'string') {
+          throw new Error(
+            `RESTORE_AMBIGUOUS_OWNERSHIP: Version 2 backup contains site "${s.id || 'unknown'}" with missing contractorId.`
+          );
         }
-        if (acc.pinLock && !acc.pinLock.startsWith('pbkdf2:v1:')) {
-          acc.pinLock = await hashCredential(acc.pinLock);
+        if (s.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_ACCOUNT_MISMATCH: Backup contains site "${s.id}" belonging to contractor "${s.contractorId}", ` +
+            `which does not match active contractor ID "${targetContractorId}".`
+          );
+        }
+      }
+
+      if (Array.isArray(data.vendors)) {
+        for (const v of data.vendors) {
+          if (!v || typeof v !== 'object') continue;
+          if (!v.contractorId || typeof v.contractorId !== 'string') {
+            throw new Error(
+              `RESTORE_AMBIGUOUS_OWNERSHIP: Version 2 backup contains vendor "${v.id || 'unknown'}" with missing contractorId.`
+            );
+          }
+          if (v.contractorId !== targetContractorId) {
+            throw new Error(
+              `RESTORE_ACCOUNT_MISMATCH: Backup contains vendor "${v.id}" belonging to contractor "${v.contractorId}", ` +
+              `which does not match active contractor ID "${targetContractorId}".`
+            );
+          }
+        }
+      }
+    } else {
+      // Legacy V1 backup handling: permit normalization ONLY if safely provable
+      const isSafeV1Legacy =
+        !data.contractorId &&
+        data.version !== 2 &&
+        Array.isArray(data.account) &&
+        data.account.length === 1 &&
+        data.account[0]?.id === targetContractorId;
+
+      if (!isSafeV1Legacy) {
+        throw new Error(
+          'RESTORE_AMBIGUOUS_OWNERSHIP: Legacy backup ownership cannot be safely verified from payload metadata.'
+        );
+      }
+
+      // Ensure no conflicting ownership tags exist in legacy payload
+      for (const s of data.sites) {
+        if (s && s.contractorId && s.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_ACCOUNT_MISMATCH: Legacy backup contains site "${s.id}" with conflicting contractorId "${s.contractorId}".`
+          );
+        }
+      }
+      if (Array.isArray(data.vendors)) {
+        for (const v of data.vendors) {
+          if (v && v.contractorId && v.contractorId !== targetContractorId) {
+            throw new Error(
+              `RESTORE_ACCOUNT_MISMATCH: Legacy backup contains vendor "${v.id}" with conflicting contractorId "${v.contractorId}".`
+            );
+          }
         }
       }
     }
 
+    // Verify child records do not have conflicting foreign contractorId tags
+    const verifyNoConflictingContractorTag = (records: any[] | undefined, label: string) => {
+      if (!Array.isArray(records)) return;
+      for (const r of records) {
+        if (r && r.contractorId && r.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_ACCOUNT_MISMATCH: ${label} record "${r.id || 'unknown'}" has conflicting contractorId "${r.contractorId}".`
+          );
+        }
+      }
+    };
+
+    verifyNoConflictingContractorTag(data.tools, 'Tool');
+    verifyNoConflictingContractorTag(data.labourRecords, 'Labour record');
+    verifyNoConflictingContractorTag(data.labourEntries, 'Labour entry');
+    verifyNoConflictingContractorTag(data.materials, 'Material');
+    verifyNoConflictingContractorTag(data.machinery, 'Machinery');
+    verifyNoConflictingContractorTag(data.dues, 'Expense due');
+    verifyNoConflictingContractorTag(data.reminders, 'Reminder');
+    verifyNoConflictingContractorTag(data.clientPayments, 'Client payment');
+
+    // Step 3: Prepare Scoped Records to Import
+    const accountsToImport = [matchingAccount];
+    for (const acc of accountsToImport) {
+      if (acc.password && !acc.password.startsWith('pbkdf2:v1:')) {
+        acc.password = await hashCredential(acc.password);
+      }
+      if (acc.pinLock && !acc.pinLock.startsWith('pbkdf2:v1:')) {
+        acc.pinLock = await hashCredential(acc.pinLock);
+      }
+    }
+
+    const sitesToImport = (data.sites as Site[])
+      .filter((s) => s && (s.contractorId === targetContractorId || !s.contractorId))
+      .map((s) => ({
+        ...s,
+        contractorId: targetContractorId,
+      }));
+    const validSiteIds = new Set(sitesToImport.map((s) => s.id));
+
+    const vendorsToImport = Array.isArray(data.vendors)
+      ? (data.vendors as Vendor[])
+          .filter((v) => v && (v.contractorId === targetContractorId || !v.contractorId))
+          .map((v) => ({
+            ...v,
+            contractorId: targetContractorId,
+          }))
+      : [];
+
+    const toolsToImport = Array.isArray(data.tools)
+      ? (data.tools as ToolRecord[]).filter((t) => t && t.siteId && validSiteIds.has(t.siteId))
+      : [];
+
+    const labourRecordsToImport = Array.isArray(data.labourRecords)
+      ? (data.labourRecords as LabourRecord[]).filter((lr) => lr && lr.siteId && validSiteIds.has(lr.siteId))
+      : [];
+    const validLabourRecordIds = new Set(labourRecordsToImport.map((lr) => lr.id));
+
+    const labourEntriesToImport = Array.isArray(data.labourEntries)
+      ? (data.labourEntries as LabourEntry[]).filter(
+          (le) => le && le.recordId && validLabourRecordIds.has(le.recordId)
+        )
+      : [];
+
+    const materialsToImport = Array.isArray(data.materials)
+      ? (data.materials as MaterialRecord[]).filter((m) => m && m.siteId && validSiteIds.has(m.siteId))
+      : [];
+
+    const machineryToImport = Array.isArray(data.machinery)
+      ? (data.machinery as MachineryRecord[]).filter((m) => m && m.siteId && validSiteIds.has(m.siteId))
+      : [];
+
+    const duesToImport = Array.isArray(data.dues)
+      ? (data.dues as ExpenseDue[]).filter((d) => d && d.siteId && validSiteIds.has(d.siteId))
+      : [];
+
+    const remindersToImport = Array.isArray(data.reminders)
+      ? (data.reminders as Reminder[]).filter((r) => r && r.siteId && validSiteIds.has(r.siteId))
+      : [];
+
+    const clientPaymentsToImport = Array.isArray(data.clientPayments)
+      ? (data.clientPayments as ClientPayment[]).filter((p) => p && p.siteId && validSiteIds.has(p.siteId))
+      : [];
+
+    // Step 4: Validate and Sanitize Vendor References (SEC-2B-004)
+    // Gather all valid vendor IDs for the active contractor (imported + existing local)
+    const existingVendors = await this.vendors.toArray();
+    const existingContractorVendors = existingVendors.filter((v) => v.contractorId === targetContractorId);
+    const validVendorIds = new Set([
+      ...vendorsToImport.map((v) => v.id),
+      ...existingContractorVendors.map((v) => v.id),
+    ]);
+
+    for (const m of materialsToImport) {
+      if (m.vendorId && !validVendorIds.has(m.vendorId)) {
+        // Strip foreign or invalid vendor reference so foreign vendor IDs cannot persist
+        delete m.vendorId;
+      }
+    }
+
+    for (const d of duesToImport) {
+      if (d.vendorId && !validVendorIds.has(d.vendorId)) {
+        // Strip foreign or invalid vendor reference so foreign vendor IDs cannot persist
+        delete d.vendorId;
+      }
+    }
+
+    // Step 5: Pre-Transaction Cross-Contractor Primary-Key Collision Detection (SEC-2B-003)
+    const existingSites = await this.sites.toArray();
+    const existingSitesMap = new Map(existingSites.map((s) => [s.id, s]));
+    const existingVendorsMap = new Map(existingVendors.map((v) => [v.id, v]));
+
+    for (const s of sitesToImport) {
+      const existing = existingSitesMap.get(s.id);
+      if (existing && existing.contractorId && existing.contractorId !== targetContractorId) {
+        throw new Error(
+          `RESTORE_COLLISION_DETECTED: Site "${s.id}" collides with an existing site belonging to another contractor.`
+        );
+      }
+    }
+
+    for (const v of vendorsToImport) {
+      const existing = existingVendorsMap.get(v.id);
+      if (existing && existing.contractorId && existing.contractorId !== targetContractorId) {
+        throw new Error(
+          `RESTORE_COLLISION_DETECTED: Vendor "${v.id}" collides with an existing vendor belonging to another contractor.`
+        );
+      }
+    }
+
+    const existingTools = await this.tools.toArray();
+    const existingToolsMap = new Map(existingTools.map((t) => [t.id, t]));
+    for (const t of toolsToImport) {
+      const existing = existingToolsMap.get(t.id);
+      if (existing) {
+        const parentSite = existingSitesMap.get(existing.siteId);
+        if (parentSite && parentSite.contractorId && parentSite.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_COLLISION_DETECTED: Tool "${t.id}" collides with an existing tool belonging to another contractor.`
+          );
+        }
+      }
+    }
+
+    const existingLabourRecords = await this.labourRecords.toArray();
+    const existingLabourRecordsMap = new Map(existingLabourRecords.map((lr) => [lr.id, lr]));
+    for (const lr of labourRecordsToImport) {
+      const existing = existingLabourRecordsMap.get(lr.id);
+      if (existing) {
+        const parentSite = existingSitesMap.get(existing.siteId);
+        if (parentSite && parentSite.contractorId && parentSite.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_COLLISION_DETECTED: Labour record "${lr.id}" collides with an existing labour record belonging to another contractor.`
+          );
+        }
+      }
+    }
+
+    const existingLabourEntries = await this.labourEntries.toArray();
+    const existingLabourEntriesMap = new Map(existingLabourEntries.map((le) => [le.id, le]));
+    for (const le of labourEntriesToImport) {
+      const existing = existingLabourEntriesMap.get(le.id);
+      if (existing) {
+        const parentLr = existingLabourRecordsMap.get(existing.recordId);
+        const parentSite = parentLr ? existingSitesMap.get(parentLr.siteId) : undefined;
+        if (parentSite && parentSite.contractorId && parentSite.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_COLLISION_DETECTED: Labour entry "${le.id}" collides with an existing labour entry belonging to another contractor.`
+          );
+        }
+      }
+    }
+
+    const existingMaterials = await this.materials.toArray();
+    const existingMaterialsMap = new Map(existingMaterials.map((m) => [m.id, m]));
+    for (const m of materialsToImport) {
+      const existing = existingMaterialsMap.get(m.id);
+      if (existing) {
+        const parentSite = existingSitesMap.get(existing.siteId);
+        if (parentSite && parentSite.contractorId && parentSite.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_COLLISION_DETECTED: Material "${m.id}" collides with an existing material belonging to another contractor.`
+          );
+        }
+      }
+    }
+
+    const existingMachinery = await this.machinery.toArray();
+    const existingMachineryMap = new Map(existingMachinery.map((m) => [m.id, m]));
+    for (const m of machineryToImport) {
+      const existing = existingMachineryMap.get(m.id);
+      if (existing) {
+        const parentSite = existingSitesMap.get(existing.siteId);
+        if (parentSite && parentSite.contractorId && parentSite.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_COLLISION_DETECTED: Machinery "${m.id}" collides with an existing machinery record belonging to another contractor.`
+          );
+        }
+      }
+    }
+
+    const existingDues = await this.dues.toArray();
+    const existingDuesMap = new Map(existingDues.map((d) => [d.id, d]));
+    for (const d of duesToImport) {
+      const existing = existingDuesMap.get(d.id);
+      if (existing) {
+        const parentSite = existingSitesMap.get(existing.siteId);
+        if (parentSite && parentSite.contractorId && parentSite.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_COLLISION_DETECTED: Expense due "${d.id}" collides with an existing expense due belonging to another contractor.`
+          );
+        }
+      }
+    }
+
+    const existingReminders = await this.reminders.toArray();
+    const existingRemindersMap = new Map(existingReminders.map((r) => [r.id, r]));
+    for (const r of remindersToImport) {
+      const existing = existingRemindersMap.get(r.id);
+      if (existing) {
+        const parentSite = existingSitesMap.get(existing.siteId);
+        if (parentSite && parentSite.contractorId && parentSite.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_COLLISION_DETECTED: Reminder "${r.id}" collides with an existing reminder belonging to another contractor.`
+          );
+        }
+      }
+    }
+
+    const existingClientPayments = await this.clientPayments.toArray();
+    const existingClientPaymentsMap = new Map(existingClientPayments.map((p) => [p.id, p]));
+    for (const p of clientPaymentsToImport) {
+      const existing = existingClientPaymentsMap.get(p.id);
+      if (existing) {
+        const parentSite = existingSitesMap.get(existing.siteId);
+        if (parentSite && parentSite.contractorId && parentSite.contractorId !== targetContractorId) {
+          throw new Error(
+            `RESTORE_COLLISION_DETECTED: Client payment "${p.id}" collides with an existing client payment belonging to another contractor.`
+          );
+        }
+      }
+    }
+
+    // Step 6: Atomic Database Transaction
     await this.transaction(
       'rw',
       [
@@ -525,17 +979,17 @@ export class SiteSaathiDatabase extends Dexie {
         this.clientPayments,
       ],
       async () => {
-        if (data.account?.length) await this.account.bulkPut(data.account);
-        if (data.sites?.length) await this.sites.bulkPut(data.sites);
-        if (data.tools?.length) await this.tools.bulkPut(data.tools);
-        if (data.labourRecords?.length) await this.labourRecords.bulkPut(data.labourRecords);
-        if (data.labourEntries?.length) await this.labourEntries.bulkPut(data.labourEntries);
-        if (data.materials?.length) await this.materials.bulkPut(data.materials);
-        if (data.machinery?.length) await this.machinery.bulkPut(data.machinery);
-        if (data.dues?.length) await this.dues.bulkPut(data.dues);
-        if (data.vendors?.length) await this.vendors.bulkPut(data.vendors);
-        if (data.reminders?.length) await this.reminders.bulkPut(data.reminders);
-        if (data.clientPayments?.length) await this.clientPayments.bulkPut(data.clientPayments);
+        if (accountsToImport.length) await this.account.bulkPut(accountsToImport);
+        if (sitesToImport.length) await this.sites.bulkPut(sitesToImport);
+        if (toolsToImport.length) await this.tools.bulkPut(toolsToImport);
+        if (labourRecordsToImport.length) await this.labourRecords.bulkPut(labourRecordsToImport);
+        if (labourEntriesToImport.length) await this.labourEntries.bulkPut(labourEntriesToImport);
+        if (materialsToImport.length) await this.materials.bulkPut(materialsToImport);
+        if (machineryToImport.length) await this.machinery.bulkPut(machineryToImport);
+        if (duesToImport.length) await this.dues.bulkPut(duesToImport);
+        if (vendorsToImport.length) await this.vendors.bulkPut(vendorsToImport);
+        if (remindersToImport.length) await this.reminders.bulkPut(remindersToImport);
+        if (clientPaymentsToImport.length) await this.clientPayments.bulkPut(clientPaymentsToImport);
       }
     );
 

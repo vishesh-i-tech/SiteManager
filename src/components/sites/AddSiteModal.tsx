@@ -136,8 +136,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     setIsSubmitting(true);
     try {
       const finalType = siteType === 'Other' && customCategory.trim() ? (customCategory.trim() as any) : siteType;
+      const activeContractorId = localStorage.getItem('sitesaathi_active_user_id');
+      if (!activeContractorId) {
+        throw new Error('NO_ACTIVE_CONTRACTOR: Please sign in before creating a site.');
+      }
       const nowIso = new Date().toISOString();
-      const activeContractorId = localStorage.getItem('sitesaathi_active_user_id') || 'contractor-1';
 
       const newSite: Site = {
         id: `site-${Date.now()}`,

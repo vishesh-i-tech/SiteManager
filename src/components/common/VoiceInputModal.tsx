@@ -91,11 +91,16 @@ export const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
 
   const handleSaveSite = async () => {
     if (!siteName) return;
+    const activeContractorId = localStorage.getItem('sitesaathi_active_user_id');
+    if (!activeContractorId) {
+      console.error('Cannot create site: No active contractor session.');
+      return;
+    }
     setIsSaving(true);
     try {
       const newSite: Site = {
         id: `site-${Date.now()}`,
-        contractorId: 'contractor-1',
+        contractorId: activeContractorId,
         name: siteName,
         location: location || 'Site Location Area',
         siteType,

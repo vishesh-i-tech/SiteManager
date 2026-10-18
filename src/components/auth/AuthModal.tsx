@@ -28,6 +28,8 @@ import {
   Truck,
 } from 'lucide-react';
 
+import { hashCredential } from '../../utils/cryptoUtils';
+
 interface AuthModalProps {
   isOpen: boolean;
   onAuthenticated: (account: ContractorAccount, isNewAccount: boolean) => void;
@@ -58,6 +60,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [phone, setPhone] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -84,13 +88,39 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
+    if (!password.trim() || password.trim().length < 4) {
+      setErrorMsg(language === 'hi' ? 'सुरक्षा पिन कम से कम 4 अंकों का होना चाहिए' : 'Security PIN must be at least 4 digits');
+      return;
+    }
+
+    if (password.trim() !== confirmPassword.trim()) {
+      setErrorMsg(language === 'hi' ? 'पिन मेल नहीं खा रहे हैं' : 'PINs do not match');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg('');
     try {
+      const existing = await db.account.where('phone').equals(cleanPhone).first();
+      if (existing) {
+        setErrorMsg(
+          language === 'hi'
+            ? 'इस नंबर से खाता पहले से मौजूद है। कृपया साइन इन करें।'
+            : 'An account with this phone number already exists. Please sign in.'
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      const hashedPin = await hashCredential(password.trim());
+
       const newAccount: ContractorAccount = {
         id: `contractor-${Date.now()}`,
         name: name.trim(),
         phone: cleanPhone,
+        password: hashedPin,
+        pinLock: hashedPin,
+        isPinLockEnabled: true,
         companyName: companyName.trim() || undefined,
         email: email.trim() || undefined,
         trade,
@@ -100,7 +130,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         createdAt: new Date().toISOString(),
       };
 
-      // Save to Dexie (completely fresh and empty of fake data!)
+      // Save to Dexie
       await db.account.put(newAccount);
       localStorage.setItem('sitesaathi_active_user_id', newAccount.id);
 
@@ -432,11 +462,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>{language === 'hi' ? '4-अंकों का सुरक्षा पिन' : '4-Digit Security PIN'} *</span>
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        maxLength={4}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        placeholder="••••"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white tracking-widest text-center"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>{language === 'hi' ? 'पिन पुनः दर्ज करें' : 'Confirm PIN'} *</span>
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        maxLength={4}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        placeholder="••••"
+                        className="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none dark:text-white tracking-widest text-center"
+                      />
+                    </div>
                   </div>
 
                   <button
                     type="submit"
-                    disabled={isSubmitting || !name.trim() || !phone.trim()}
+                    disabled={isSubmitting || !name.trim() || !phone.trim() || password.length < 4}
                     className="w-full py-3 px-4 rounded-xl text-xs font-black text-white shadow-lg flex items-center justify-center gap-2 transition-all btn-tactile glow-theme disabled:opacity-50"
                     style={{ backgroundColor: tradeConfig.primaryColor }}
                   >

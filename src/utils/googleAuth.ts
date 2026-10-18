@@ -36,20 +36,51 @@ declare global {
   }
 }
 
-// Scopes: strictly drive.file for app-created visible folder and backup files
+// Scopes: drive.file for app-created visible folder/backups, userinfo.email for identity verification
 export const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+export const GOOGLE_USERINFO_SCOPE = 'https://www.googleapis.com/auth/userinfo.email';
+export const GOOGLE_AUTH_SCOPES = `${GOOGLE_DRIVE_SCOPE} ${GOOGLE_USERINFO_SCOPE}`;
 
-// Ephemeral in-memory token state — NEVER written to localStorage or IndexedDB
-interface MemoryTokenState {
-  accessToken: string;
-  expiresAt: number; // Date.now() + (expiresIn * 1000)
+export interface GoogleAccountIdentity {
+  email: string;
+  name?: string;
+  picture?: string;
 }
 
-let inMemoryToken: MemoryTokenState | null = null;
+// Ephemeral in-memory token and identity state — NEVER written to localStorage or IndexedDB
+interface MemoryTokenState {
+  contractorId: string;
+  accessToken: string;
+  expiresAt: number; // Date.now() + (expiresIn * 1000)
+  identity?: GoogleAccountIdentity;
+}
+
+// Per-contractor in-memory token map ensuring complete contractor isolation
+const contractorTokenMap = new Map<string, MemoryTokenState>();
+
 let gisScriptPromise: Promise<void> | null = null;
 let activeAuthResolver: ((token: string) => void) | null = null;
 let activeAuthRejecter: ((err: Error) => void) | null = null;
 let tokenClient: GoogleTokenClient | null = null;
+
+const resolveContractorKey = (explicitContractorId?: string): string => {
+  if (explicitContractorId && explicitContractorId.trim()) {
+    return explicitContractorId.trim();
+  }
+  if (typeof localStorage !== 'undefined') {
+    const saved = localStorage.getItem('sitesaathi_active_user_id');
+    if (saved && saved.trim()) return saved.trim();
+  }
+  return 'default';
+};
+
+/**
+ * Returns whether the app is currently running in a native Capacitor Android container.
+ */
+export const isNativeAndroidPlatform = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return Boolean((window as any).Capacitor?.isNativePlatform?.() && (window as any).Capacitor?.getPlatform?.() === 'android');
+};
 
 /**
  * Returns whether the Web Google Client ID is configured in the environment.
@@ -129,28 +160,112 @@ export const loadGoogleIdentityServicesScript = (): Promise<void> => {
 };
 
 /**
- * Returns the currently active, unexpired in-memory access token, or null if none is valid.
- * Applies a 60-second safety margin to prevent mid-operation token expiration.
+ * Queries Google's supported userinfo / tokeninfo identity endpoints
+ * to verify and extract the authenticated Google account email.
  */
-export const getValidGoogleAccessToken = (): string | null => {
-  if (!inMemoryToken) return null;
-  const bufferMs = 60 * 1000;
-  if (Date.now() >= inMemoryToken.expiresAt - bufferMs) {
-    inMemoryToken = null;
-    return null;
+export const fetchGoogleAccountIdentity = async (accessToken: string): Promise<GoogleAccountIdentity> => {
+  try {
+    const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.email) {
+        return {
+          email: data.email,
+          name: data.name,
+          picture: data.picture,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Google userinfo endpoint fetch failed, attempting tokeninfo fallback:', err);
   }
-  return inMemoryToken.accessToken;
+
+  try {
+    const tokenInfoResp = await fetch(
+      `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${encodeURIComponent(accessToken)}`
+    );
+    if (tokenInfoResp.ok) {
+      const data = await tokenInfoResp.json();
+      if (data.email) {
+        return { email: data.email };
+      }
+    }
+  } catch (err) {
+    console.warn('Google tokeninfo fallback failed:', err);
+  }
+
+  throw new Error('IDENTITY_FETCH_FAILED: Unable to verify Google account identity.');
 };
 
 /**
- * Requests an in-memory OAuth 2.0 access token via Google Identity Services Token Model.
- * If a valid, unexpired in-memory token is already available, returns it immediately.
- * 
- * @param options.forcePrompt If true, forces the consent/account selection prompt
+ * Returns the currently active, unexpired in-memory access token for the given contractor,
+ * or null if none is valid. Applies a 60-second safety margin.
  */
-export const requestGoogleAccessToken = async (options?: { forcePrompt?: boolean }): Promise<string> => {
-  const existingToken = getValidGoogleAccessToken();
-  if (existingToken && !options?.forcePrompt) {
+export const getValidGoogleAccessToken = (contractorId?: string): string | null => {
+  const key = resolveContractorKey(contractorId);
+  const entry = contractorTokenMap.get(key);
+  if (!entry) return null;
+
+  const bufferMs = 60 * 1000;
+  if (Date.now() >= entry.expiresAt - bufferMs) {
+    contractorTokenMap.delete(key);
+    return null;
+  }
+  return entry.accessToken;
+};
+
+/**
+ * Returns the verified Google identity associated with the in-memory session for this contractor.
+ */
+export const getGoogleAccountIdentity = (contractorId?: string): GoogleAccountIdentity | null => {
+  const key = resolveContractorKey(contractorId);
+  const entry = contractorTokenMap.get(key);
+  if (!entry) return null;
+
+  const bufferMs = 60 * 1000;
+  if (Date.now() >= entry.expiresAt - bufferMs) {
+    contractorTokenMap.delete(key);
+    return null;
+  }
+  return entry.identity || null;
+};
+
+/**
+ * Sets synthetic mock Google credentials for testing and automated evaluation.
+ */
+export const setMockGoogleAuth = (
+  contractorId: string,
+  accessToken: string,
+  identity: GoogleAccountIdentity,
+  expiresInSec = 3600
+): void => {
+  contractorTokenMap.set(contractorId, {
+    contractorId,
+    accessToken,
+    expiresAt: Date.now() + expiresInSec * 1000,
+    identity,
+  });
+};
+
+export interface RequestGoogleAccessTokenOptions {
+  forcePrompt?: boolean;
+  prompt?: 'consent' | 'select_account';
+  contractorId?: string;
+}
+
+/**
+ * Requests an in-memory OAuth 2.0 access token via Google Identity Services Token Model.
+ * Caches the token and verified Google identity scoped to the specified contractor.
+ */
+export const requestGoogleAccessToken = async (
+  options?: RequestGoogleAccessTokenOptions
+): Promise<string> => {
+  const contractorKey = resolveContractorKey(options?.contractorId);
+
+  const existingToken = getValidGoogleAccessToken(contractorKey);
+  if (existingToken && !options?.forcePrompt && !options?.prompt) {
     return existingToken;
   }
 
@@ -162,7 +277,6 @@ export const requestGoogleAccessToken = async (options?: { forcePrompt?: boolean
   }
 
   return new Promise((resolve, reject) => {
-    // If an authentication request is already awaiting user interaction, cancel it
     if (activeAuthRejecter) {
       activeAuthRejecter(new Error('AUTH_CANCELLED: Superseded by new authorization request.'));
       activeAuthResolver = null;
@@ -178,11 +292,13 @@ export const requestGoogleAccessToken = async (options?: { forcePrompt?: boolean
         throw new Error('Google Identity Services oauth2 client is not available.');
       }
 
-      if (!tokenClient || options?.forcePrompt) {
+      const promptParam = options?.prompt || (options?.forcePrompt ? 'consent' : undefined);
+
+      if (!tokenClient || options?.forcePrompt || options?.prompt) {
         tokenClient = oauth2.initTokenClient({
           client_id: clientId,
-          scope: GOOGLE_DRIVE_SCOPE,
-          callback: (response: GoogleTokenResponse) => {
+          scope: GOOGLE_AUTH_SCOPES,
+          callback: async (response: GoogleTokenResponse) => {
             if (response.error) {
               const errCode = response.error;
               const errDesc = response.error_description || 'Unknown Google OAuth error';
@@ -203,14 +319,24 @@ export const requestGoogleAccessToken = async (options?: { forcePrompt?: boolean
               return;
             }
 
-            const expiresInSec = typeof response.expires_in === 'string'
-              ? parseInt(response.expires_in, 10) || 3600
-              : response.expires_in || 3600;
+            const expiresInSec =
+              typeof response.expires_in === 'string'
+                ? parseInt(response.expires_in, 10) || 3600
+                : response.expires_in || 3600;
 
-            inMemoryToken = {
+            let identity: GoogleAccountIdentity | undefined;
+            try {
+              identity = await fetchGoogleAccountIdentity(response.access_token);
+            } catch (idErr) {
+              console.warn('Failed to fetch verified identity on token receipt:', idErr);
+            }
+
+            contractorTokenMap.set(contractorKey, {
+              contractorId: contractorKey,
               accessToken: response.access_token,
-              expiresAt: Date.now() + (expiresInSec * 1000),
-            };
+              expiresAt: Date.now() + expiresInSec * 1000,
+              identity,
+            });
 
             if (activeAuthResolver) {
               activeAuthResolver(response.access_token);
@@ -225,12 +351,12 @@ export const requestGoogleAccessToken = async (options?: { forcePrompt?: boolean
             activeAuthResolver = null;
             activeAuthRejecter = null;
           },
-          prompt: options?.forcePrompt ? 'consent' : undefined,
+          prompt: promptParam,
         });
       }
 
       tokenClient.requestAccessToken({
-        prompt: options?.forcePrompt ? 'consent' : undefined,
+        prompt: promptParam,
       });
     } catch (err: any) {
       activeAuthResolver = null;
@@ -241,21 +367,28 @@ export const requestGoogleAccessToken = async (options?: { forcePrompt?: boolean
 };
 
 /**
- * Immediately clears any in-memory Google access token.
- * Should be called upon contractor logout or application teardown.
+ * Immediately clears in-memory Google access token and identity.
+ * If contractorId is specified, clears only that contractor's session.
+ * Otherwise, clears all in-memory contractor tokens.
  */
-export const clearGoogleAuthSession = (): void => {
-  inMemoryToken = null;
+export const clearGoogleAuthSession = (contractorId?: string): void => {
+  if (contractorId) {
+    contractorTokenMap.delete(contractorId);
+  } else {
+    contractorTokenMap.clear();
+  }
 };
 
 /**
- * Revokes the current in-memory access token with Google's OAuth 2.0 servers
- * and wipes all in-memory token state.
+ * Revokes the in-memory access token with Google's OAuth 2.0 servers
+ * and wipes all in-memory token state for the specified contractor.
  */
-export const revokeGoogleAccessToken = async (): Promise<void> => {
-  const token = inMemoryToken?.accessToken;
-  inMemoryToken = null;
+export const revokeGoogleAccessToken = async (contractorId?: string): Promise<void> => {
+  const key = resolveContractorKey(contractorId);
+  const entry = contractorTokenMap.get(key);
+  contractorTokenMap.delete(key);
 
+  const token = entry?.accessToken;
   if (!token) return;
 
   if (window.google?.accounts?.oauth2?.revoke) {
