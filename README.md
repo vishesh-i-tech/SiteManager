@@ -48,7 +48,7 @@ SiteManager (SiteSaathi) is a mobile-responsive, offline-resilient web applicati
 - **Vendors & Suppliers:** Raw material dealers, rental agencies, and machinery contractors (Udhaar balances).
 - **Clients / Project Owners:** Contract budgets, milestone tracking, and billing.
 
-For full architectural breakdown, refer to the documentation in [`docx/site_sathi_project_documentation.pdf`](docx/site_sathi_project_documentation.pdf).
+For full architectural breakdown, refer to the documentation in [`docs/reports/SiteSaathi Project Documentation.pdf`](docs/reports/SiteSaathi%20Project%20Documentation.pdf).
 
 ---
 

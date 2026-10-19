@@ -922,13 +922,13 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Operational Guide for Field Users:** Provides a detailed, practical, bilingual contractor manual for Indian thekedars and site supervisors.
 - **How it works (Under the Hood):**
   - The documentation suite comprises 7 interconnected Markdown specifications:
-    1. [`docs/PRD.md`](docs/PRD.md): Product vision, user stories, functional specs, data models, acceptance criteria, and implemented vs. future capabilities.
-    2. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): Component tree, state tiers, Dexie v2/v3 schemas, cascade deletion sequences, hardware bridges, and Capacitor packaging.
-    3. [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md): Structured risk-based test plan with 42 stable test IDs across 13 functional modules with priority and severity rubrics.
-    4. [`docs/TEST_REPORT.md`](docs/TEST_REPORT.md): Evidence-based test audit tracking real command execution (`npm run build`, `npm run lint`), verified passes, and 6 documented defects.
-    5. [`docs/SECURITY.md`](docs/SECURITY.md): Comprehensive threat model (STRIDE / OWASP Mobile Top 10), plaintext credential audit, mock biometric analysis, and Web Crypto API hardening roadmap.
-    6. [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md): Practical step-by-step contractor manual explaining the 5-step workflow, daily logging, voice/OCR, dues, and PDF reports.
-    7. [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md): 6-phase release readiness checklist, APK build verification, known limitations, and emergency rollback procedures.
+    1. [`docs/Product Requirements Document.md`](docs/Product%20Requirements%20Document.md): Product vision, user stories, functional specs, data models, acceptance criteria, and implemented vs. future capabilities.
+    2. [`docs/Architecture.md`](docs/Architecture.md): Component tree, state tiers, Dexie v2/v3 schemas, cascade deletion sequences, hardware bridges, and Capacitor packaging.
+    3. [`docs/Test Plan.md`](docs/Test%20Plan.md): Structured risk-based test plan with 42 stable test IDs across 13 functional modules with priority and severity rubrics.
+    4. [`docs/Test Report.md`](docs/Test%20Report.md): Evidence-based test audit tracking real command execution (`npm run build`, `npm run lint`), verified passes, and 6 documented defects.
+    5. [`docs/Security.md`](docs/Security.md): Comprehensive threat model (STRIDE / OWASP Mobile Top 10), plaintext credential audit, mock biometric analysis, and Web Crypto API hardening roadmap.
+    6. [`docs/User Guide.md`](docs/User%20Guide.md): Practical step-by-step contractor manual explaining the 5-step workflow, daily logging, voice/OCR, dues, and PDF reports.
+    7. [`docs/Release Checklist.md`](docs/Release%20Checklist.md): 6-phase release readiness checklist, APK build verification, known limitations, and emergency rollback procedures.
 - **A short, simple summary:** Produced an exhaustive, evidence-based 7-document technical and user documentation suite under `docs/` providing complete architectural visibility, security threat modeling, test evidence, and contractor field guides.
 
 ---
@@ -938,10 +938,10 @@ This document tracks all technologies, libraries, and architectural modules used
 ### 1. Technology: Complete Technical Specification & Feature Catalog Ecosystem
 - **Name of the Technology:** SiteSaathi Design, Database, Setup & Feature Development Specifications
 - **What it does (Role & Purpose):**
-  - **Design System Blueprint ([`docs/DESIGN.md`](docs/DESIGN.md)):** Authoritative design system documentation capturing the unified monochromatic blue palette (`#2563EB`), typography (`Outfit`, `Plus Jakarta Sans`, `Hind`), tactile buttons (`.btn-tactile`), zero-default form suppression, and responsive layout rules.
-  - **Database Architecture ([`docs/DATABASE.md`](docs/DATABASE.md)):** Comprehensive IndexedDB schema reference across 11 Dexie.js v4 tables, Version 2 & 3 schemas, Mermaid ERD, atomic cascade deletions in `deleteSite()`, orphan sweeps, and backup/restore mechanics.
-  - **Local Development & Deployment Guide ([`docs/SETUP.md`](docs/SETUP.md)):** End-to-end setup documentation detailing Node.js/npm prerequisites, zero-env configuration, IndexedDB initialization, NPM scripts, and Capacitor Android APK build workflows.
-  - **Feature Catalog & Implementation Guide ([`docs/FEATURES.md`](docs/FEATURES.md)):** Authoritative central feature inventory, dependency architecture, step-by-step implementation guides for future developers, and safe change management rules.
+  - **Design System Blueprint ([`docs/Design.md`](docs/Design.md)):** Authoritative design system documentation capturing the unified monochromatic blue palette (`#2563EB`), typography (`Outfit`, `Plus Jakarta Sans`, `Hind`), tactile buttons (`.btn-tactile`), zero-default form suppression, and responsive layout rules.
+  - **Database Architecture ([`docs/Database.md`](docs/Database.md)):** Comprehensive IndexedDB schema reference across 11 Dexie.js v4 tables, Version 2 & 3 schemas, Mermaid ERD, atomic cascade deletions in `deleteSite()`, orphan sweeps, and backup/restore mechanics.
+  - **Local Development & Deployment Guide ([`docs/Setup.md`](docs/Setup.md)):** End-to-end setup documentation detailing Node.js/npm prerequisites, zero-env configuration, IndexedDB initialization, NPM scripts, and Capacitor Android APK build workflows.
+  - **Feature Catalog & Implementation Guide ([`docs/Features.md`](docs/Features.md)):** Authoritative central feature inventory, dependency architecture, step-by-step implementation guides for future developers, and safe change management rules.
 - **How it works (Under the Hood):**
   - Generated strictly in documentation-only mode without touching application source code, stylesheets, or database records.
   - References verified source paths, exact Dexie method calls, and real UI behavior discovered from code inspection and test execution.
@@ -949,7 +949,7 @@ This document tracks all technologies, libraries, and architectural modules used
 
 ---
 
-## Phase 2.45: Comprehensive Authentication & Application Security Audit Specification (`docs/AUTHENTICATION.md`)
+## Phase 2.45: Comprehensive Authentication & Application Security Audit Specification (`docs/Authentication.md`)
 
 ### 1. Technology: SiteSaathi Authentication Security Architecture & Audit Report
 - **Name of the Technology:** SiteSaathi Authentication Architecture & Security Audit Specification
@@ -960,7 +960,7 @@ This document tracks all technologies, libraries, and architectural modules used
 - **How it works (Under the Hood):**
   - Synthesized strictly in read-only audit mode without altering any application code, database records, or UI components.
   - Establishes clear trust boundary distinctions between UI-level guards, client-side cryptographic checks, server-enforced authentication, and device-level OS biometrics.
-- **A short, simple summary:** Created `docs/AUTHENTICATION.md` establishing an exhaustive, evidence-based security audit, threat analysis, and non-breaking P0-P3 hardening roadmap for offline-first contractor authentication.
+- **A short, simple summary:** Created `docs/Authentication.md` establishing an exhaustive, evidence-based security audit, threat analysis, and non-breaking P0-P3 hardening roadmap for offline-first contractor authentication.
 
 ---
 
@@ -1125,6 +1125,56 @@ This document tracks all technologies, libraries, and architectural modules used
   - **Explicit Account Switcher (`GoogleDriveBackupSection.tsx`):** The "Switch Google Account" action invokes `requestGoogleAccessToken({ forcePrompt: true, prompt: 'select_account', contractorId: account?.id })`, forcing Google's account picker modal so the contractor can explicitly choose a different Google account.
   - **Platform Verification & Android WebView Constraints:** Web GIS and Google OAuth run cleanly in desktop/mobile browsers and PWAs. In native Android APKs built via Capacitor, Google rejects OAuth within embedded WebViews (`disallowed_useragent`), requiring native Chrome Custom Tabs / deep-linking integration (e.g. `@codetrix-studio/capacitor-google-auth`) for production APK distribution.
 - **A short, simple summary:** Delivered zero-dependency self-service offline registration with PBKDF2 PIN hashing and a multi-tenant Google Drive management engine providing verified identity display, isolated in-memory tokens, and explicit account switching per contractor.
+
+---
+
+### 12. Technology: SiteSaathi External Branding & Zero-Flicker Startup Architecture (`src/App.tsx`, `src/components/common/SplashScreen.tsx`, `src/components/common/SiteSaathiLogo.tsx`, `src/components/auth/AuthScreen.tsx`, `index.html`, Android Res)
+- **Name of the Technology:** SiteSaathi Geometric Brand System & Zero-Flicker Native Launch Pipeline
+- **What it does (Role & Purpose):**
+  - **Unique Visual Identity:** Replaced generic placeholder icons with a bespoke, professional SiteSaathi identity: multi-tier architectural buildings with angular roofs and windows, an amber sun arc, a site supervisor hardhat silhouette, and a sweeping teal foundation checkmark.
+  - **Multi-Density Android Assets:** Deployed full asset suites across all screen densities (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) for launcher icons (`ic_launcher.png`), circular launcher icons (`ic_launcher_round.png`), adaptive foregrounds (`ic_launcher_foreground.png`), deep-navy vector backgrounds (`#0A192F`), and portrait/landscape splash screens (`drawable/splash.png`).
+  - **Eliminated Startup Flashes & Flickers:** Eradicated the startup race condition where existing authenticated contractors briefly saw a jarring flash of the Welcome/Onboarding or Login screen before Dexie's asynchronous `useLiveQuery` query resolved.
+  - **Direct-to-Dashboard Routing for Existing Users:** For contractors with a valid, authenticated session in local storage, the app transitions smoothly from the branded splash screen directly into the active dashboard with zero intermediate screen flashes.
+  - **Clean Onboarding Gate for New Users:** Genuinely new users (zero saved accounts on the device) seamlessly land on the Welcome Screen (`onboarding`) with options to "Get Started" (Sign Up) or "I Already Have An Account" (Sign In).
+  - **Context-Aware Navigation on Login Screen:** Removed the inappropriate "Back to Welcome" arrow when an existing user is logging in on a device with saved accounts, preventing navigation confusion while preserving PIN security and account switching.
+  - **Strict Preservation of Internal UI:** Leaves 100% of internal screens, dashboard widgets, reports, forms, calculators, Dexie tables, and offline business logic completely untouched.
+- **How it works (Under the Hood):**
+  - **Pre-Render Native Preloader (`index.html`):** Inlines clean CSS preloader markup with the SVG emblem inside `<div id="root">`, ensuring the WebView paints a seamless branded screen on frame 0 before JavaScript executes.
+  - **State Guard (`isInitializing` & `syncedAccount` in `App.tsx`):** Holds an `isInitializing` gate while `checkAuth()` runs asynchronously against Dexie. Stores the verified session into `syncedAccount` synchronously so `currentAccount` never falls through to `null` while `useLiveQuery` resolves.
+  - **PIN Security & Lock Gate:** If `isPinLockEnabled` is active and `sessionStorage` has no unlock token, the app routes directly to `<AppLockScreen>` without ever flashing the welcome or login screens.
+  - **Contextual Auth Routing (`AuthScreen.tsx`):** Evaluates `hasExistingAccounts = userSavedAccounts.length > 0`. If existing accounts exist, defaults `view` to `'login'` and hides the back-to-welcome control. If no accounts exist, defaults to `'onboarding'` and allows full navigation.
+- **A short, simple summary:** Delivered a unique, professional SiteSaathi logo system across web and native Android, and eliminated startup race conditions to give existing contractors an instant, flicker-free direct path to their dashboard.
+
+---
+
+## Phase 2.46: Cryptographic Android Release Signing, Release Distribution & Repository Architecture
+
+### 1. Technology: Permanent Android PKCS12 Release Keystore & Gradle Signing Pipeline (`android/app/build.gradle`, `android/key.properties`, `.gitignore`)
+- **Name of the Technology:** SiteSaathi Cryptographic Release Keystore & Localized Secret Ingestion Architecture
+- **What it does (Role & Purpose):**
+  - **Permanent Cryptographic Identity:** Establishes an unalterable, long-term ownership identity for `com.sitesaathi.app` valid for 10,000 days (until 2054) using an RSA 2048-bit key in PKCS12 format (`sitesaathi-release.p12`).
+  - **Zero-Secret Leakage Guarantee:** Configures Gradle to ingest release signing credentials dynamically from a local, untracked `android/key.properties` file located strictly outside version control.
+  - **Graceful Public Clone Compatibility:** If `key.properties` is absent on a public clone or developer machine, Gradle gracefully skips signing rather than failing the build or exposing empty properties.
+  - **APK Signature Scheme v2 Verification:** Generates fully verified release APKs compliant with Android APK Signature Scheme v2 (full binary integrity verification) passing Google SDK `apksigner`.
+- **How it works (Under the Hood):**
+  - **External Storage:** Stores the permanent release keystore outside the Git workspace at `%USERPROFILE%\.android\keystores\sitesaathi-release.p12`.
+  - **Conditional Ingestion in `app/build.gradle`:** Evaluates `def keystorePropertiesFile = rootProject.file("key.properties")`. If present, loads `storeFile`, `storePassword`, `keyAlias`, and `keyPassword` dynamically into `signingConfigs.release` and links it to `buildTypes.release`.
+  - **Multi-Layer Git Protection (`.gitignore`):** Explicitly ignores `*.p12`, `*.jks`, `*.keystore`, `*.apk`, and `key.properties` patterns so no credentials, private keys, or binary APK packages can ever be staged or pushed to GitHub.
+  - **Distribution Packaging (`releases/`):** Copies the verified, signed release APK to `releases/SiteSaathi v1.0.apk` alongside verified `releases/Release Notes.md` detailing build metadata, certificate SHA-256 fingerprint (`42:D1:C7:...`), and the technical necessity of clean uninstall/reinstall when transitioning from debug builds.
+- **A short, simple summary:** Created a permanent, 27-year PKCS12 release keystore outside Git, wired a secure leak-free signing pipeline in Gradle, and produced a verified, signed `SiteSaathi v1.0.apk` with comprehensive release documentation.
+
+### 2. Technology: Professional Repository Organization & Human-Readable Documentation Architecture (`docs/`, `docs/reports/`, `releases/`)
+- **Name of the Technology:** Standardized Monorepo Documentation & Release Artifact Structure
+- **What it does (Role & Purpose):**
+  - **Pristine Root Workspace:** Cleaned up clutter from the repository root by removing redundant empty folders (`raw problems...`, `src/data`) and obsolete duplicate instruction files (`GEMINI.md`).
+  - **Human-Readable Documentation:** Renamed uppercase underscored files to clean, professional names without underscores (`User Guide.md`, `Test Plan.md`, `Release Checklist.md`, `Test Report.md`, `Setup.md`, `Architecture.md`, `Design.md`, `Database.md`, `Security.md`, `Features.md`, `Product Requirements Document.md`, `Feature Walkthrough.md`).
+  - **Dedicated Reports & Releases Subdirectories:** Grouped standalone progress reports and Python generator scripts into `docs/reports/` and established `releases/` for distributable installable packages.
+  - **Validated Hyperlink Integrity:** Updated and audited every cross-reference in `README.md`, `explainer.md`, and all `docs/*.md` files, ensuring 100% of internal links resolve accurately.
+- **How it works (Under the Hood):**
+  - Preserved every existing uncommitted file and asset across Android native resources, web components, and styles.
+  - Consolidated scattered PDF and Python reporting utilities under `docs/reports/` while eliminating single-file directories (`docx/`).
+- **A short, simple summary:** Restructured project documentation into a standardized, human-readable hierarchy with 100% validated cross-references, clean releases, and an uncluttered repository root.
+
 
 
 

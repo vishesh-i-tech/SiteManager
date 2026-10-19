@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../core/theme/ThemeContext';
 import { ContractorAccount } from '../../types';
 import { db } from '../../core/db/database';
@@ -7,6 +7,9 @@ import {
   getValidGoogleAccessToken,
   requestGoogleAccessToken,
   revokeGoogleAccessToken,
+  getGoogleAccountIdentity,
+  clearGoogleAuthSession,
+  isNativeAndroidPlatform,
 } from '../../utils/googleAuth';
 import {
   uploadEncryptedBackupToDrive,
@@ -44,8 +47,11 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
 }) => {
   const { language, t } = useTheme();
 
-  // Connection & Auth State (In-Memory Only)
-  const [isConnected, setIsConnected] = useState<boolean>(() => !!getValidGoogleAccessToken());
+  // Connection & Auth State (In-Memory Only, scoped to active contractor)
+  const [isConnected, setIsConnected] = useState<boolean>(() => !!getValidGoogleAccessToken(account?.id));
+  const [connectedEmail, setConnectedEmail] = useState<string | null>(() => {
+    return getGoogleAccountIdentity(account?.id)?.email || null;
+  });
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [isConfigured] = useState<boolean>(() => isGoogleAuthConfigured());
   const [statusFeedback, setStatusFeedback] = useState<{
@@ -89,6 +95,17 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
   } | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
 
+  // Synchronize in-memory Google session when the active contractor account changes
+  useEffect(() => {
+    const activeToken = getValidGoogleAccessToken(account?.id);
+    setIsConnected(!!activeToken);
+    const identity = getGoogleAccountIdentity(account?.id);
+    setConnectedEmail(identity?.email || null);
+    setBackupsList([]);
+    setSelectedBackup(null);
+    setStatusFeedback(null);
+  }, [account?.id]);
+
   const showStatus = (text: string, type: 'success' | 'error' | 'info' = 'info', durationMs = 4500) => {
     setStatusFeedback({ text, type });
     if (durationMs > 0) {
@@ -100,7 +117,7 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
 
   /**
    * Connect to Google Drive via Web GIS Token Client.
-   * Access tokens remain in memory only.
+   * Access tokens remain in memory only and are scoped to the active contractor account.
    */
   const handleConnect = async () => {
     if (!isConfigured) {
@@ -112,6 +129,16 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
         6000
       );
       return;
+    }
+
+    if (isNativeAndroidPlatform()) {
+      showStatus(
+        language === 'hi'
+          ? 'सूचना: एंड्रॉइड वेबव्यू में गूगल लॉगिन के लिए क्रोम कस्टम टैब्स आवश्यक है (वेब/PWA में उपलब्ध)।'
+          : 'Notice: Google OAuth in Android APK requires native browser integration (works in Web/PWA).',
+        'info',
+        6000
+      );
     }
 
     if (!navigator.onLine) {
@@ -128,17 +155,20 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
     setStatusFeedback(null);
 
     try {
-      await requestGoogleAccessToken({ forcePrompt: true });
+      await requestGoogleAccessToken({ forcePrompt: true, contractorId: account?.id });
+      const identity = getGoogleAccountIdentity(account?.id);
       setIsConnected(true);
+      setConnectedEmail(identity?.email || null);
       showStatus(
         language === 'hi'
-          ? '✓ गूगल ड्राइव सफलतापूर्वक कनेक्ट हो गया!'
-          : '✓ Google Drive connected successfully! (Ephemeral in-memory session active)',
+          ? `✓ गूगल ड्राइव कनेक्ट हो गया (${identity?.email || 'सक्रिय सत्र'})`
+          : `✓ Google Drive connected! (${identity?.email || 'Active in-memory session'})`,
         'success'
       );
     } catch (err: any) {
       console.warn('Google Drive auth failed:', err);
       setIsConnected(false);
+      setConnectedEmail(null);
       const isCancelled =
         err?.message?.includes('cancelled') ||
         err?.message?.includes('popup') ||
@@ -157,21 +187,75 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
   };
 
   /**
+   * Switch Google Account explicitly via account picker.
+   */
+  const handleSwitchAccount = async () => {
+    if (!navigator.onLine) {
+      showStatus(
+        language === 'hi'
+          ? 'नेटवर्क त्रुटि: आप ऑफलाइन हैं। कृपया इंटरनेट चालू करें।'
+          : 'Network error: You are currently offline.',
+        'error'
+      );
+      return;
+    }
+
+    setIsConnecting(true);
+    setStatusFeedback(null);
+
+    try {
+      await requestGoogleAccessToken({
+        forcePrompt: true,
+        prompt: 'select_account',
+        contractorId: account?.id,
+      });
+      const identity = getGoogleAccountIdentity(account?.id);
+      setIsConnected(true);
+      setConnectedEmail(identity?.email || null);
+      setBackupsList([]);
+      showStatus(
+        language === 'hi'
+          ? `✓ गूगल खाता बदला गया: ${identity?.email || ''}`
+          : `✓ Switched Google account: ${identity?.email || ''}`,
+        'success'
+      );
+    } catch (err: any) {
+      console.warn('Google account switch failed:', err);
+      const isCancelled =
+        err?.message?.includes('cancelled') ||
+        err?.message?.includes('popup') ||
+        err?.message?.includes('closed');
+      showStatus(
+        isCancelled
+          ? language === 'hi'
+            ? 'खाता चयन विंडो बंद कर दी गई।'
+            : 'Account selection prompt was cancelled.'
+          : err?.message || 'Failed to switch Google account.',
+        isCancelled ? 'info' : 'error'
+      );
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  /**
    * Disconnect Google Drive. Revokes token with Google and clears in-memory state.
    * Does NOT touch local database records or cloud files.
    */
   const handleDisconnect = async () => {
     try {
-      await revokeGoogleAccessToken();
+      await revokeGoogleAccessToken(account?.id);
     } catch (err) {
       console.warn('Revoke error (non-fatal):', err);
     }
+    clearGoogleAuthSession(account?.id);
     setIsConnected(false);
+    setConnectedEmail(null);
     setBackupsList([]);
     showStatus(
       language === 'hi'
-        ? 'गूगल ड्राइव डिस्कनेक्ट हो गया। इन-मेमोरी टोकन हटा दिया गया।'
-        : 'Google Drive disconnected. In-memory access token cleared.',
+        ? 'गूगल ड्राइव डिस्कनेक्ट हो गया। इन-मेमोरी सत्र हटा दिया गया।'
+        : 'Google Drive disconnected. In-memory session cleared.',
       'info'
     );
   };
@@ -244,16 +328,25 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
     setIsBackingUp(true);
 
     try {
-      // 1. Export database encrypted with AES-GCM-256 via Web Crypto
-      const encryptedJson = await db.exportBackupJson(cleanPass);
+      if (!account?.id) {
+        setPassphraseError(
+          language === 'hi'
+            ? 'बैकअप विफल: कोई सक्रिय ठेकेदार खाता नहीं मिला।'
+            : 'Backup failed: No active contractor account session found.'
+        );
+        return;
+      }
+
+      // 1. Export database encrypted with AES-GCM-256 via Web Crypto (contractor-scoped)
+      const encryptedJson = await db.exportBackupJson(cleanPass, account.id);
 
       // 2. Security Gate: Validate envelope structure strictly before touching network
       validateEncryptedBackupPayload(encryptedJson);
 
-      // 3. Obtain or verify valid in-memory token
-      let token = getValidGoogleAccessToken();
+      // 3. Obtain or verify valid in-memory token scoped to this contractor
+      let token = getValidGoogleAccessToken(account.id);
       if (!token) {
-        token = await requestGoogleAccessToken();
+        token = await requestGoogleAccessToken({ contractorId: account.id });
         setIsConnected(true);
       }
 
@@ -262,7 +355,7 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
 
       // 5. Update last successful backup indicator ONLY after confirmed upload success
       const nowIso = new Date().toISOString();
-      const storageKey = `sitesaathi_last_drive_backup_${account?.id || 'default'}`;
+      const storageKey = `sitesaathi_last_drive_backup_${account.id}`;
       localStorage.setItem(storageKey, nowIso);
       setLastBackupTime(nowIso);
 
@@ -331,9 +424,9 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
     setListError('');
 
     try {
-      let token = getValidGoogleAccessToken();
+      let token = getValidGoogleAccessToken(account?.id);
       if (!token) {
-        token = await requestGoogleAccessToken();
+        token = await requestGoogleAccessToken({ contractorId: account?.id });
         setIsConnected(true);
       }
 
@@ -367,9 +460,9 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
     setListError('');
 
     try {
-      let token = getValidGoogleAccessToken();
+      let token = getValidGoogleAccessToken(account?.id);
       if (!token) {
-        token = await requestGoogleAccessToken();
+        token = await requestGoogleAccessToken({ contractorId: account?.id });
         setIsConnected(true);
       }
 
@@ -437,6 +530,19 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
         );
       }
 
+      // Verify contractor account ownership before opening confirmation dialog
+      if (account?.id) {
+        const matchingAcc = parsed.account.find((a: any) => a && a.id === account.id);
+        if (!matchingAcc) {
+          const ownerNames = parsed.account.map((a: any) => a?.name ? `${a.name} (${a.id})` : a?.id).join(', ');
+          throw new Error(
+            language === 'hi'
+              ? `खाता असंगत: यह बैकअप दूसरे ठेकेदार (${ownerNames || 'अज्ञात'}) का है। यह आपके खाते में रीस्टोर नहीं हो सकता।`
+              : `RESTORE_ACCOUNT_MISMATCH: This backup belongs to contractor "${ownerNames || 'unknown'}". It cannot be restored into your account.`
+          );
+        }
+      }
+
       // 3. Prepare preview metadata for safe user confirmation
       setPendingCleanContent(resolvedJson);
       setPendingRestoreMeta({
@@ -481,10 +587,19 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
    */
   const handleConfirmExecuteRestore = async () => {
     if (!pendingCleanContent) return;
+    if (!account?.id) {
+      showStatus(
+        language === 'hi'
+          ? 'रीस्टोर विफल: कोई सक्रिय ठेकेदार खाता नहीं मिला।'
+          : 'Restore failed: No active contractor account session found.',
+        'error'
+      );
+      return;
+    }
     setIsRestoring(true);
 
     try {
-      await db.importBackupJson(pendingCleanContent);
+      await db.importBackupJson(pendingCleanContent, { activeContractorId: account.id });
       setIsConfirmRestoreOpen(false);
       setIsBackupsModalOpen(false);
       setPendingCleanContent(null);
@@ -635,6 +750,33 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
           </span>
         </div>
 
+        {/* Connected Google Account Identity Badge */}
+        {isConnected && (
+          <div className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div className="min-w-0">
+                <span className="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-300 block leading-tight">
+                  {language === 'hi' ? 'कनेक्टेड गूगल खाता:' : 'Connected Google Account:'}
+                </span>
+                <span className="font-extrabold text-slate-800 dark:text-slate-100 truncate block text-xs">
+                  {connectedEmail || (language === 'hi' ? 'गूगल खाता सक्रिय' : 'Active Google Session')}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={isConnecting}
+              onClick={handleSwitchAccount}
+              className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-lg flex items-center gap-1 shrink-0 ml-2 shadow-xs transition-colors"
+            >
+              <RefreshCw className={`w-3 h-3 ${isConnecting ? 'animate-spin' : ''}`} />
+              <span>{language === 'hi' ? 'खाता बदलें' : 'Switch'}</span>
+            </button>
+          </div>
+        )}
+
         {/* Action Controls */}
         {!isConnected ? (
           /* Disconnected State: Single Connect Button */
@@ -659,7 +801,7 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
             </button>
           </div>
         ) : (
-          /* Connected State: Action Grid + Disconnect Option */
+          /* Connected State: Action Grid + Switch/Disconnect Option */
           <div className="space-y-2 pt-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
@@ -681,7 +823,17 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
               </button>
             </div>
 
-            <div className="flex justify-end pt-0.5">
+            <div className="flex items-center justify-between pt-0.5 px-1">
+              <button
+                type="button"
+                disabled={isConnecting}
+                onClick={handleSwitchAccount}
+                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 transition-colors"
+              >
+                <RefreshCw className={`w-3 h-3 ${isConnecting ? 'animate-spin' : ''}`} />
+                <span>{language === 'hi' ? 'गूगल खाता बदलें' : 'Switch Google Account'}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleDisconnect}
@@ -697,7 +849,7 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
 
       {/* MODAL 1: Passphrase Prompt for Encrypted Upload */}
       {isPassphraseModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
             onClick={() => {
@@ -824,7 +976,7 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
 
       {/* MODAL 2: Google Drive Backups List */}
       {isBackupsModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
             onClick={() => {
@@ -973,7 +1125,7 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
 
       {/* MODAL 3: In-Memory Decryption Passphrase Prompt */}
       {isCloudDecryptModalOpen && (
-        <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm" onClick={handleCancelRestore} />
           <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
@@ -1029,7 +1181,7 @@ export const GoogleDriveBackupSection: React.FC<GoogleDriveBackupSectionProps> =
 
       {/* MODAL 4: Pre-Restore Preview & Explicit Merge Confirmation */}
       {isConfirmRestoreOpen && (
-        <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm" onClick={handleCancelRestore} />
           <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">

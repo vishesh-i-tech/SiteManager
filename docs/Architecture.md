@@ -261,16 +261,18 @@ d:/TECH/site sathi/
 ├── capacitor.config.ts             # Capacitor Android application configuration
 ├── .oxlintrc.json                  # Oxlint static analysis configuration
 ├── explainer.md                    # Technology explainer reference file
-├── walkthrough.md                  # Project overview walkthrough
 ├── docs/                           # Central Documentation Suite
-│   ├── PRD.md                      # Product Requirements Document
-│   ├── ARCHITECTURE.md             # Technical Architecture (This Document)
-│   ├── DESIGN.md                   # Visual Identity & Design System Specification
-│   ├── TEST_PLAN.md                # 42-Test Case Risk-Based Protocol
-│   ├── TEST_REPORT.md              # Evidence-Based Execution Audit & Defect Log
-│   ├── SECURITY.md                 # Security Review, Threat Model & Hardening
-│   ├── USER_GUIDE.md               # Bilingual Contractor & Supervisor Manual
-│   └── RELEASE_CHECKLIST.md        # Pre-Flight Release Gatekeeper
+│   ├── Product Requirements Document.md # Product Requirements Document
+│   ├── Architecture.md             # Technical Architecture (This Document)
+│   ├── Design.md                   # Visual Identity & Design System Specification
+│   ├── Database.md                 # Database Schema, ERD & Integrity Rules
+│   ├── Test Plan.md                # 42-Test Case Risk-Based Protocol
+│   ├── Test Report.md              # Evidence-Based Execution Audit & Defect Log
+│   ├── Security.md                 # Security Review, Threat Model & Hardening
+│   ├── User Guide.md               # Bilingual Contractor & Supervisor Manual
+│   ├── Release Checklist.md        # Pre-Flight Release Gatekeeper
+│   ├── Feature Walkthrough.md      # Feature Walkthrough & Verification Summary
+│   └── reports/                    # Generated Progress & Architecture Reports
 ├── android/                        # Native Android Capacitor Project
 │   ├── build.gradle                # Top-level Gradle configuration
 │   ├── gradlew.bat                 # Windows Gradle wrapper script

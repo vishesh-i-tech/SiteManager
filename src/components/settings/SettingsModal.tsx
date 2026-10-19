@@ -246,9 +246,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const executeBackupDownload = async (passphrase?: string) => {
+    if (!account?.id) {
+      setBackupStatus(
+        language === 'hi'
+          ? 'बैकअप विफल: कोई सक्रिय ठेकेदार खाता नहीं मिला।'
+          : 'Backup failed: No active contractor account session found.'
+      );
+      return;
+    }
     try {
       setBackupStatus(language === 'hi' ? 'बैकअप तैयार हो रहा है...' : 'Generating backup file...');
-      const json = await db.exportBackupJson(passphrase);
+      const json = await db.exportBackupJson(passphrase, account.id);
       const isEnc = !!passphrase;
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -358,6 +366,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           return;
         }
 
+        // Verify contractor ownership before opening confirmation dialog
+        if (account?.id && !parsed.account.some((a: any) => a && a.id === account.id)) {
+          const ownerNames = parsed.account.map((a: any) => a?.name ? `${a.name} (${a.id})` : a?.id).join(', ');
+          setBackupStatus(
+            language === 'hi'
+              ? `खाता असंगत: यह बैकअप दूसरे ठेकेदार (${ownerNames || 'अज्ञात'}) का है।`
+              : `Account mismatch: This backup belongs to contractor "${ownerNames || 'unknown'}". It cannot be restored into your account.`
+          );
+          return;
+        }
+
         // 3. Stash pending content and require explicit user confirmation before applying
         setPendingCleanContent(content);
         setPendingRestoreMeta({
@@ -385,19 +404,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleConfirmRestore = async () => {
     if (!pendingCleanContent) return;
+    if (!account?.id) {
+      setBackupStatus(language === 'hi' ? 'सक्रिय खाता अनुपलब्ध' : 'Active account unavailable');
+      return;
+    }
     setIsConfirmRestoreOpen(false);
     try {
       setBackupStatus(language === 'hi' ? 'डेटा रीस्टोर किया जा रहा है...' : 'Restoring database...');
-      await db.importBackupJson(pendingCleanContent);
+      await db.importBackupJson(pendingCleanContent, { activeContractorId: account.id });
       setPendingCleanContent(null);
       setPendingRestoreMeta(null);
       setBackupStatus(language === 'hi' ? '✓ डेटा सफलतापूर्वक रीस्टोर हो गया!' : '✓ Database restored successfully!');
       setTimeout(() => {
         window.location.reload();
       }, 1200);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Restore error:', err);
-      setBackupStatus(language === 'hi' ? 'डेटा रीस्टोर करने में त्रुटि' : 'Failed to restore database');
+      setBackupStatus(
+        err?.message?.includes('RESTORE_ACCOUNT_MISMATCH')
+          ? (language === 'hi' ? 'खाता असंगत: यह बैकअप किसी अन्य ठेकेदार का है।' : err.message)
+          : (language === 'hi' ? 'डेटा रीस्टोर करने में त्रुटि' : 'Failed to restore database')
+      );
       setPendingCleanContent(null);
       setPendingRestoreMeta(null);
     }
@@ -408,10 +435,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setDecryptError(language === 'hi' ? 'कृपया पासवर्ड दर्ज करें' : 'Please enter the decryption password');
       return;
     }
+    if (!account?.id) {
+      setDecryptError(language === 'hi' ? 'सक्रिय खाता अनुपलब्ध' : 'Active account unavailable');
+      return;
+    }
     setDecryptError('');
     try {
       setBackupStatus(language === 'hi' ? 'डेटा डिक्रिप्ट व रीस्टोर हो रहा है...' : 'Decrypting and restoring backup...');
-      await db.importBackupJson(pendingEncryptedContent, restorePassphrase.trim());
+      await db.importBackupJson(pendingEncryptedContent, {
+        passphrase: restorePassphrase.trim(),
+        activeContractorId: account.id,
+      });
       setIsDecryptModalOpen(false);
       setPendingEncryptedContent(null);
       setRestorePassphrase('');
@@ -421,10 +455,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       }, 1200);
     } catch (err: any) {
       console.error('Decryption failed:', err);
+      const isMismatch = err?.message?.includes('RESTORE_ACCOUNT_MISMATCH');
       setDecryptError(
-        language === 'hi'
-          ? 'गलत पासवर्ड या दूषित बैकअप फाइल।'
-          : 'Incorrect password or corrupted backup file.'
+        isMismatch
+          ? (language === 'hi' ? 'खाता असंगत: यह बैकअप किसी अन्य ठेकेदार का है।' : err.message)
+          : (language === 'hi' ? 'गलत पासवर्ड या दूषित बैकअप फाइल।' : 'Incorrect password or corrupted backup file.')
       );
       setBackupStatus('');
     }
@@ -454,10 +489,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] overflow-y-auto">
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
-        <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-fade-in">
+        <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[90vh] animate-fade-in my-auto">
           
           {/* Header - Strictly "Settings" as requested */}
           <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
@@ -486,7 +521,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Modal Body */}
-          <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+          <div className="p-5 sm:p-6 space-y-6 overflow-y-auto flex-1 text-xs pb-10 sm:pb-8">
             
             {/* 1. Contractor Profile Card & In-line Editor */}
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
@@ -965,7 +1000,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* 8. Log Out / Switch Account */}
-            <div className="pt-2">
+            <div className="pt-2 pb-2">
               <button
                 type="button"
                 onClick={() => {
@@ -986,7 +1021,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       {/* PIN Verification Modal for Anti-Delete / Clear All Data */}
       {pinPromptOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setPinPromptOpen(false)} />
           <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
@@ -1034,7 +1069,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       {/* Export Passphrase / Option Modal for Encrypted vs. Clean Backup */}
       {isEncryptExportModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
             onClick={() => {
@@ -1140,7 +1175,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       {/* Decrypt Passphrase Modal for Encrypted Backup Restore */}
       {isDecryptModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsDecryptModalOpen(false)} />
           <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
@@ -1191,7 +1226,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       {/* Confirmation Modal for Unencrypted Backup Restore */}
       {isConfirmRestoreOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={handleCancelRestore} />
           <div className="relative z-10 bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">

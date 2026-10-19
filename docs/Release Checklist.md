@@ -76,7 +76,7 @@ graph TD
 | `REL-SEC-02` | **Biometric Unlock Audit** | Test biometric unlock on AppLockScreen. | Must challenge fingerprint sensor; must NOT auto-unlock. | **FAIL** | **Known Issue:** Mock check auto-unlocks; fix in v1.1. |
 | `REL-SEC-03` | **Saved Account Login Challenge** | Tap saved account card on login screen. | Must require PIN before granting access. | **FAIL** | **Known Issue:** Bypasses PIN; fix in v1.1. |
 | `REL-SEC-04` | **Anti-Delete PIN Prompt** | Attempt "Clear All Data" in Settings. | Requires valid PIN before data wipe proceeds. | **PASS** | Verified in `SettingsModal.tsx`. |
-| `REL-SEC-05` | **Plaintext Credential Risk** | Inspect `db.account` in DevTools. | Passwords should be cryptographically hashed. | **FAIL** | **Known Issue:** Plaintext stored; documented in SECURITY.md. |
+| `REL-SEC-05` | **Plaintext Credential Risk** | Inspect `db.account` in DevTools. | Passwords should be cryptographically hashed. | **FAIL** | **Known Issue:** Plaintext stored; documented in Security.md. |
 
 ---
 

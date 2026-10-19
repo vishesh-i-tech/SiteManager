@@ -62,16 +62,18 @@ d:/TECH/site sathi/
 │   └── images/
 │       └── builder_character.jpg   # 3D interactive mascot asset
 ├── docs/                           # Authoritative Documentation Suite
-│   ├── PRD.md                      # Product Requirements Document
-│   ├── ARCHITECTURE.md             # Technical Architecture & Data Flow
-│   ├── DESIGN.md                   # Visual Identity, Tokens & UX Guidelines
-│   ├── DATABASE.md                 # Database Schema, ERD & Integrity Rules
-│   ├── TEST_PLAN.md                # 42-Test Case Risk-Based Plan
-│   ├── TEST_REPORT.md              # Execution Audit & Discovered Defect Register
-│   ├── SECURITY.md                 # Threat Model, STRIDE Audit & Hardening
-│   ├── USER_GUIDE.md               # Bilingual Contractor Field Manual
-│   ├── RELEASE_CHECKLIST.md        # Pre-Flight Release Gatekeeper
-│   └── SETUP.md                    # This Project Setup Guide
+│   ├── Product Requirements Document.md # Product Requirements Document
+│   ├── Architecture.md             # Technical Architecture & Data Flow
+│   ├── Design.md                   # Visual Identity, Tokens & UX Guidelines
+│   ├── Database.md                 # Database Schema, ERD & Integrity Rules
+│   ├── Test Plan.md                # 42-Test Case Risk-Based Plan
+│   ├── Test Report.md              # Execution Audit & Discovered Defect Register
+│   ├── Security.md                 # Threat Model, STRIDE Audit & Hardening
+│   ├── User Guide.md               # Bilingual Contractor Field Manual
+│   ├── Release Checklist.md        # Pre-Flight Release Gatekeeper
+│   ├── Feature Walkthrough.md      # Feature Walkthrough & Verification Summary
+│   ├── reports/                    # Generated Progress & Architecture Reports
+│   └── Setup.md                    # This Project Setup Guide
 ├── android/                        # Native Android Capacitor Project
 │   ├── build.gradle                # Root Gradle configuration
 │   ├── gradlew.bat                 # Windows Gradle wrapper execution script

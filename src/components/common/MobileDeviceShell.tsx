@@ -119,7 +119,7 @@ export const MobileDeviceShell: React.FC<MobileDeviceShellProps> = ({ children }
       >
         {/* Device Status Bar (shown in phone & tablet mode) */}
         {!isFull && (
-          <div className="w-full bg-slate-900 text-slate-200 px-6 py-2.5 flex items-center justify-between text-xs font-semibold select-none z-50 border-b border-slate-800/80">
+          <div className="w-full bg-slate-900 text-slate-200 px-6 py-2.5 flex items-center justify-between text-xs font-semibold select-none z-20 border-b border-slate-800/80">
             <span className="font-mono text-[11px]">{currentTime}</span>
             
             {/* Dynamic Island / Camera Punch-hole */}
@@ -141,7 +141,7 @@ export const MobileDeviceShell: React.FC<MobileDeviceShellProps> = ({ children }
 
         {/* Mobile Device Home Bar (shown in phone & tablet mode) */}
         {!isFull && (
-          <div className="w-full bg-slate-900/90 py-1.5 flex items-center justify-center select-none z-50 border-t border-slate-800/50">
+          <div className="w-full bg-slate-900/90 py-1.5 flex items-center justify-center select-none z-20 border-t border-slate-800/50">
             <div className="w-32 h-1 bg-slate-600 rounded-full" />
           </div>
         )}

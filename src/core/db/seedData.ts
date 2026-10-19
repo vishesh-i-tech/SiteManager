@@ -1,4 +1,4 @@
-import {
+import type {
   ContractorAccount,
   Site,
   ToolRecord,
@@ -10,7 +10,7 @@ import {
   Vendor,
   Reminder,
   ClientPayment,
-} from '../../types';
+} from '../../types/index.ts';
 
 export const SEED_ACCOUNTS: ContractorAccount[] = [
   {

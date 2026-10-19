@@ -30,20 +30,31 @@ import {
   KeyRound,
 } from 'lucide-react';
 
+import { SiteSaathiLogo } from '../common/SiteSaathiLogo';
+
 interface AuthScreenProps {
   onAuthenticated: (account: ContractorAccount, isNewAccount: boolean) => void;
   existingAccounts: ContractorAccount[];
+  initialView?: 'onboarding' | 'login' | 'register';
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({
   onAuthenticated,
   existingAccounts,
+  initialView,
 }) => {
   const { setTrade, language, setLanguage } = useTheme();
 
-  // Three view states matching the reference design:
-  // 'onboarding' (hero screen), 'register' (Sign Up), 'login' (Welcome Back)
-  const [view, setView] = useState<'onboarding' | 'login' | 'register'>('onboarding');
+  // Filter out explicit demo contractor IDs so only real accounts saved on this device appear
+  const userSavedAccounts = existingAccounts.filter(
+    (acc) => !['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(acc.id)
+  );
+  const hasExistingAccounts = userSavedAccounts.length > 0;
+
+  // View state: 'onboarding' (Welcome screen), 'register' (Sign Up), 'login' (Welcome Back)
+  const [view, setView] = useState<'onboarding' | 'login' | 'register'>(
+    () => initialView || (hasExistingAccounts ? 'login' : 'onboarding')
+  );
 
   // Register form state
   const [selectedTrade, setSelectedTrade] = useState<TradeCategory>('construction');
@@ -272,10 +283,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     }
   };
 
-  // Filter out explicit demo contractor IDs so only real accounts saved on this device appear
-  const userSavedAccounts = existingAccounts.filter(
-    (acc) => !['contractor-1', 'contractor-2', 'contractor-3', 'contractor-demo'].includes(acc.id)
-  );
 
   // SEC-DEF-002 FIX: Selecting account pre-fills phone and transitions to secure PIN challenge view
   const handleQuickAccountSelect = (acc: ContractorAccount) => {
@@ -444,27 +451,39 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
       {/* TOP BAR: Brand + Language Switcher */}
       <div className="w-full flex items-center justify-between z-10 pt-1 pb-4">
-        {view !== 'onboarding' ? (
-          <button
-            type="button"
-            onClick={() => {
-              setErrorMsg('');
-              setView('onboarding');
-            }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-            title="Back to start"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        ) : (
+        {view === 'onboarding' ? (
           <div className="w-9" />
+        ) : (
+          /* Show back button only when returning to welcome as a new user, or going from register back to login */
+          (!hasExistingAccounts || view === 'register') ? (
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMsg('');
+                if (view === 'register' && hasExistingAccounts) {
+                  setView('login');
+                } else {
+                  setView('onboarding');
+                }
+              }}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              title={view === 'register' && hasExistingAccounts ? 'Back to login' : 'Back to start'}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          ) : (
+            <div className="w-9" />
+          )
         )}
 
-        {/* Center Brand Name & Sparkle */}
-        <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setView('onboarding')}>
-          <span className="text-blue-600 text-sm font-black">✦</span>
-          <span className="font-extrabold text-base tracking-tight text-slate-900 font-heading">
-            SiteSaathi
+        {/* Center Brand Name with SiteSaathi Logo */}
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6">
+            <SiteSaathiLogo size="sm" />
+          </div>
+          <span className="font-extrabold text-base tracking-tight font-heading">
+            <span className="text-[#0F2744]">Site</span>
+            <span className="text-[#0D9488]">Saathi</span>
           </span>
         </div>
 
@@ -474,7 +493,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           onClick={() => setLanguage(language === 'hi' ? 'en' : 'hi')}
           className="px-2.5 py-1 rounded-full text-xs font-bold text-slate-600 bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200/80 flex items-center gap-1 transition-all"
         >
-          <Globe className="w-3 h-3 text-blue-600" />
+          <Globe className="w-3 h-3 text-[#0D9488]" />
           <span>{language === 'hi' ? 'English' : 'हिंदी'}</span>
         </button>
       </div>
@@ -483,19 +502,24 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       <div className="flex-1 flex flex-col justify-center max-w-sm w-full mx-auto z-10 py-2">
         
         {/* ============================================================== */}
-        {/* 1. ONBOARDING SCREEN (Exact match with Screen 1 of reference) */}
+        {/* 1. ONBOARDING SCREEN (Exact match with Screen 2 of reference) */}
         {/* ============================================================== */}
         {view === 'onboarding' && (
           <div className="flex-1 flex flex-col justify-between animate-fade-in space-y-6">
             
-            {/* Center Illustration Hero */}
-            <div className="flex-1 flex items-center justify-center py-4">
-              <div className="relative w-64 h-64 sm:w-72 sm:h-72">
-                <img
-                  src="/images/auth_hero.jpg"
-                  alt="SiteSaathi Contractor Management"
-                  className="w-full h-full object-contain rounded-3xl mix-blend-multiply transition-transform hover:scale-102"
-                />
+            {/* Center Branded Logo & Identity Card */}
+            <div className="flex-1 flex flex-col items-center justify-center py-6 space-y-4">
+              <div className="w-36 h-36 sm:w-44 sm:h-44 drop-shadow-md">
+                <SiteSaathiLogo size="2xl" className="w-full h-full justify-center" />
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-black tracking-tight font-heading">
+                  <span className="text-[#0F2744]">Site</span>
+                  <span className="text-[#0D9488]">Saathi</span>
+                </div>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+                  Construction Management Made Simple
+                </p>
               </div>
             </div>
 
@@ -511,31 +535,27 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               </p>
             </div>
 
-            {/* Bottom Split Pill Action: "Get Started" + Circle Arrow Button */}
-            <div className="pt-4 space-y-3">
+            {/* Bottom Actions: "Get Started" + "I Already Have An Account" */}
+            <div className="pt-2 space-y-3">
               <div
-                onClick={() => setView('login')}
-                className="w-full pl-6 pr-2 py-2 rounded-full border border-slate-200 bg-white hover:border-slate-300 shadow-xs flex items-center justify-between cursor-pointer group active:scale-[0.99] transition-all"
+                onClick={() => setView('register')}
+                className="w-full pl-6 pr-2 py-2 rounded-full border border-blue-600 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25 flex items-center justify-between cursor-pointer group active:scale-[0.99] transition-all text-white"
               >
-                <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600 transition-colors">
-                  {language === 'hi' ? 'शुरू करें' : 'Get Started'}
+                <span className="font-bold text-sm tracking-wide">
+                  {language === 'hi' ? 'शुरू करें (नया खाता)' : 'Get Started'}
                 </span>
-                <div className="w-11 h-11 rounded-full bg-blue-600 group-hover:bg-blue-700 text-white flex items-center justify-center shadow-md shadow-blue-500/30 transition-all group-hover:translate-x-0.5">
+                <div className="w-10 h-10 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-xs transition-all group-hover:translate-x-0.5">
                   <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </div>
               </div>
 
-              {/* Quick direct sign up switch */}
-              <div className="text-center">
-                <span className="text-xs text-slate-500 font-medium">
-                  {language === 'hi' ? 'नया खाता बनाना है? ' : "New contractor? "}
-                  <button
-                    type="button"
-                    onClick={() => setView('register')}
-                    className="text-blue-600 font-bold hover:underline"
-                  >
-                    {language === 'hi' ? 'साइन अप करें' : 'Sign up'}
-                  </button>
+              {/* Already have an account sign-in option */}
+              <div
+                onClick={() => setView('login')}
+                className="w-full py-3 rounded-full border border-slate-200 bg-white hover:border-slate-300 shadow-xs flex items-center justify-center cursor-pointer active:scale-[0.99] transition-all"
+              >
+                <span className="font-bold text-xs text-slate-700">
+                  {language === 'hi' ? 'पहले से खाता है? साइन इन करें' : 'I Already Have An Account'}
                 </span>
               </div>
             </div>
@@ -549,14 +569,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         {view === 'login' && (
           <div className="flex-1 flex flex-col justify-center animate-fade-in space-y-5">
             
-            {/* Top Miniature Illustration */}
+            {/* Top Logo Mark */}
             <div className="flex justify-center -mt-2">
-              <div className="w-24 h-24 rounded-2xl overflow-hidden bg-blue-50/50 p-1 flex items-center justify-center border border-blue-100/80">
-                <img
-                  src="/images/auth_hero.jpg"
-                  alt="Contractor Avatar"
-                  className="w-full h-full object-cover rounded-xl mix-blend-multiply"
-                />
+              <div className="w-20 h-20 p-2 rounded-2xl bg-slate-50 border border-slate-100 shadow-xs flex items-center justify-center">
+                <SiteSaathiLogo size="xl" className="w-full h-full justify-center" />
               </div>
             </div>
 

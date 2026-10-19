@@ -46,6 +46,7 @@ import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { ConfirmDeleteModal } from './components/common/ConfirmDeleteModal';
 import { ToastNotification, ToastMessage } from './components/common/ToastNotification';
 import { MobileDeviceShell } from './components/common/MobileDeviceShell';
+import { SplashScreen } from './components/common/SplashScreen';
 import { exportSiteReportPdf } from './utils/reportExporter';
 
 export const App: React.FC = () => {
@@ -63,6 +64,8 @@ export const App: React.FC = () => {
   const [activeAccountId, setActiveAccountId] = useState<string | null>(() => {
     return localStorage.getItem('sitesaathi_active_user_id');
   });
+  const [syncedAccount, setSyncedAccount] = useState<ContractorAccount | null>(null);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
   const [isAppLocked, setIsAppLocked] = useState(false);
 
   // Modal open states
@@ -114,7 +117,7 @@ export const App: React.FC = () => {
 
   // Reactive IndexedDB queries via Dexie hooks
   const accounts = useLiveQuery(() => db.account.toArray(), []) || [];
-  const currentAccount = accounts.find((a) => a.id === activeAccountId) || null;
+  const currentAccount = accounts.find((a) => a.id === activeAccountId) || syncedAccount;
 
   // DATA-DEF-005 FIX: Scope reactive queries to the active contractor account
   const sites = useLiveQuery(
@@ -243,35 +246,72 @@ export const App: React.FC = () => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Check auth session on startup
+  // Check auth session on startup with zero-flash splash screen
   useEffect(() => {
-    const checkAuth = async () => {
-      await db.ensureDefaultAccounts();
-      const allAccounts = await db.account.toArray();
-      const savedId = localStorage.getItem('sitesaathi_active_user_id');
+    let isMounted = true;
 
-      if (savedId && allAccounts.some((a) => a.id === savedId)) {
-        const acc = allAccounts.find((a) => a.id === savedId);
-        if (acc) {
-          // Restored accounts without credentials must authenticate & establish a PIN first
-          if (!acc.password && !acc.pinLock) {
-            setActiveAccountId(null);
-            localStorage.removeItem('sitesaathi_active_user_id');
-            return;
+    const checkAuth = async () => {
+      try {
+        await db.ensureDefaultAccounts();
+        const allAccounts = await db.account.toArray();
+        const savedId = localStorage.getItem('sitesaathi_active_user_id');
+
+        if (savedId && allAccounts.some((a) => a.id === savedId)) {
+          const acc = allAccounts.find((a) => a.id === savedId);
+          if (acc) {
+            // Restored accounts without credentials must authenticate & establish a PIN first
+            if (!acc.password && !acc.pinLock) {
+              if (isMounted) {
+                setActiveAccountId(null);
+                setSyncedAccount(null);
+                localStorage.removeItem('sitesaathi_active_user_id');
+              }
+              return;
+            }
+            if (isMounted) {
+              setActiveAccountId(acc.id);
+              setSyncedAccount(acc);
+              setTrade(acc.trade);
+              setLanguage(acc.language);
+
+              // Check PIN lock state immediately so no intermediate screen flashes
+              if (acc.isPinLockEnabled && acc.pinLock && !sessionStorage.getItem('sitesaathi_unlocked')) {
+                setIsAppLocked(true);
+              } else {
+                setIsAppLocked(false);
+              }
+            }
+            const smartIns = await db.generateSmartInsights(acc.id);
+            if (isMounted) {
+              setInsights(smartIns);
+            }
           }
-          setActiveAccountId(acc.id);
-          setTrade(acc.trade);
-          setLanguage(acc.language);
-          const smartIns = await db.generateSmartInsights(acc.id);
-          setInsights(smartIns);
+        } else {
+          if (isMounted) {
+            setActiveAccountId(null);
+            setSyncedAccount(null);
+            localStorage.removeItem('sitesaathi_active_user_id');
+          }
         }
-      } else {
-        setActiveAccountId(null);
-        localStorage.removeItem('sitesaathi_active_user_id');
+      } catch (err) {
+        console.error('Startup auth check error:', err);
+      } finally {
+        if (isMounted) {
+          // Provide a smooth, flicker-free native splash transition (min 350ms)
+          setTimeout(() => {
+            if (isMounted) {
+              setIsInitializing(false);
+            }
+          }, 350);
+        }
       }
     };
 
     checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Monitor PIN Lock state
@@ -333,6 +373,7 @@ export const App: React.FC = () => {
 
   const handleAuthenticated = (account: ContractorAccount, isNewAccount: boolean) => {
     setActiveAccountId(account.id);
+    setSyncedAccount(account);
     localStorage.setItem('sitesaathi_active_user_id', account.id);
     sessionStorage.setItem('sitesaathi_unlocked', 'true');
     setIsAppLocked(false);
@@ -351,6 +392,7 @@ export const App: React.FC = () => {
     localStorage.removeItem('sitesaathi_active_user_id');
     sessionStorage.removeItem('sitesaathi_unlocked');
     setActiveAccountId(null);
+    setSyncedAccount(null);
     setIsAppLocked(false);
     setIsSettingsModalOpen(false);
     setSelectedSite(null);
@@ -372,6 +414,7 @@ export const App: React.FC = () => {
     localStorage.removeItem('sitesaathi_active_user_id');
     sessionStorage.removeItem('sitesaathi_unlocked');
     setActiveAccountId(null);
+    setSyncedAccount(null);
     refreshInsights();
     if (selectedSite) setSelectedSite(null);
     setIsSettingsModalOpen(false);
@@ -427,7 +470,9 @@ export const App: React.FC = () => {
 
   return (
     <MobileDeviceShell>
-      {!currentAccount ? (
+      {isInitializing ? (
+        <SplashScreen />
+      ) : !currentAccount ? (
         <>
           <ToastNotification toasts={toasts} onDismiss={dismissToast} />
           <AuthScreen
