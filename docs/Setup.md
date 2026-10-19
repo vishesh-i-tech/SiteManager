@@ -101,8 +101,8 @@ Follow these step-by-step instructions to prepare the repository for local devel
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/vishesh-i-tech/SiteManager.git
-cd SiteManager
+git clone https://github.com/vishesh-i-tech/SiteSaathi.git
+cd SiteSaathi
 ```
 
 ### Step 2: Verify Your Node.js & npm Versions

@@ -1,6 +1,6 @@
 # Project Technology & Architecture Explainer (`explainer.md`)
 
-This document tracks all technologies, libraries, and architectural modules used in **SiteManager (SiteSaathi)**. It explains what each technology does, how it works, and provides a quick summary. This file is continuously updated as new features and technologies are introduced across phases.
+This document tracks all technologies, libraries, and architectural modules used in **SiteSaathi (साइट साथी)**. It explains what each technology does, how it works, and provides a quick summary. This file is continuously updated as new features and technologies are introduced across phases.
 
 ---
 

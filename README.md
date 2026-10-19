@@ -1,4 +1,4 @@
-# SiteManager (SiteSaathi — साइट साथी)
+# SiteSaathi (साइट साथी)
 
 > **Multi-Trade Site Management & Daily Record Assistant for Contractors & Site Engineers**
 
@@ -8,7 +8,7 @@
 [![Offline](https://img.shields.io/badge/Offline-100%25%20IndexedDB-green.svg)](https://dexie.org/)
 [![Bilingual](https://img.shields.io/badge/Language-Hindi%20%7C%20English-orange.svg)](#)
 
-SiteManager (SiteSaathi) is a mobile-responsive, offline-resilient web application designed for contractors and site supervisors (**Thekedars**) across **General Construction, Plumbing, and Electrical** trades. It replaces traditional paper notebooks and lost slips with voice-assisted entry, photo diary scanning, tool rental tracking, and persistent vendor dues management.
+SiteSaathi (साइट साथी) is a mobile-responsive, offline-resilient web application designed for contractors and site supervisors (**Thekedars**) across **General Construction, Plumbing, and Electrical** trades. It replaces traditional paper notebooks and lost slips with voice-assisted entry, photo diary scanning, tool rental tracking, and persistent vendor dues management.
 
 ---
 
@@ -62,10 +62,10 @@ For full architectural breakdown, refer to the documentation in [`docs/reports/S
 
 ```bash
 # Clone the repository
-git clone https://github.com/vishesh-i-tech/SiteManager.git
+git clone https://github.com/vishesh-i-tech/SiteSaathi.git
 
 # Navigate to project directory
-cd SiteManager
+cd SiteSaathi
 
 # Install dependencies
 npm install
